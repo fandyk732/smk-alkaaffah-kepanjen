@@ -55,7 +55,6 @@ export function KontakPage() {
               <div className="flex gap-2 pt-2">
                 <a href={school.socials.instagram} aria-label="Instagram" className="grid h-11 w-11 place-items-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground"><Instagram className="h-5 w-5" /></a>
                 <a href={school.socials.facebook} aria-label="Facebook" className="grid h-11 w-11 place-items-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground"><Facebook className="h-5 w-5" /></a>
-                <a href={school.socials.youtube} aria-label="YouTube" className="grid h-11 w-11 place-items-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground"><Youtube className="h-5 w-5" /></a>
               </div>
             </div>
           </Reveal>

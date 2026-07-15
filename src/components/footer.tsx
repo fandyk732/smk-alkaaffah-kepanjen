@@ -21,9 +21,6 @@ export function Footer() {
             <a href={school.socials.facebook} aria-label="Facebook" className="grid h-9 w-9 place-items-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
               <Facebook className="h-4 w-4" />
             </a>
-            <a href={school.socials.youtube} aria-label="YouTube" className="grid h-9 w-9 place-items-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
-              <Youtube className="h-4 w-4" />
-            </a>
           </div>
         </div>
 
