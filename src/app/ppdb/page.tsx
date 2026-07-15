@@ -28,7 +28,7 @@ const faqs = [
   { q: "Kapan PPDB dibuka?", a: "PPDB dibuka mulai gelombang 1 hingga kuota terpenuhi. Pantau pengumuman resmi sekolah." },
   { q: "Apakah ada biaya pendaftaran?", a: "Biaya pendaftaran sangat terjangkau dan tersedia program beasiswa bagi siswa berprestasi maupun kurang mampu." },
   { q: "Bisakah mendaftar secara online?", a: "Ya, seluruh proses pendaftaran dapat dilakukan secara online melalui website ini." },
-  { q: "Program keahlian apa saja yang tersedia?", a: "Tersedia TKJ, RPL, Multimedia, dan Akuntansi & Keuangan." },
+  { q: "Program keahlian apa saja yang tersedia?", a: "Tersedia TKJ, TAV, TKR, dan DM." },
 ];
 
 export default function PpdbPage() {

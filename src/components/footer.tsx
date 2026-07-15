@@ -44,9 +44,9 @@ export function Footer() {
           <h3 className="text-sm font-semibold">Program Keahlian</h3>
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
             <li>Teknik Komputer &amp; Jaringan</li>
-            <li>Rekayasa Perangkat Lunak</li>
-            <li>Multimedia &amp; Desain</li>
-            <li>Akuntansi &amp; Keuangan</li>
+            <li>Teknik Elektronika</li>
+            <li>Teknik Kendaraan Ringan</li>
+            <li>Digital Marketing</li>
           </ul>
         </div>
 
@@ -62,7 +62,7 @@ export function Footer() {
       <div className="border-t">
         <div className="container-page flex flex-col items-center justify-between gap-2 py-6 text-xs text-muted-foreground sm:flex-row">
           <p>© {new Date().getFullYear()} {school.name}. Hak cipta dilindungi.</p>
-          <p>Dibuat dengan dedikasi untuk pendidikan vokasi.</p>
+          <p>Dibuat oleh : "FAL&RTS" dengan dedikasi untuk legacy SMK Al Kaaffah.</p>
         </div>
       </div>
     </footer>

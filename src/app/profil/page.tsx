@@ -18,7 +18,7 @@ const values = [
   { icon: TreePine, t: "Berkelanjutan", d: "Peduli lingkungan dan masa depan." },
 ];
 
-const facilities = ["Laboratorium Komputer & Jaringan", "Studio Multimedia", "Perpustakaan Digital", "Masjid Sekolah", "Lapangan Olahraga", "Kantin Sehat", "Ruang Kelas Ber-AC", "Aula Serbaguna"];
+const facilities = ["Laboratorium Komputer & Jaringan", "Bengkel Listrik", "Bengkel Otomotif", "Studio Digital Marketing", "Perpustakaan Digital", "Masjid Sekolah", "Lapangan Olahraga", "Kantin Sehat",  "Aula Serbaguna", "Bus Sekolah", "Ruang UKS", "Laboratorium Elektronika", "Laboratorium Kendaraan Ringan", "Ruang Guru & Staf", "Ruang Administrasi", "Area Parkir Luas", "Taman Edukasi"];
 
 export default function ProfilPage() {
   return (
@@ -31,7 +31,7 @@ export default function ProfilPage() {
             description="Berdiri dengan semangat menghadirkan pendidikan kejuruan yang memadukan kompetensi teknologi dan nilai islami, SMK Al Kaaffah Kepanjen terus berkembang menjadi sekolah rujukan di wilayah Malang Selatan. Dari tahun ke tahun, kami memperkuat kemitraan industri, memperbarui fasilitas, dan meluluskan ribuan alumni yang tersebar di dunia kerja maupun perguruan tinggi." />
           <Reveal>
             <div className="overflow-hidden rounded-3xl border shadow-soft">
-              <img src="https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1000&q=80" alt="Gedung sekolah" loading="lazy" className="h-full w-full object-cover" />
+              <img src="https://6a56f44fcec0a76b21484386.imgix.net/bg_alkaaffah.jpg" alt="Gedung sekolah" loading="lazy" className="h-full w-full object-cover" />
             </div>
           </Reveal>
         </div>
@@ -81,12 +81,11 @@ export default function ProfilPage() {
           <SectionHeading eyebrow="Struktur Organisasi" title="Tim manajemen sekolah" />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { n: "Drs. H. Ahmad Kaaffah, M.Pd.", r: "Kepala Sekolah" },
-              { n: "Siti Nurhaliza, S.Pd.", r: "Wakil Kurikulum" },
-              { n: "Budi Santoso, S.Kom.", r: "Wakil Kesiswaan" },
-              { n: "Dewi Lestari, S.E.", r: "Kepala Tata Usaha" },
-              { n: "Eko Prasetyo, S.T.", r: "Kaprodi TKJ" },
-              { n: "Rina Marlina, S.Kom.", r: "Kaprodi RPL" },
+              { n: "Maya Dian Rosita, S.A.P", r: "Kepala Sekolah" },
+              { n: "Arif Mafatia Karim, S.Pd., Gr. Mt.Rt", r: "Wakil Kurikulum & Kaprodi TAV" },
+              { n: "Khusnul Huda, S.H.I", r: "Wakil Kesiswaan & Kaprodi TKR" },
+              { n: "Asfa Al Makmun Muttakin, S.Kom", r: "Kepala Tata Usaha" },
+              { n: "Rubika Nastiti", r: "Kaprodi TKJ & DM" },
             ].map((p, i) => (
               <Reveal key={p.n} delay={i * 0.05}>
                 <div className="flex items-center gap-4 rounded-2xl border bg-card p-5">

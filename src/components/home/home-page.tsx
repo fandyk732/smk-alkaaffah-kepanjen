@@ -54,7 +54,7 @@ export function HomePage() {
               <Link href="/ppdb">Daftar PPDB <ArrowRight className="ml-1 h-4 w-4" /></Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="/program">Lihat Program</Link>
+              <Link href="/program">Lihat Kompetensi Keahlian</Link>
             </Button>
           </motion.div>
           <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted-foreground">
@@ -138,7 +138,7 @@ export function HomePage() {
               vokasi berkualitas yang memadukan kompetensi, karakter, dan inovasi. Bersama, kita
               siapkan generasi yang tangguh, beriman, dan unggul menghadapi tantangan masa depan.&quot;
             </blockquote>
-            <p className="mt-5 font-semibold">Drs. H. Ahmad Kaaffah, M.Pd.</p>
+            <p className="mt-5 font-semibold">Maya Dian Rosita, S.A.P</p>
             <p className="text-sm text-muted-foreground">Kepala SMK Al Kaaffah Kepanjen</p>
           </Reveal>
         </div>
@@ -162,7 +162,7 @@ export function HomePage() {
 
       {/* PROGRAMS */}
       <section className="container-page py-16">
-        <SectionHeading eyebrow="Program Keahlian" title="Pilih jurusan sesuai passion-mu" description="Empat kompetensi keahlian yang dirancang mengikuti standar dunia industri." />
+        <SectionHeading eyebrow="Program Keahlian" title="Pilih Kompetensi Keahlian sesuai passion-mu" description="Empat kompetensi keahlian yang dirancang mengikuti standar dunia industri." />
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {programs.map((p, i) => {
             const Icon = iconMap[p.icon as keyof typeof iconMap];
@@ -170,7 +170,7 @@ export function HomePage() {
               <Reveal key={p.code} delay={i * 0.07}>
                 <motion.div whileHover={{ y: -6 }} className="group h-full rounded-2xl border bg-card p-6 transition-shadow hover:shadow-elegant">
                   <span className="grid h-12 w-12 place-items-center rounded-xl bg-secondary text-primary transition-colors group-hover:bg-gradient-primary group-hover:text-primary-foreground">
-                    <Icon className="h-6 w-6" />
+                    
                   </span>
                   <span className="mt-4 inline-block rounded-full bg-secondary px-2.5 py-0.5 text-xs font-bold text-secondary-foreground">{p.code}</span>
                   <h3 className="mt-2 font-bold leading-snug">{p.title}</h3>
@@ -190,7 +190,7 @@ export function HomePage() {
               <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
                 <Wifi className="h-3.5 w-3.5" /> Program Unggulan
               </span>
-              <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Teknik Komputer &amp; Jaringan</h2>
+              <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Kelas Bahasa Jepang</h2>
               <p className="mt-4 max-w-md opacity-90">
                 Jurusan favorit dengan fasilitas laboratorium jaringan lengkap, sertifikasi vendor,
                 dan langganan juara LKS. Siapkan dirimu menjadi network engineer profesional.

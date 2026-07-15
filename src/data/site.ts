@@ -4,15 +4,15 @@ export const school = {
   tagline: "Mencetak Generasi Unggul, Berkarakter, dan Siap Kerja",
   description:
     "Sekolah Menengah Kejuruan unggulan di Kepanjen yang memadukan kompetensi teknologi, karakter islami, dan kesiapan dunia industri.",
-  address: "Jl. Raya Kepanjen, Kepanjen, Kabupaten Malang, Jawa Timur",
-  phone: "+62 812-3456-7890",
-  whatsapp: "6281234567890",
-  email: "info@smkalkaaffah.sch.id",
-  maps: "https://www.google.com/maps?q=Kepanjen,Malang&output=embed",
+  address: "Jl. Semeru Nomor 18a Dilem, Kepanjen, Kabupaten Malang, Jawa Timur",
+  phone: "+62 813-3332-8174",
+  whatsapp: "6281333328174",
+  email: "smkalkaaffahkpj@gmail.com",
+  maps: "https://www.google.com/maps?q=@-8.117257930336452, 112.5735618389007&output=embed",
   socials: {
-    instagram: "https://instagram.com",
+    instagram: "https://www.instagram.com/smkalkaaffah/",
     facebook: "https://facebook.com",
-    youtube: "https://youtube.com",
+    tiktok: "https://www.tiktok.com/@smkalkaaffah",
   },
 };
 
@@ -27,10 +27,10 @@ export const navItems = [
 ] as const;
 
 export const stats = [
-  { value: 1200, suffix: "+", label: "Siswa Aktif" },
-  { value: 85, suffix: "+", label: "Guru & Staf" },
-  { value: 95, suffix: "%", label: "Lulusan Terserap" },
-  { value: 40, suffix: "+", label: "Mitra Industri" },
+  { value: 65, suffix: "+", label: "Siswa Aktif" },
+  { value: 20, suffix: "+", label: "Guru & Staf" },
+  { value: 90, suffix: "%", label: "Lulusan Terserap" },
+  { value: 10, suffix: "+", label: "Mitra Industri" },
 ];
 
 export const programs = [
@@ -41,34 +41,34 @@ export const programs = [
     icon: "Network",
   },
   {
-    title: "Rekayasa Perangkat Lunak",
-    code: "RPL",
-    desc: "Mengembangkan aplikasi web & mobile dengan standar industri terkini.",
-    icon: "Code2",
+    title: "Teknik Elektronika Industri",
+    code: "TE",
+    desc: "Memrancang Bangun Komponen Eletkronika, Instalasi Listik Industri, Instalasi PLTS, dan IoT.",
+    icon: "",
   },
   {
-    title: "Multimedia & Desain",
-    code: "MM",
-    desc: "Produksi konten digital, desain grafis, fotografi, dan videografi.",
-    icon: "Clapperboard",
+    title: "Teknik Kendaraan Ringan",
+    code: "TKR",
+    desc: "Perawatan dan perbaikan kendaraan bermotor serta sistem elektriknya.",
+    icon: "",
   },
   {
-    title: "Akuntansi & Keuangan",
-    code: "AKL",
-    desc: "Kompetensi pengelolaan keuangan dan administrasi lembaga.",
-    icon: "Calculator",
+    title: "Digital Marketing",
+    code: "DM",
+    desc: "Mempelajari strategi pemasaran digital dan pengelolaan media sosial.",
+    icon: "",
   },
 ];
 
 export const news = [
   {
-    slug: "wisuda-angkatan-2025",
-    title: "Wisuda Angkatan 2025 Berlangsung Khidmat dan Meriah",
-    excerpt: "Sebanyak 320 siswa resmi dinyatakan lulus dan siap memasuki dunia industri.",
+    slug: "wisuda-angkatan-2026",
+    title: "Wisuda Angkatan 2026 Berlangsung Khidmat dan Meriah",
+    excerpt: "Sebanyak 15 siswa resmi dinyatakan lulus dan siap memasuki dunia industri.",
     category: "Kegiatan",
-    date: "2025-05-28",
+    date: "2026-05-28",
     image:
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
+      "https://6a56f44fcec0a76b21484386.imgix.net/2dba840e-7c2e-46c2-ae89-f6e2f6620bcf(1).jpg",
   },
   {
     slug: "juara-lks-jaringan",
@@ -77,7 +77,7 @@ export const news = [
     category: "Prestasi",
     date: "2025-04-12",
     image:
-      "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=1200&q=80",
+      "https://6a56f44fcec0a76b21484386.imgix.net/WhatsApp%20Image%202024-11-13%20at%2009.50.42.jpg",
   },
   {
     slug: "kerja-sama-industri",
@@ -86,12 +86,12 @@ export const news = [
     category: "Kerja Sama",
     date: "2025-03-03",
     image:
-      "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1200&q=80",
+      "https://6a56f44fcec0a76b21484386.imgix.net/WhatsApp%20Image%202026-07-07%20at%2010.12.12.jpg",
   },
 ];
 
 export const achievements = [
-  { title: "Juara 1 LKS Provinsi", field: "IT Network", year: "2025" },
+  { title: "Juara 1 LBB Kecamatan Kepanjen", field: "LBB", year: "2025" },
   { title: "Medali Emas KSN", field: "Informatika", year: "2024" },
   { title: "Juara 2 Hackathon Nasional", field: "RPL", year: "2024" },
   { title: "Best Booth Expo Industri", field: "Multimedia", year: "2023" },
@@ -99,19 +99,19 @@ export const achievements = [
 
 export const testimonials = [
   {
-    name: "Rizky Pratama",
-    role: "Alumni TKJ — Network Engineer",
+    name: "Ocha",
+    role: "Alumni TKJ — Mahasiswa Teknik Komputer UB",
     quote:
-      "Bekal kompetensi dan praktik nyata di sekolah membuat saya langsung siap bekerja setelah lulus.",
+      "Pendampingan yang intens dari Bapak Ibu Guru membantu saya berhasil lolos SPMB UB jalur beasiswa.",
   },
   {
-    name: "Salsabila Putri",
-    role: "Alumni RPL — Software Developer",
+    name: "Rico Marcelino",
+    role: "Alumni TKR — Operator Traktor Merauke Sugar Group",
     quote:
-      "Lingkungan belajar yang suportif dan guru yang kompeten membentuk karakter dan skill saya.",
+      "Terimakasih Guru-guru SMK Al Kaaffah, saya sekarang sudah bekerja di Industri Impian saya.",
   },
   {
-    name: "Ahmad Fauzi",
+    name: "Doni Amargo",
     role: "Alumni MM — Content Creator",
     quote:
       "Fasilitas studio dan bimbingan industri benar-benar membuka jalan karier kreatif saya.",
@@ -122,9 +122,9 @@ export const partners = ["Telkom", "Cisco", "Microsoft", "Dicoding", "BNI", "Ast
 
 export const galleryItems = [
   { title: "Laboratorium Jaringan", category: "Fasilitas", image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=900&q=80" },
-  { title: "Kegiatan Praktikum", category: "Kegiatan", image: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?auto=format&fit=crop&w=900&q=80" },
-  { title: "Upacara Bendera", category: "Kegiatan", image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=900&q=80" },
-  { title: "Studio Multimedia", category: "Fasilitas", image: "https://images.unsplash.com/photo-1492724441997-5dc865305da7?auto=format&fit=crop&w=900&q=80" },
-  { title: "Kompetisi Siswa", category: "Prestasi", image: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80" },
+  { title: "Bengkel Listrik", category: "Kegiatan", image: "https://6a56f44fcec0a76b21484386.imgix.net/IMG-20240301-WA0004.jpg" },
+  { title: "Bengkel Otomotif", category: "Kegiatan", image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=900&q=80" },
+  { title: "Kelas Bahasa Jepang", category: "Fasilitas", image: "https://images.unsplash.com/photo-1492724441997-5dc865305da7?auto=format&fit=crop&w=900&q=80" },
+  { title: "Masjid Sekolah", category: "Prestasi", image: "https://6a56f44fcec0a76b21484386.imgix.net/Screenshot%202024-10-09%2008.18.04.png" },
   { title: "Perpustakaan", category: "Fasilitas", image: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=80" },
 ];
