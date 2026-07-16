@@ -118,7 +118,7 @@ export const testimonials = [
   },
 ];
 
-export const partners = ["Telkom", "Cisco", "Microsoft", "Dicoding", "BNI", "Astra", "Indosat", "Pertamina"];
+export const partners = ["Telkom", "Bengkel Sitondi", "Tiara Auto Service", "Whitecret.id", "BKKBN Kab.Malang", "RS Wava Husada", "Polinema", "Fajar Internasional"];
 
 export const galleryItems = [
   { title: "Laboratorium Jaringan", category: "Fasilitas", image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=900&q=80" },
