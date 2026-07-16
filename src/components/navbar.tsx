@@ -108,31 +108,32 @@ export function Navbar() {
       </nav>
 
       <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden overflow-hidden"
-          >
-            <ul className="container-page flex flex-col gap-1 py-4">
-              {navItems.map((item) => (
-                <li key={item.to}>
-                  <Link
-                    href={item.to}
-                    className="block rounded-lg px-4 py-3 text-sm font-medium hover:bg-secondary"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-              <Button asChild className="mt-2 bg-gradient-primary">
-                <Link href="/ppdb">Daftar PPDB</Link>
-              </Button>
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
+  {open && (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="lg:hidden overflow-hidden bg-background/95 backdrop-blur-md border-b" 
+    >
+      <ul className="container-page flex flex-col gap-1 py-4">
+        {navItems.map((item) => (
+          <li key={item.to}>
+            <Link
+              href={item.to}
+              className="block rounded-lg px-4 py-3 text-sm font-medium hover:bg-secondary"
+            >
+              {item.label}
+            </Link>
+          </li>
+        ))}
+        {/* Tombol PPDB versi mobile biar muncul juga di HP kecil */}
+        <Button asChild className="mt-2 w-full bg-gradient-primary sm:hidden">
+          <Link href="/ppdb">Daftar PPDB</Link>
+        </Button>
+      </ul>
+    </motion.div>
+  )}
+    </AnimatePresence>
     </header>
   );
 }
