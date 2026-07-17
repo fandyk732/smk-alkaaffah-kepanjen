@@ -1,48 +1,108 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/motion-primitives";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { news } from "@/data/site";
 
-const categories = ["Semua", "Kegiatan", "Prestasi", "Kerja Sama"];
+// Import Firestore
+import { db } from "@/lib/firebase"; // Sesuaikan path jika berbeda, misal "@/firebase"
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+
+// Definisikan tipe data berita dari Firestore
+interface Berita {
+  id: string;
+  judul: string;
+  slug: string;
+  kategori: string;
+  konten: string;
+  gambar: string;
+  tanggal: string;
+  penulis: string;
+}
+
+// Kategorinya disesuaikan dengan opsi di form admin lo kemarin
+const categories = ["Semua", "Berita", "Pengumuman", "Prestasi", "Event"];
 const PER_PAGE = 6;
 
 export function BeritaPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("Semua");
   const [page, setPage] = useState(1);
+  
+  // State baru untuk menampung data dari Firestore dan status loading
+  const [daftarBerita, setDaftarBerita] = useState<Berita[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Ambil data dari Firestore saat halaman di-load
+  useEffect(() => {
+    const ambilBerita = async () => {
+      try {
+        const qSnapshot = await getDocs(
+          query(collection(db, "berita"), orderBy("createdAt", "desc"))
+        );
+        
+        const data: Berita[] = [];
+        qSnapshot.forEach((doc) => {
+          data.push({ id: doc.id, ...doc.data() } as Berita);
+        });
+
+        setDaftarBerita(data);
+      } catch (error) {
+        console.error("Gagal mengambil data berita dari Firestore:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    ambilBerita();
+  }, []);
+
+  // Filter pencarian & kategori bekerja secara real-time di sisi client
   const filtered = useMemo(() => {
-    return news.filter((n) =>
-      (cat === "Semua" || n.category === cat) &&
-      n.title.toLowerCase().includes(q.toLowerCase())
+    return daftarBerita.filter((n) =>
+      (cat === "Semua" || n.kategori === cat) &&
+      n.judul.toLowerCase().includes(q.toLowerCase())
     );
-  }, [q, cat]);
+  }, [q, cat, daftarBerita]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const items = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <>
-      <PageHero eyebrow="Berita & Artikel" title="Kabar terbaru dari sekolah" description="Ikuti perkembangan kegiatan, prestasi, dan informasi terbaru SMK Al Kaaffah Kepanjen." />
+      <PageHero 
+        eyebrow="Berita & Artikel" 
+        title="Kabar terbaru dari sekolah" 
+        description="Ikuti perkembangan kegiatan, prestasi, dan informasi terbaru SMK Al Kaaffah Kepanjen." 
+      />
 
       <section className="container-page py-8">
+        {/* Filter Pencarian & Kategori */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Cari berita..." className="pl-9" aria-label="Cari berita" />
+            <Input 
+              value={q} 
+              onChange={(e) => { setQ(e.target.value); setPage(1); }} 
+              placeholder="Cari berita..." 
+              className="pl-9" 
+              aria-label="Cari berita" 
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             {categories.map((c) => (
               <button
                 key={c}
                 onClick={() => { setCat(c); setPage(1); }}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${cat === c ? "bg-gradient-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-primary/10"}`}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  cat === c 
+                    ? "bg-gradient-primary text-primary-foreground" 
+                    : "bg-secondary text-secondary-foreground hover:bg-primary/10"
+                }`}
               >
                 {c}
               </button>
@@ -50,20 +110,46 @@ export function BeritaPage() {
           </div>
         </div>
 
-        {items.length === 0 ? (
+        {/* State Loading Spinner */}
+        {loading ? (
+          <div className="flex justify-center items-center py-24">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+          </div>
+        ) : items.length === 0 ? (
           <p className="py-20 text-center text-muted-foreground">Tidak ada berita yang cocok.</p>
         ) : (
+          /* Grid Berita Utama */
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {items.map((n, i) => (
               <Reveal key={n.slug} delay={i * 0.06}>
-                <Link href={`/berita/${n.slug}`} className="group block h-full overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-elegant">
-                  <div className="aspect-video overflow-hidden">
-                    <img src={n.image} alt={n.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <Link 
+                  href={`/berita/${n.slug}`} 
+                  className="group block h-full overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-elegant"
+                >
+                  <div className="aspect-video overflow-hidden bg-slate-100 dark:bg-slate-800">
+                    <img 
+                      src={n.gambar} 
+                      alt={n.judul} 
+                      loading="lazy" 
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                      onError={(e) => {
+                        // Fallback jika image link pecah
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800";
+                      }}
+                    />
                   </div>
                   <div className="p-5">
-                    <span className="text-xs font-semibold text-primary">{n.category}</span>
-                    <h3 className="mt-2 font-bold leading-snug group-hover:text-primary">{n.title}</h3>
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{n.excerpt}</p>
+                    <div className="flex justify-between items-center text-xs font-semibold text-primary">
+                      <span>{n.kategori}</span>
+                      <span className="text-muted-foreground font-normal">{n.tanggal}</span>
+                    </div>
+                    <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2">
+                      {n.judul}
+                    </h3>
+                    {/* Potong konten secara otomatis untuk dijadikan excerpt/ringkasan */}
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                      {n.konten}
+                    </p>
                   </div>
                 </Link>
               </Reveal>
@@ -71,10 +157,17 @@ export function BeritaPage() {
           </div>
         )}
 
-        {totalPages > 1 && (
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
           <div className="mt-10 flex justify-center gap-2">
             {Array.from({ length: totalPages }).map((_, i) => (
-              <Button key={i} variant={page === i + 1 ? "default" : "outline"} size="icon" onClick={() => setPage(i + 1)} aria-label={`Halaman ${i + 1}`}>
+              <Button 
+                key={i} 
+                variant={page === i + 1 ? "default" : "outline"} 
+                size="icon" 
+                onClick={() => setPage(i + 1)} 
+                aria-label={`Halaman ${i + 1}`}
+              >
                 {i + 1}
               </Button>
             ))}
