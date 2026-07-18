@@ -6,6 +6,7 @@ import { Reveal, SectionHeading } from "@/components/motion-primitives";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { school } from "@/data/site";
+import { FormPPDB } from "@/components/pages/form-ppdb"; // Import komponen form barusan
 
 export const metadata: Metadata = {
   title: `PPDB — ${school.name}`,
@@ -34,20 +35,37 @@ const faqs = [
 export default function PpdbPage() {
   return (
     <>
-      <PageHero eyebrow="PPDB 2025/2026" title="Penerimaan Peserta Didik Baru" description="Bergabunglah dengan SMK Al Kaaffah Kepanjen dan mulai perjalanan menuju masa depan gemilang." />
+      <PageHero eyebrow="PPDB 2026/2027" title="Penerimaan Peserta Didik Baru" description="Bergabunglah dengan SMK Al Kaaffah Kepanjen dan mulai perjalanan menuju masa depan gemilang." />
 
-      <section className="container-page py-8">
+     {/* BANNER CEK PENGUMUMAN SELEKSI */}
+<section className="container-page py-6 max-w-2xl mx-auto">
+  <Reveal>
+    <div className="rounded-3xl border border-primary/20 bg-primary/5 p-6 text-center shadow-sm">
+      <h3 className="text-lg font-bold text-foreground">Sudah Mengikuti Seleksi Gelombang Sebelumnya?</h3>
+      <p className="text-sm text-muted-foreground mt-1">
+        Bagi calon siswa yang sudah mengikuti tahapan tes dan wawancara, silakan cek status kelulusanmu sekarang.
+      </p>
+      <Button asChild className="mt-4 rounded-xl bg-gradient-primary" size="sm">
+        <Link href="/ppdb/pengumuman">
+          Cek Hasil Kelulusan Disini <ArrowRight className="ml-1 h-4 w-4" />
+        </Link>
+      </Button>
+    </div>
+  </Reveal>
+</section>
+     
+      {/* SECTION FORM PPDB INTEGRASI FIRESTORE */}
+      <section className="container-page py-8 max-w-2xl mx-auto">
         <Reveal>
-          <div className="rounded-3xl bg-gradient-primary p-8 text-primary-foreground shadow-elegant lg:p-10">
-            <h2 className="text-2xl font-bold">Informasi Pendaftaran</h2>
-            <p className="mt-3 max-w-2xl opacity-90">Pendaftaran dibuka untuk seluruh program keahlian. Kuota terbatas — segera amankan kursimu. Tersedia jalur prestasi, reguler, dan beasiswa.</p>
-            <Button asChild size="lg" variant="secondary" className="mt-6">
-              <a href={`https://wa.me/${school.whatsapp}`} target="_blank" rel="noreferrer">Daftar Online Sekarang <ArrowRight className="ml-1 h-4 w-4" /></a>
-            </Button>
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-foreground">Formulir Pendaftaran Online</h2>
+            <p className="text-sm text-muted-foreground mt-1">Kuota terbatas — silakan amankan kursi pendaftaranmu sekarang.</p>
           </div>
+          <FormPPDB />
         </Reveal>
       </section>
 
+      {/* PERSYARATAN & ALUR */}
       <section className="container-page py-12">
         <div className="grid gap-10 lg:grid-cols-2">
           <div>
@@ -82,6 +100,7 @@ export default function PpdbPage() {
         </div>
       </section>
 
+      {/* FAQ SECTION */}
       <section className="bg-section py-16">
         <div className="container-page max-w-3xl">
           <SectionHeading eyebrow="FAQ" title="Pertanyaan yang sering diajukan" />

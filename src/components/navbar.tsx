@@ -4,10 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Moon, Sun, GraduationCap } from "lucide-react";
+// 1. HAPUS GraduationCap dari lucide-react
+import { Menu, X, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { navItems, school } from "@/data/site";
 import { cn } from "@/lib/utils";
+
+// 2. IMPORT LOGO SMK KUSTOM HASIL OPTIMASI LO
+import { LogoSmkIcon } from "@/components/logo-smk-icon";
 
 function useTheme() {
   const [dark, setDark] = useState(false);
@@ -51,16 +55,21 @@ export function Navbar() {
       )}
     >
       <nav className="container-page flex items-center justify-between" aria-label="Navigasi utama">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-soft">
-            <GraduationCap className="h-5 w-5" />
-          </span>
-          <span className="flex flex-col leading-tight">
-            <span className="text-sm font-extrabold tracking-tight">{school.short}</span>
-            <span className="text-[11px] text-muted-foreground">Kepanjen</span>
-          </span>
-        </Link>
+        
+        {/* ================= BRAND LOGO SEKOLAH ================= */}
+<Link href="/" className="flex items-center gap-2.5 group">
+  {/* Hapus bg-gradient-primary dan text-primary-foreground, ganti p-1.5 jadi p-0 */}
+  <span className="grid h-8 w-8 place-items-center rounded-xl transition-transform group-hover:scale-105">
+    {/* LOGO SMK KUSTOM */}
+    <LogoSmkIcon className="h-full w-full object-contain" />
+  </span>
+  <span className="flex flex-col leading-tight">
+    <span className="text-sm font-extrabold tracking-tight">{school.short}</span>
+    <span className="text-[11px] text-muted-foreground">Kepanjen</span>
+  </span>
+</Link>
 
+        {/* Desktop Menu */}
         <ul className="hidden items-center gap-1 lg:flex">
           {navItems.map((item) => {
             const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
@@ -87,6 +96,7 @@ export function Navbar() {
           })}
         </ul>
 
+        {/* Right Actions */}
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={toggle} aria-label="Ganti tema">
             {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -107,33 +117,33 @@ export function Navbar() {
         </div>
       </nav>
 
+      {/* Mobile Menu */}
       <AnimatePresence>
-  {open && (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      className="lg:hidden overflow-hidden bg-background/95 backdrop-blur-md border-b" 
-    >
-      <ul className="container-page flex flex-col gap-1 py-4">
-        {navItems.map((item) => (
-          <li key={item.to}>
-            <Link
-              href={item.to}
-              className="block rounded-lg px-4 py-3 text-sm font-medium hover:bg-secondary"
-            >
-              {item.label}
-            </Link>
-          </li>
-        ))}
-        {/* Tombol PPDB versi mobile biar muncul juga di HP kecil */}
-        <Button asChild className="mt-2 w-full bg-gradient-primary sm:hidden">
-          <Link href="/ppdb">Daftar PPDB</Link>
-        </Button>
-      </ul>
-    </motion.div>
-  )}
-    </AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden overflow-hidden bg-background/95 backdrop-blur-md border-b" 
+          >
+            <ul className="container-page flex flex-col gap-1 py-4">
+              {navItems.map((item) => (
+                <li key={item.to}>
+                  <Link
+                    href={item.to}
+                    className="block rounded-lg px-4 py-3 text-sm font-medium hover:bg-secondary"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              <Button asChild className="mt-2 w-full bg-gradient-primary sm:hidden">
+                <Link href="/ppdb">Daftar PPDB</Link>
+              </Button>
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
