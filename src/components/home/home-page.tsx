@@ -15,12 +15,11 @@ import {
 import heroImg from "@/assets/hero.jpg";
 
 // Import Firestore
-import { db } from "@/lib/firebase"; // Sesuaikan path config Firebase lo
+import { db } from "@/lib/firebase"; 
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 
 const iconMap = { Network, Code2, Clapperboard, Calculator } as const;
 
-// Interface tipe data berita
 interface Berita {
   id: string;
   judul: string;
@@ -32,18 +31,16 @@ interface Berita {
 }
 
 export function HomePage() {
-  // State untuk menampung 3 berita terbaru dari Firestore
   const [beritaTerbaru, setBeritaTerbaru] = useState<Berita[]>([]);
   const [loadingBerita, setLoadingBerita] = useState(true);
 
-  // Ambil 3 berita terbaru dari Firestore
   useEffect(() => {
     const ambilBeritaTerbaru = async () => {
       try {
         const q = query(
           collection(db, "berita"),
           orderBy("createdAt", "desc"),
-          limit(3) // Kita batasi hanya ambil 3 data teratas
+          limit(3)
         );
         const querySnapshot = await getDocs(q);
         const list: Berita[] = [];
@@ -63,7 +60,7 @@ export function HomePage() {
 
   return (
     <>
-      {/* HERO */}
+      {/* 1. HERO SECTION */}
       <section className="container-page relative grid items-center gap-12 py-12 lg:grid-cols-2 lg:py-20">
         <div>
           <motion.span
@@ -139,130 +136,8 @@ export function HomePage() {
         </motion.div>
       </section>
 
-      {/* INTRO */}
-      <section className="container-page py-16">
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-          <SectionHeading
-            align="left"
-            eyebrow="Tentang Kami"
-            title="Pendidikan vokasi yang relevan dengan masa depan"
-            description="SMK Al Kaaffah Kepanjen hadir untuk membekali siswa dengan kompetensi teknis, karakter islami yang kuat, serta kesiapan menghadapi dunia kerja dan wirausaha di era digital."
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              { icon: Cpu, t: "Teknologi Terkini", d: "Lab modern & perangkat industri." },
-              { icon: ShieldCheck, t: "Karakter Islami", d: "Pembinaan akhlak setiap hari." },
-              { icon: Building2, t: "Mitra Industri", d: "Magang & rekrutmen langsung." },
-              { icon: GraduationCap, t: "Guru Kompeten", d: "Tenaga pendidik tersertifikasi." },
-            ].map((f, i) => (
-              <Reveal key={f.t} delay={i * 0.07}>
-                <div className="h-full rounded-2xl border bg-card p-5 transition-shadow hover:shadow-soft">
-                  <f.icon className="h-7 w-7 text-primary" />
-                  <h3 className="mt-3 font-semibold">{f.t}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{f.d}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PRINCIPAL */}
-      <section className="bg-section py-16">
-        <div className="container-page grid gap-8 lg:grid-cols-3 lg:items-center">
-          <Reveal>
-            <div className="rounded-3xl bg-gradient-primary p-8 text-primary-foreground shadow-elegant">
-              <Quote className="h-10 w-10 opacity-80" />
-              <p className="mt-4 text-sm font-medium opacity-90">Sambutan</p>
-              <p className="text-xl font-bold">Kepala Sekolah</p>
-            </div>
-          </Reveal>
-          <Reveal delay={0.1} className="lg:col-span-2">
-            <blockquote className="text-lg leading-relaxed text-foreground">
-              &quot;Selamat datang di SMK Al Kaaffah Kepanjen. Kami berkomitmen menghadirkan pendidikan
-              vokasi berkualitas yang memadukan kompetensi, karakter, dan inovasi. Bersama, kita
-              siapkan generasi yang tangguh, beriman, dan unggul menghadapi tantangan masa depan.&quot;
-            </blockquote>
-            <p className="mt-5 font-semibold">Maya Dian Rosita, S.A.P</p>
-            <p className="text-sm text-muted-foreground">Kepala SMK Al Kaaffah Kepanjen</p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* STATS */}
-      <section className="container-page py-16">
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {stats.map((s, i) => (
-            <Reveal key={s.label} delay={i * 0.08}>
-              <div className="rounded-2xl border bg-card p-6 text-center transition-shadow hover:shadow-soft">
-                <p className="text-4xl font-extrabold text-gradient">
-                  <Counter value={s.value} suffix={s.suffix} />
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">{s.label}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* PROGRAMS */}
-      <section className="container-page py-16">
-        <SectionHeading eyebrow="Program Keahlian" title="Pilih Kompetensi Keahlian sesuai passion-mu" description="Empat kompetensi keahlian yang dirancang mengikuti standar dunia industri." />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {programs.map((p, i) => {
-            const Icon = iconMap[p.icon as keyof typeof iconMap];
-            return (
-              <Reveal key={p.code} delay={i * 0.07}>
-                <motion.div whileHover={{ y: -6 }} className="group h-full rounded-2xl border bg-card p-6 transition-shadow hover:shadow-elegant">
-                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-secondary text-primary transition-colors group-hover:bg-gradient-primary group-hover:text-primary-foreground">
-                    
-                  </span>
-                  <span className="mt-4 inline-block rounded-full bg-secondary px-2.5 py-0.5 text-xs font-bold text-secondary-foreground">{p.code}</span>
-                  <h3 className="mt-2 font-bold leading-snug">{p.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
-                </motion.div>
-              </Reveal>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* TKJ HIGHLIGHT */}
-      <section className="container-page py-16">
-        <div className="overflow-hidden rounded-3xl border bg-gradient-primary text-primary-foreground shadow-elegant">
-          <div className="grid gap-8 p-8 lg:grid-cols-2 lg:items-center lg:p-12">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
-                <Wifi className="h-3.5 w-3.5" /> Program Unggulan
-              </span>
-              <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Kelas Bahasa Jepang</h2>
-              <p className="mt-4 max-w-md opacity-90">
-                Jurusan favorit dengan fasilitas laboratorium jaringan lengkap, sertifikasi vendor,
-                dan langganan juara LKS. Siapkan dirimu menjadi network engineer profesional.
-              </p>
-              <ul className="mt-6 grid gap-2 text-sm">
-                {["Routing & Switching", "Server & Cloud", "Keamanan Jaringan", "Sertifikasi Cisco & MikroTik"].map((t) => (
-                  <li key={t} className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t}</li>
-                ))}
-              </ul>
-              <Button asChild size="lg" variant="secondary" className="mt-8">
-                <Link href="/program">Pelajari TKJ <ArrowRight className="ml-1 h-4 w-4" /></Link>
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[{ v: "100%", l: "Praktik Industri" }, { v: "8+", l: "Sertifikasi" }, { v: "1st", l: "Juara LKS Provinsi" }, { v: "15+", l: "Mitra IT" }].map((b) => (
-                <div key={b.l} className="rounded-2xl bg-white/10 p-5 backdrop-blur">
-                  <p className="text-3xl font-extrabold">{b.v}</p>
-                  <p className="mt-1 text-sm opacity-90">{b.l}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* NEWS */}
-      <section className="container-page py-16">
+      {/* 2. NEWS SECTION (SEKARANG SUDAH DI SINI, TEPAT DI BAWAH HERO) */}
+      <section className="container-page py-16 border-t border-muted/30">
         <div className="flex items-end justify-between gap-4">
           <SectionHeading align="left" eyebrow="Berita Terbaru" title="Kabar & kegiatan sekolah" />
           <Button asChild variant="ghost" className="hidden sm:inline-flex">
@@ -270,7 +145,6 @@ export function HomePage() {
           </Button>
         </div>
 
-        {/* Dynamic News Grid dari Firestore */}
         {loadingBerita ? (
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -315,7 +189,129 @@ export function HomePage() {
         )}
       </section>
 
-      {/* ACHIEVEMENTS */}
+      {/* 3. INTRO SECTION */}
+      <section className="container-page py-16 border-t border-muted/30">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+          <SectionHeading
+            align="left"
+            eyebrow="Tentang Kami"
+            title="Pendidikan vokasi yang relevan dengan masa depan"
+            description="SMK Al Kaaffah Kepanjen hadir untuk membekali siswa dengan kompetensi teknis, karakter islami yang kuat, serta kesiapan menghadapi dunia kerja dan wirausaha di era digital."
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              { icon: Cpu, t: "Teknologi Terkini", d: "Lab modern & perangkat industri." },
+              { icon: ShieldCheck, t: "Karakter Islami", d: "Pembinaan akhlak setiap hari." },
+              { icon: Building2, t: "Mitra Industri", d: "Magang & rekrutmen langsung." },
+              { icon: GraduationCap, t: "Guru Kompeten", d: "Tenaga pendidik tersertifikasi." },
+            ].map((f, i) => (
+              <Reveal key={f.t} delay={i * 0.07}>
+                <div className="h-full rounded-2xl border bg-card p-5 transition-shadow hover:shadow-soft">
+                  <f.icon className="h-7 w-7 text-primary" />
+                  <h3 className="mt-3 font-semibold">{f.t}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{f.d}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. PRINCIPAL SECTION */}
+      <section className="bg-section py-16">
+        <div className="container-page grid gap-8 lg:grid-cols-3 lg:items-center">
+          <Reveal>
+            <div className="rounded-3xl bg-gradient-primary p-8 text-primary-foreground shadow-elegant">
+              <Quote className="h-10 w-10 opacity-80" />
+              <p className="mt-4 text-sm font-medium opacity-90">Sambutan</p>
+              <p className="text-xl font-bold">Kepala Sekolah</p>
+            </div>
+          </Reveal>
+          <Reveal delay={0.1} className="lg:col-span-2">
+            <blockquote className="text-lg leading-relaxed text-foreground">
+              &quot;Selamat datang di SMK Al Kaaffah Kepanjen. Kami berkomitmen menghadirkan pendidikan
+              vokasi berkualitas yang memadukan kompetensi, karakter, dan inovasi. Bersama, kita
+              siapkan generasi yang tangguh, beriman, dan unggul menghadapi tantangan masa depan.&quot;
+            </blockquote>
+            <p className="mt-5 font-semibold">Maya Dian Rosita, S.A.P</p>
+            <p className="text-sm text-muted-foreground">Kepala SMK Al Kaaffah Kepanjen</p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* 5. STATS SECTION */}
+      <section className="container-page py-16">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {stats.map((s, i) => (
+            <Reveal key={s.label} delay={i * 0.08}>
+              <div className="rounded-2xl border bg-card p-6 text-center transition-shadow hover:shadow-soft">
+                <p className="text-4xl font-extrabold text-gradient">
+                  <Counter value={s.value} suffix={s.suffix} />
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">{s.label}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* 6. PROGRAMS SECTION */}
+      <section className="container-page py-16">
+        <SectionHeading eyebrow="Program Keahlian" title="Pilih Kompetensi Keahlian sesuai passion-mu" description="Empat kompetensi keahlian yang dirancang mengikuti standar dunia industri." />
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {programs.map((p, i) => {
+            const Icon = iconMap[p.icon as keyof typeof iconMap];
+            return (
+              <Reveal key={p.code} delay={i * 0.07}>
+                <motion.div whileHover={{ y: -6 }} className="group h-full rounded-2xl border bg-card p-6 transition-shadow hover:shadow-elegant">
+                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-secondary text-primary transition-colors group-hover:bg-gradient-primary group-hover:text-primary-foreground">
+                    {Icon && <Icon className="h-5 w-5" />}
+                  </span>
+                  <span className="mt-4 inline-block rounded-full bg-secondary px-2.5 py-0.5 text-xs font-bold text-secondary-foreground">{p.code}</span>
+                  <h3 className="mt-2 font-bold leading-snug">{p.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
+                </motion.div>
+              </Reveal>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 7. TKJ HIGHLIGHT SECTION */}
+      <section className="container-page py-16">
+        <div className="overflow-hidden rounded-3xl border bg-gradient-primary text-primary-foreground shadow-elegant">
+          <div className="grid gap-8 p-8 lg:grid-cols-2 lg:items-center lg:p-12">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
+                <Wifi className="h-3.5 w-3.5" /> Program Unggulan
+              </span>
+              <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Kelas Bahasa Jepang</h2>
+              <p className="mt-4 max-w-md opacity-90">
+                Jurusan favorit dengan fasilitas laboratorium jaringan lengkap, sertifikasi vendor,
+                dan langganan juara LKS. Siapkan dirimu menjadi network engineer profesional.
+              </p>
+              <ul className="mt-6 grid gap-2 text-sm">
+                {["Routing & Switching", "Server & Cloud", "Keamanan Jaringan", "Sertifikasi Cisco & MikroTik"].map((t) => (
+                  <li key={t} className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t}</li>
+                ))}
+              </ul>
+              <Button asChild size="lg" variant="secondary" className="mt-8">
+                <Link href="/program">Pelajari TKJ <ArrowRight className="ml-1 h-4 w-4" /></Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[{ v: "100%", l: "Praktik Industri" }, { v: "8+", l: "Sertifikasi" }, { v: "1st", l: "Juara LKS Provinsi" }, { v: "15+", l: "Mitra IT" }].map((b) => (
+                <div key={b.l} className="rounded-2xl bg-white/10 p-5 backdrop-blur">
+                  <p className="text-3xl font-extrabold">{b.v}</p>
+                  <p className="mt-1 text-sm opacity-90">{b.l}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. ACHIEVEMENTS SECTION */}
       <section className="bg-section py-16">
         <div className="container-page">
           <SectionHeading eyebrow="Prestasi" title="Membanggakan di berbagai bidang" />
@@ -333,7 +329,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
+      {/* 9. TESTIMONIALS SECTION */}
       <section className="container-page py-16">
         <SectionHeading eyebrow="Alumni" title="Kata mereka tentang kami" />
         <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -357,7 +353,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* PARTNERS */}
+      {/* 10. PARTNERS SECTION */}
       <section className="container-page py-12">
         <p className="text-center text-sm font-semibold uppercase tracking-wider text-muted-foreground">Dipercaya oleh mitra industri</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
@@ -367,7 +363,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* 11. CTA SECTION */}
       <section className="container-page py-16">
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl border bg-section p-10 text-center shadow-soft lg:p-16">
