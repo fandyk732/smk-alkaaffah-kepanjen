@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, doc, updateDoc } from "firebase/firestore";
-import { CheckCircle2, XCircle, Clock, Search, Filter, Loader2, RefreshCw, Printer, FileSpreadsheet } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { collection, getDocs, query, orderBy, doc, updateDoc, getDoc } from "firebase/firestore";
+import { Search, Filter, Loader2, RefreshCw, Printer, FileSpreadsheet, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Pendaftar {
@@ -18,11 +20,54 @@ interface Pendaftar {
 }
 
 export default function AdminPPDBPage() {
+  const router = useRouter();
   const [listPendaftar, setListPendaftar] = useState<Pendaftar[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [panitiaName, setPanitiaName] = useState("");
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
 
+  // --- 🛡️ PROTEKSI HALAMAN & VALIDASI ROLE ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // 1. Jika tidak ada sesi login, langsung tendang ke /login
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+        // Ambil data user dari Firestore untuk cek role staf
+        const userDoc = await getDoc(doc(db, "users", user.email || ""));
+        
+        if (userDoc.exists()) {
+          const role = userDoc.data().role;
+          
+          // 2. Pastikan yang masuk cuma panitia PPDB atau Superadmin
+          if (role === "panitia_ppdb" || role === "superadmin") {
+            setPanitiaName(userDoc.data().nama || "Panitia PPDB");
+            setLoadingAuth(false);
+            ambilDataPPDB(); // Ambil data siswa jika role valid
+          } else {
+            // Jika role tidak sesuai (misal staf BKK nyasar), balikkan ke login
+            console.warn("Akses ditolak: Role tidak valid.");
+            router.push("/login");
+          }
+        } else {
+          router.push("/login");
+        }
+      } catch (err) {
+        console.error("Gagal melakukan verifikasi hak akses:", err);
+        router.push("/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  // --- AMBIL DATA PPDB FROM FIRESTORE ---
   const ambilDataPPDB = async () => {
     setLoading(true);
     try {
@@ -40,10 +85,13 @@ export default function AdminPPDBPage() {
     }
   };
 
-  useEffect(() => {
-    ambilDataPPDB();
-  }, []);
+  // --- HANDLER KELUAR SISTEM ---
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/login");
+  };
 
+  // --- UBAH STATUS PENDAFTARAN SISWA ---
   const ubahStatus = async (id: string, statusBaru: "Diterima" | "Ditolak") => {
     try {
       const docRef = doc(db, "ppdb", id);
@@ -58,17 +106,14 @@ export default function AdminPPDBPage() {
     }
   };
 
-  // --- 1. FUNGSI DOWNLOAD EXCEL (CSV) ---
+  // --- FUNGSI DOWNLOAD EXCEL (CSV) ---
   const downloadExcel = () => {
     if (pendaftarDifilter.length === 0) return alert("Tidak ada data untuk diexport");
 
-    // Header Kolom
     const headers = ["Nama Lengkap", "NISN", "Asal Sekolah", "WhatsApp", "Pilihan Jurusan", "Status Pendaftaran"];
-    
-    // Baris Data
     const rows = pendaftarDifilter.map(p => [
       `"${p.namaLengkap.replace(/"/g, '""')}"`,
-      ` font-mono:"${p.nisn}"`, // trick biar NISN gak hilang angka 0 didepannya saat di Excel
+      ` font-mono:"${p.nisn}"`,
       `"${p.asalSekolah.replace(/"/g, '""')}"`,
       `"${p.whatsapp}"`,
       `"${p.pilihanJurusan}"`,
@@ -87,12 +132,10 @@ export default function AdminPPDBPage() {
     document.body.removeChild(link);
   };
 
-  // --- 2. FUNGSI PRINT SEMUA DATA ---
   const printSemua = () => {
     window.print();
   };
 
-  // --- 3. FUNGSI PRINT INDIVIDU ---
   const printIndividu = (pendaftar: Pendaftar) => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
@@ -110,7 +153,6 @@ export default function AdminPPDBPage() {
             td { padding: 12px; font-size: 16px; border-bottom: 1px solid #ddd; }
             td.label { font-weight: bold; width: 30%; color: #555; }
             .footer { margin-top: 60px; text-align: right; font-size: 14px; }
-            .stamp { margin-top: 50px; display: inline-block; border: 2px solid green; color: green; padding: 5px 15px; font-weight: bold; transform: rotate(-5deg); }
           </style>
         </head>
         <body>
@@ -118,28 +160,21 @@ export default function AdminPPDBPage() {
             <div class="title">SMK AL KAAFFAH KEPANJEN</div>
             <div class="subtitle">Bukti Pendaftaran Peserta Didik Baru (PPDB)</div>
           </div>
-          
           <h3 style="text-align: center; margin-top: 20px;">BIODATA CALON SISWA</h3>
-          
           <table>
             <tr><td class="label">Nama Lengkap</td><td>: ${pendaftar.namaLengkap}</td></tr>
             <tr><td class="label">NISN</td><td>: ${pendaftar.nisn}</td></tr>
             <tr><td class="label">Asal Sekolah</td><td>: ${pendaftar.asalSekolah}</td></tr>
             <tr><td class="label">Pilihan Jurusan</td><td>: ${pendaftar.pilihanJurusan}</td></tr>
             <tr><td class="label">No. WhatsApp</td><td>: ${pendaftar.whatsapp}</td></tr>
-            <tr>
-              <td class="label">Status Saat Ini</td>
-              <td>: <strong>${pendaftar.statusPendaftaran}</strong></td>
-            </tr>
+            <tr><td class="label">Status Saat Ini</td><td>: <strong>${pendaftar.statusPendaftaran}</strong></td></tr>
           </table>
-
           <div class="footer">
             <p>Kepanjen, ${new Date().toLocaleDateString("id-ID")}</p>
             <p>Panitia PPDB,</p>
             <br/><br/><br/>
             <p>_______________________</p>
           </div>
-
           <script>
             window.onload = function() { window.print(); window.close(); }
           </script>
@@ -149,6 +184,7 @@ export default function AdminPPDBPage() {
     printWindow.document.close();
   };
 
+  // --- LOGIKA FILTER SEARCH & DROP DOWN JURUSAN ---
   const pendaftarDifilter = listPendaftar.filter((p) => {
     const cocokSearch =
       p.namaLengkap.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -156,23 +192,31 @@ export default function AdminPPDBPage() {
       p.asalSekolah.toLowerCase().includes(searchQuery.toLowerCase());
     
     const cocokJurusan = filterJurusan === "" || p.pilihanJurusan === filterJurusan;
-
     return cocokSearch && cocokJurusan;
   });
+
+  // Tampilkan loading screen penuh saat mengecek sesi user
+  if (loadingAuth) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-slate-50 dark:bg-slate-950">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-16 text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header - Tombol action ditambahkan di sini (Akan disembunyikan saat print seluruh halaman) */}
+        {/* Header - Disembunyikan saat print */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-5 mb-8 print:hidden">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">Dashboard Panitia PPDB</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Total pendaftar masuk: <span className="font-bold text-primary">{listPendaftar.length} siswa</span>
+              Petugas: <span className="font-semibold text-foreground">{panitiaName}</span> • Total pendaftar: <span className="font-bold text-primary">{listPendaftar.length} siswa</span>
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button onClick={downloadExcel} variant="outline" size="sm" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400">
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel
             </Button>
@@ -182,16 +226,19 @@ export default function AdminPPDBPage() {
             <Button onClick={ambilDataPPDB} variant="ghost" size="sm">
               <RefreshCw className="mr-2 h-4 w-4" /> Refresh
             </Button>
+            <Button onClick={handleLogout} variant="destructive" size="sm" className="gap-1.5 rounded-xl">
+              <LogOut className="h-4 w-4" /> Keluar
+            </Button>
           </div>
         </div>
 
-        {/* Judul Khusus saat Halaman di-Print */}
+        {/* Laporan Print Area */}
         <div className="hidden print:block text-center border-b-2 pb-4 mb-6">
           <h1 className="text-2xl font-bold uppercase">Laporan Pendaftaran PPDB</h1>
-          <p className="text-sm">SMK Al Kaaffah Kepanjen — Tanggal Cetak: {new Date().toLocaleDateString("id-ID")}</p>
+          <p className="text-sm">SMK Al Kaaffah Kepanjen — Petugas Cetak: {panitiaName} — Tanggal: {new Date().toLocaleDateString("id-ID")}</p>
         </div>
 
-        {/* Search Bar & Filter (Otomatis Hilang saat Print) */}
+        {/* Search Bar & Filter */}
         <div className="grid gap-4 sm:grid-cols-3 mb-6 print:hidden">
           <div className="relative sm:col-span-2">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -280,7 +327,6 @@ export default function AdminPPDBPage() {
                         </span>
                       )}
                     </td>
-                    {/* AKSI EDIT + PRINT INDIVIDU */}
                     <td className="px-6 py-4 flex flex-wrap items-center justify-center gap-1.5 print:hidden">
                       <Button
                         size="sm"

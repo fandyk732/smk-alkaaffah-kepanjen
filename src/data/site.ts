@@ -22,6 +22,7 @@ export const navItems = [
   { label: "Program", to: "/program" },
   { label: "Berita", to: "/berita" },
   { label: "Galeri", to: "/galeri" },
+  { label: "Alumni", to: "/alumni" },
   { label: "PPDB", to: "/ppdb" },
   { label: "Kontak", to: "/kontak" },
 ] as const;

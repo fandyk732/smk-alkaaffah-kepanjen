@@ -1,5 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+// 1. IMPORT getAuth DARI FIREBASE AUTH
+import { getAuth } from "firebase/auth";
 
 // Masukkan SDK Firebase Configuration lo di sini
 const firebaseConfig = {
@@ -12,8 +14,12 @@ const firebaseConfig = {
   measurementId: "G-F0M9SK89D5"
 };
 
-// Inisialisasi Firebase (mencegah inisialisasi ganda di Next.js)
+// Initialize Firebase (Anti duplikasi untuk Next.js SSR)
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Ekspor database Firestore agar bisa dipakai di halaman admin & berita
-export const db = getFirestore(app);
+// 2. INISIALISASI DATABASE & AUTH
+const db = getFirestore(app);
+const auth = getAuth(app); // <-- Tambahkan baris ini
+
+// 3. EXPORT KEDUANYA AGAR BISA DIPAKAI DI TEMPAT LAIN
+export { db, auth };

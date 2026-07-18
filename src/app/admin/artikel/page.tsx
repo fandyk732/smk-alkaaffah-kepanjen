@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { db } from "@/lib/firebase"; 
+import { useRouter } from "next/navigation"; // 1. IMPORT ROUTER
+import { onAuthStateChanged, signOut } from "firebase/auth"; // 2. IMPORT AUTH & SIGNOUT
+import { db, auth } from "@/lib/firebase"; 
 import { 
   collection, 
   addDoc, 
@@ -11,9 +13,10 @@ import {
   deleteDoc, 
   query, 
   orderBy, 
-  serverTimestamp 
+  serverTimestamp,
+  getDoc
 } from "firebase/firestore";
-import { Edit2, Trash2, Plus, Save, X } from "lucide-react";
+import { Edit2, Trash2, Plus, Save, X, Loader2, LogOut } from "lucide-react";
 
 interface Berita {
   id: string;
@@ -25,7 +28,9 @@ interface Berita {
   tanggal: string;
 }
 
-export default function AdminPage() {
+export default function AdminArtikelPage() {
+  const router = useRouter();
+  
   // State Form
   const [judul, setJudul] = useState("");
   const [kategori, setKategori] = useState("Berita");
@@ -36,9 +41,46 @@ export default function AdminPage() {
   const [beritaList, setBeritaList] = useState<Berita[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingFetch, setLoadingFetch] = useState(true);
+  const [loadingAuth, setLoadingAuth] = useState(true); // State loading untuk proteksi role
+  const [adminName, setAdminName] = useState(""); // Menyimpan nama admin artikel aktif
   
   // State Mode Edit
   const [editId, setEditId] = useState<string | null>(null);
+
+  // --- 🛡️ PROTEKSI HALAMAN & VALIDASI ROLE admin_artikel / superadmin ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.email || ""));
+        
+        if (userDoc.exists()) {
+          const role = userDoc.data().role;
+          
+          // Izinkan jika dia admin_artikel ATAU superadmin
+          if (role === "admin_artikel" || role === "superadmin") {
+            setAdminName(userDoc.data().nama || "Admin Artikel");
+            setLoadingAuth(false);
+            ambilBerita(); // Ambil data berita jika role valid
+          } else {
+            console.warn("Akses ditolak: Role tidak valid untuk manajemen artikel.");
+            router.push("/login");
+          }
+        } else {
+          router.push("/login");
+        }
+      } catch (err) {
+        console.error("Gagal melakukan verifikasi hak akses:", err);
+        router.push("/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   // 1. Ambil List Berita dari Firestore
   const ambilBerita = async () => {
@@ -57,10 +99,6 @@ export default function AdminPage() {
       setLoadingFetch(false);
     }
   };
-
-  useEffect(() => {
-    ambilBerita();
-  }, []);
 
   // Fungsi pembantu membuat slug
   const buatSlug = (text: string) => {
@@ -86,7 +124,6 @@ export default function AdminPage() {
       const slug = buatSlug(judul);
 
       if (editId) {
-        // --- PROSES UPDATE (EDIT) ---
         const docRef = doc(db, "berita", editId);
         await updateDoc(docRef, {
           judul,
@@ -94,12 +131,9 @@ export default function AdminPage() {
           kategori,
           konten,
           gambar: gambarUrl,
-          // Tanggal edit tidak diubah agar tanggal publish asli tetap terjaga, 
-          // tapi bisa disesuaikan sesuai kebutuhan sekolah.
         });
         alert("Berita berhasil diperbarui!");
       } else {
-        // --- PROSES TAMBAH BARU ---
         const opsiTanggal: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
         const tanggalFormat = new Date().toLocaleDateString('id-ID', opsiTanggal);
 
@@ -110,15 +144,13 @@ export default function AdminPage() {
           konten,
           gambar: gambarUrl,
           tanggal: tanggalFormat,
-          penulis: "Guru SMK Al Kaaffah",
+          penulis: adminName || "Guru SMK Al Kaaffah",
           createdAt: serverTimestamp()
         });
         alert("Berita berhasil dipublikasikan!");
       }
 
-      // Reset Form & Mode
       batalEdit();
-      // Tarik ulang data terbaru dari Firestore
       ambilBerita();
 
     } catch (error) {
@@ -129,18 +161,15 @@ export default function AdminPage() {
     }
   };
 
-  // 3. Masuk ke Mode Edit (Naikkan data ke Form)
   const handleEditPersiapan = (item: Berita) => {
     setEditId(item.id);
     setJudul(item.judul);
     setKategori(item.kategori);
     setKonten(item.konten);
     setGambarUrl(item.gambar);
-    // Scroll otomatis ke bagian form paling atas biar user tidak bingung
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 4. Batalkan Mode Edit
   const batalEdit = () => {
     setEditId(null);
     setJudul("");
@@ -149,7 +178,6 @@ export default function AdminPage() {
     setGambarUrl("");
   };
 
-  // 5. Fungsi Hapus Berita
   const handleHapus = async (id: string, judulBerita: string) => {
     const konfirmasi = window.confirm(`Apakah Anda yakin ingin menghapus berita:\n"${judulBerita}"?`);
     
@@ -157,7 +185,6 @@ export default function AdminPage() {
       try {
         await deleteDoc(doc(db, "berita", id));
         alert("Berita berhasil dihapus!");
-        // Refresh list
         ambilBerita();
       } catch (error) {
         console.error("Gagal menghapus berita:", error);
@@ -166,26 +193,49 @@ export default function AdminPage() {
     }
   };
 
+  // HANDLER LOGOUT
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/login");
+  };
+
+  // Tampilkan loading screen penuh saat mengecek sesi user
+  if (loadingAuth) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-slate-50">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pt-28 pb-20 px-4 sm:px-6 lg:px-8 [color-scheme:light]">
       <div className="max-w-4xl mx-auto space-y-12">
         
         {/* ================= FORM INPUT / EDIT ================= */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8 text-slate-900">
-          <div className="border-b border-slate-100 pb-6 mb-8 flex justify-between items-center">
+          <div className="border-b border-slate-100 pb-6 mb-8 flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
             <div>
               <h1 className="text-3xl font-bold text-slate-800">
                 {editId ? "Edit Artikel" : "Tulis Artikel Baru"}
               </h1>
-              <p className="text-slate-500 mt-1">
-                {editId ? "Ubah konten berita yang sudah diterbitkan." : "Tulis dan publikasikan berita sekolah terbaru."}
+              <p className="text-slate-500 text-sm mt-1">
+                Petugas: <span className="font-semibold text-slate-700">{adminName}</span>
               </p>
             </div>
-            {editId && (
-              <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-full">
-                Mode Edit Aktif
-              </span>
-            )}
+            <div className="flex items-center gap-3 self-end md:self-auto">
+              {editId && (
+                <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-full">
+                  Mode Edit Aktif
+                </span>
+              )}
+              <button 
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
+              >
+                <LogOut className="h-3.5 w-3.5" /> Keluar
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -318,7 +368,6 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {beritaList.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition">
-                      {/* Mini Thumbnail */}
                       <td className="py-4 px-4">
                         <div className="w-16 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-100">
                           <img 
@@ -332,20 +381,17 @@ export default function AdminPage() {
                         </div>
                       </td>
                       
-                      {/* Detail Judul & Tanggal */}
                       <td className="py-4 px-4 max-w-xs md:max-w-md">
                         <h4 className="font-semibold text-slate-800 line-clamp-2">{item.judul}</h4>
                         <span className="text-xs text-slate-400 block mt-1">{item.tanggal}</span>
                       </td>
 
-                      {/* Kategori Badge */}
                       <td className="py-4 px-4">
                         <span className="inline-block px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
                           {item.kategori}
                         </span>
                       </td>
 
-                      {/* Tombol Aksi */}
                       <td className="py-4 px-4 text-center">
                         <div className="flex justify-center items-center gap-2">
                           <button
