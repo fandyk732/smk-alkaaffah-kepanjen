@@ -16,11 +16,10 @@ import {
   serverTimestamp,
   getDoc
 } from "firebase/firestore";
-import { Edit2, Trash2, Plus, Save, X, Loader2, LogOut } from "lucide-react";
+import { Edit2, Trash2, Plus, Save, X, Loader2, LogOut, LayoutGrid } from "lucide-react";
 
-// 🎯 DYNAMIC IMPORT REACT QUILL VERSI BARU (Biar Anti SSR Error)
 import dynamic from "next/dynamic";
-import "react-quill-new/dist/quill.snow.css"; // Jika pake package 'react-quill-new'
+import "react-quill-new/dist/quill.snow.css"; 
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { 
   ssr: false,
@@ -60,7 +59,7 @@ export default function AdminArtikelPage() {
   // State Mode Edit
   const [editId, setEditId] = useState<string | null>(null);
 
-  // 🎛️ CONFIG TOOLBAR QUILL
+  // Config Toolbar Quill
   const quillModules = {
     toolbar: [
       [{ header: [2, 3, false] }],
@@ -70,7 +69,7 @@ export default function AdminArtikelPage() {
       ["link", "clean"],
     ],
   };
-  // --- 🛡️ PROTEKSI HALAMAN (SUPPORT ARRAY ROLE & STRING ROLE) ---
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -82,11 +81,7 @@ export default function AdminArtikelPage() {
         const userDoc = await getDoc(doc(db, "users", user.email || ""));
         if (userDoc.exists()) {
           const data = userDoc.data();
-          
-          // 🎯 Backward compatibility: Handle jika role masih String atau Array
           const roles: string[] = Array.isArray(data.role) ? data.role : [data.role];
-
-          // 🎯 Cek Akses: Izinkan jika punya role 'admin_artikel' ATAU 'superadmin'
           const hasAccess = roles.includes("admin_artikel") || roles.includes("superadmin");
 
           if (hasAccess) {
@@ -95,7 +90,7 @@ export default function AdminArtikelPage() {
             ambilBerita(); 
           } else {
             alert("Anda tidak memiliki akses ke modul Artikel!");
-            router.push("/admin/dashboard"); // Lempar balik ke dashboard portal jika tidak berhak
+            router.push("/admin/dashboard");
           }
         } else {
           await auth.signOut();
@@ -110,7 +105,6 @@ export default function AdminArtikelPage() {
     return () => unsubscribe();
   }, [router]);
 
-  // 1. Ambil List Berita
   const ambilBerita = async () => {
     setLoadingFetch(true);
     try {
@@ -128,20 +122,20 @@ export default function AdminArtikelPage() {
     }
   };
 
-  // Helper membuat slug
   const buatSlug = (text: string) => {
     return text
       .toLowerCase()
+      .trim()
       .replace(/[^a-z0-9 -]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
   };
 
-  // 2. Handle Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!konten || konten === "<p><br></p>") {
+    const cleanKonten = konten.replace(/<[^>]*>/g, "").trim();
+    if (!cleanKonten) {
       alert("Isi artikel tidak boleh kosong!");
       return;
     }
@@ -164,6 +158,7 @@ export default function AdminArtikelPage() {
           kategori,
           konten,
           gambar: gambarUrl,
+          updatedAt: serverTimestamp(),
         });
         alert("Berita berhasil diperbarui!");
       } else {
@@ -223,6 +218,10 @@ export default function AdminArtikelPage() {
     }
   };
 
+  const handleKembaliKeDashboard = () => {
+    router.push("/admin/dashboard");
+  };
+
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
@@ -238,28 +237,40 @@ export default function AdminArtikelPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pt-28 pb-20 px-4 sm:px-6 lg:px-8 [color-scheme:light]">
-      <div className="max-w-4xl mx-auto space-y-12">
+      {/* 🎯 FIX 1: Tambahkan w-full & overflow-hidden agar pembungkus utama tidak jebol */}
+      <div className="max-w-4xl w-full mx-auto space-y-12 overflow-hidden">
         
         {/* ================= FORM INPUT / EDIT ================= */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8 text-slate-900">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 sm:p-8 text-slate-900">
           <div className="border-b border-slate-100 pb-6 mb-8 flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
                 {editId ? "Edit Artikel" : "Tulis Artikel Baru"}
               </h1>
               <p className="text-slate-500 text-sm mt-1">
                 Petugas: <span className="font-semibold text-slate-700">{adminName}</span>
               </p>
             </div>
-            <div className="flex items-center gap-3 self-end md:self-auto">
+
+            <div className="flex flex-wrap items-center gap-2 self-end md:self-auto">
               {editId && (
-                <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-full mr-1">
                   Mode Edit Aktif
                 </span>
               )}
+              
               <button 
+                type="button"
+                onClick={handleKembaliKeDashboard}
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-200"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" /> Dashboard Hub
+              </button>
+
+              <button 
+                type="button"
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
+                className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
               >
                 <LogOut className="h-3.5 w-3.5" /> Keluar
               </button>
@@ -316,12 +327,22 @@ export default function AdminArtikelPage() {
               </div>
             </div>
 
-            {/* 🎯 IMPLEMENTASI REACT QUILL EDITOR */}
+            {/* 🎯 FIX 2: Bawaan styling Quill di-breakdown agar tidak melar dan font tidak membengkak */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Isi Artikel / Berita
               </label>
-              <div className="bg-white text-slate-900 rounded-lg border border-slate-200 overflow-hidden [&_.ql-editor]:min-h-[220px]">
+              <div className="bg-white text-slate-900 rounded-lg border border-slate-200 overflow-hidden 
+                [&_.ql-editor]:min-h-[220px] 
+                [&_.ql-editor]:max-w-full 
+                [&_.ql-editor]:break-words 
+                [&_.ql-editor_img]:max-w-full 
+                [&_.ql-editor_img]:h-auto 
+                [&_.ql-editor_iframe]:max-w-full
+                [&_.ql-editor_h2]:text-xl 
+                [&_.ql-editor_h2]:font-bold 
+                [&_.ql-editor_h3]:text-lg 
+                [&_.ql-editor_h3]:font-bold">
                 <ReactQuill 
                   theme="snow"
                   value={konten}
@@ -369,7 +390,7 @@ export default function AdminArtikelPage() {
         </div>
 
         {/* ================= DAFTAR MANAJEMEN ARTIKEL ================= */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8 text-slate-900">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 sm:p-8 text-slate-900">
           <div className="border-b border-slate-100 pb-4 mb-6">
             <h2 className="text-2xl font-bold text-slate-800">Manajemen Artikel ({beritaList.length})</h2>
           </div>
@@ -383,24 +404,26 @@ export default function AdminArtikelPage() {
               Belum ada berita yang diterbitkan.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+            /* 🎯 FIX 3: Tambahkan min-w-full pada table biar ga gepeng tapi tetep scrollable di layar kecil */
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[600px] text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 text-xs uppercase tracking-wider">
-                    <th className="py-3 px-4 font-semibold">Gambar</th>
+                    <th className="py-3 px-4 font-semibold w-20">Gambar</th>
                     <th className="py-3 px-4 font-semibold">Info Artikel</th>
-                    <th className="py-3 px-4 font-semibold">Kategori</th>
-                    <th className="py-3 px-4 font-semibold text-center">Aksi</th>
+                    <th className="py-3 px-4 font-semibold w-32">Kategori</th>
+                    <th className="py-3 px-4 font-semibold text-center w-28">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {beritaList.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition">
                       <td className="py-4 px-4">
-                        <div className="w-16 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-100">
+                        <div className="w-16 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
                           <img 
                             src={item.gambar} 
                             alt={item.judul} 
+                            loading="lazy"
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=100";
@@ -409,13 +432,13 @@ export default function AdminArtikelPage() {
                         </div>
                       </td>
                       
-                      <td className="py-4 px-4 max-w-xs md:max-w-md">
-                        <h4 className="font-semibold text-slate-800 line-clamp-2">{item.judul}</h4>
+                      <td className="py-4 px-4">
+                        <h4 className="font-semibold text-slate-800 line-clamp-2 leading-snug">{item.judul}</h4>
                         <span className="text-xs text-slate-400 block mt-1">{item.tanggal}</span>
                       </td>
 
                       <td className="py-4 px-4">
-                        <span className="inline-block px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+                        <span className="inline-block px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 whitespace-nowrap">
                           {item.kategori}
                         </span>
                       </td>
@@ -423,14 +446,18 @@ export default function AdminArtikelPage() {
                       <td className="py-4 px-4 text-center">
                         <div className="flex justify-center items-center gap-2">
                           <button
+                            type="button"
                             onClick={() => handleEditPersiapan(item)}
                             className="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition"
+                            title="Edit Artikel"
                           >
                             <Edit2 className="h-4 w-4" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleHapus(item.id, item.judul)}
                             className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                            title="Hapus Artikel"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
