@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // 1. IMPORT ROUTER
-import { onAuthStateChanged, signOut } from "firebase/auth"; // 2. IMPORT AUTH & SIGNOUT
+import { useRouter } from "next/navigation"; 
+import { onAuthStateChanged, signOut } from "firebase/auth"; 
 import { db, auth } from "@/lib/firebase"; 
 import { 
   collection, 
@@ -17,6 +17,19 @@ import {
   getDoc
 } from "firebase/firestore";
 import { Edit2, Trash2, Plus, Save, X, Loader2, LogOut } from "lucide-react";
+
+// 🎯 DYNAMIC IMPORT REACT QUILL VERSI BARU (Biar Anti SSR Error)
+import dynamic from "next/dynamic";
+import "react-quill-new/dist/quill.snow.css"; // Jika pake package 'react-quill-new'
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { 
+  ssr: false,
+  loading: () => (
+    <div className="h-48 w-full bg-slate-100 animate-pulse rounded-lg flex items-center justify-center text-slate-400 text-sm">
+      Memuat Editor Artikel...
+    </div>
+  )
+});
 
 interface Berita {
   id: string;
@@ -36,18 +49,31 @@ export default function AdminArtikelPage() {
   const [kategori, setKategori] = useState("Berita");
   const [konten, setKonten] = useState("");
   const [gambarUrl, setGambarUrl] = useState("");
-  
+
   // State App & Database
   const [beritaList, setBeritaList] = useState<Berita[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingFetch, setLoadingFetch] = useState(true);
-  const [loadingAuth, setLoadingAuth] = useState(true); // State loading untuk proteksi role
-  const [adminName, setAdminName] = useState(""); // Menyimpan nama admin artikel aktif
+  const [loadingAuth, setLoadingAuth] = useState(true); 
+  const [adminName, setAdminName] = useState(""); 
   
   // State Mode Edit
   const [editId, setEditId] = useState<string | null>(null);
 
-  // --- 🛡️ PROTEKSI HALAMAN & VALIDASI ROLE admin_artikel / superadmin ---
+  // 🎛️ CONFIG TOOLBAR QUILL
+  const quillModules = {
+    toolbar: [
+      [{ header: [2, 3, false] }],
+      ["bold", "italic", "underline", "strike", "blockquote"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: [] }],
+      ["link", "clean"],
+    ],
+  };
+
+  
+
+  // --- 🛡️ PROTEKSI HALAMAN (SUPPORT ARRAY ROLE & STRING ROLE) ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -57,24 +83,29 @@ export default function AdminArtikelPage() {
 
       try {
         const userDoc = await getDoc(doc(db, "users", user.email || ""));
-        
         if (userDoc.exists()) {
-          const role = userDoc.data().role;
+          const data = userDoc.data();
           
-          // Izinkan jika dia admin_artikel ATAU superadmin
-          if (role === "admin_artikel" || role === "superadmin") {
-            setAdminName(userDoc.data().nama || "Admin Artikel");
+          // 🎯 Backward compatibility: Handle jika role masih String atau Array
+          const roles: string[] = Array.isArray(data.role) ? data.role : [data.role];
+
+          // 🎯 Cek Akses: Izinkan jika punya role 'admin_artikel' ATAU 'superadmin'
+          const hasAccess = roles.includes("admin_artikel") || roles.includes("superadmin");
+
+          if (hasAccess) {
+            setAdminName(data.nama || "Admin Artikel");
             setLoadingAuth(false);
-            ambilBerita(); // Ambil data berita jika role valid
+            ambilBerita(); 
           } else {
-            console.warn("Akses ditolak: Role tidak valid untuk manajemen artikel.");
-            router.push("/login");
+            alert("Anda tidak memiliki akses ke modul Artikel!");
+            router.push("/admin/dashboard"); // Lempar balik ke dashboard portal jika tidak berhak
           }
         } else {
+          await auth.signOut();
           router.push("/login");
         }
       } catch (err) {
-        console.error("Gagal melakukan verifikasi hak akses:", err);
+        console.error("Gagal verifikasi hak akses:", err);
         router.push("/login");
       }
     });
@@ -82,7 +113,12 @@ export default function AdminArtikelPage() {
     return () => unsubscribe();
   }, [router]);
 
-  // 1. Ambil List Berita dari Firestore
+   // --- HANDLER NAVIGASI KEMBALI KE DASHBOARD (TANPA LOGOUT) ---
+    const handleKembaliKeDashboard = () => {
+      router.push("/admin/dashboard");
+    };
+  
+  // 1. Ambil List Berita
   const ambilBerita = async () => {
     setLoadingFetch(true);
     try {
@@ -94,13 +130,13 @@ export default function AdminArtikelPage() {
       });
       setBeritaList(list);
     } catch (error) {
-      console.error("Gagal mengambil data berita:", error);
+      console.error("Gagal mengambil berita:", error);
     } finally {
       setLoadingFetch(false);
     }
   };
 
-  // Fungsi pembantu membuat slug
+  // Helper membuat slug
   const buatSlug = (text: string) => {
     return text
       .toLowerCase()
@@ -109,9 +145,14 @@ export default function AdminArtikelPage() {
       .replace(/-+/g, "-");
   };
 
-  // 2. Handle Submit (Tambah Baru ATAU Update Data)
+  // 2. Handle Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!konten || konten === "<p><br></p>") {
+      alert("Isi artikel tidak boleh kosong!");
+      return;
+    }
     
     if (!gambarUrl.trim()) {
       alert("Harap masukkan URL gambar utama!");
@@ -179,27 +220,22 @@ export default function AdminArtikelPage() {
   };
 
   const handleHapus = async (id: string, judulBerita: string) => {
-    const konfirmasi = window.confirm(`Apakah Anda yakin ingin menghapus berita:\n"${judulBerita}"?`);
-    
-    if (konfirmasi) {
+    if (window.confirm(`Hapus berita:\n"${judulBerita}"?`)) {
       try {
         await deleteDoc(doc(db, "berita", id));
         alert("Berita berhasil dihapus!");
         ambilBerita();
       } catch (error) {
-        console.error("Gagal menghapus berita:", error);
-        alert("Gagal menghapus berita.");
+        console.error("Gagal menghapus:", error);
       }
     }
   };
 
-  // HANDLER LOGOUT
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
   };
 
-  // Tampilkan loading screen penuh saat mengecek sesi user
   if (loadingAuth) {
     return (
       <div className="min-h-screen grid place-items-center bg-slate-50">
@@ -250,7 +286,7 @@ export default function AdminArtikelPage() {
                 placeholder="Masukkan judul berita..."
                 value={judul}
                 onChange={(e) => setJudul(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
             </div>
 
@@ -288,19 +324,20 @@ export default function AdminArtikelPage() {
               </div>
             </div>
 
+            {/* 🎯 IMPLEMENTASI REACT QUILL EDITOR */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Isi Artikel / Berita
               </label>
-              <textarea
-                required
-                disabled={loading}
-                rows={8}
-                placeholder="Tuliskan berita lengkap di sini..."
-                value={konten}
-                onChange={(e) => setKonten(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none"
-              />
+              <div className="bg-white text-slate-900 rounded-lg border border-slate-200 overflow-hidden [&_.ql-editor]:min-h-[220px]">
+                <ReactQuill 
+                  theme="snow"
+                  value={konten}
+                  onChange={setKonten}
+                  modules={quillModules}
+                  placeholder="Tuliskan berita lengkap di sini..."
+                />
+              </div>
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
@@ -319,8 +356,8 @@ export default function AdminArtikelPage() {
                 disabled={loading}
                 className={`px-6 py-2.5 rounded-lg text-white font-medium shadow-sm transition flex items-center gap-2 ${
                   editId 
-                    ? "bg-amber-600 hover:bg-amber-700 shadow-amber-200" 
-                    : "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
+                    ? "bg-amber-600 hover:bg-amber-700" 
+                    : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
                 {loading ? (
@@ -343,7 +380,6 @@ export default function AdminArtikelPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8 text-slate-900">
           <div className="border-b border-slate-100 pb-4 mb-6">
             <h2 className="text-2xl font-bold text-slate-800">Manajemen Artikel ({beritaList.length})</h2>
-            <p className="text-slate-500 text-sm mt-1">Daftar artikel yang saat ini aktif di website.</p>
           </div>
 
           {loadingFetch ? (
@@ -352,7 +388,7 @@ export default function AdminArtikelPage() {
             </div>
           ) : beritaList.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
-              Belum ada berita yang diterbitkan. Tulis berita pertama Anda di atas!
+              Belum ada berita yang diterbitkan.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -397,14 +433,12 @@ export default function AdminArtikelPage() {
                           <button
                             onClick={() => handleEditPersiapan(item)}
                             className="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition"
-                            title="Edit Artikel"
                           >
                             <Edit2 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleHapus(item.id, item.judul)}
                             className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                            title="Hapus Artikel"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>

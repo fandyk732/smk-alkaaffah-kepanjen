@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, doc, updateDoc, getDoc } from "firebase/firestore";
-import { Search, Filter, Loader2, RefreshCw, Printer, FileSpreadsheet, LogOut } from "lucide-react";
+import { Search, Filter, Loader2, RefreshCw, Printer, FileSpreadsheet, LogOut, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Pendaftar {
@@ -23,52 +23,13 @@ export default function AdminPPDBPage() {
   const router = useRouter();
   const [listPendaftar, setListPendaftar] = useState<Pendaftar[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingAuth, setLoadingAuth] = useState(true);
   const [panitiaName, setPanitiaName] = useState("");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
 
-  // --- 🛡️ PROTEKSI HALAMAN & VALIDASI ROLE ---
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // 1. Jika tidak ada sesi login, langsung tendang ke /login
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      try {
-        // Ambil data user dari Firestore untuk cek role staf
-        const userDoc = await getDoc(doc(db, "users", user.email || ""));
-        
-        if (userDoc.exists()) {
-          const role = userDoc.data().role;
-          
-          // 2. Pastikan yang masuk cuma panitia PPDB atau Superadmin
-          if (role === "panitia_ppdb" || role === "superadmin") {
-            setPanitiaName(userDoc.data().nama || "Panitia PPDB");
-            setLoadingAuth(false);
-            ambilDataPPDB(); // Ambil data siswa jika role valid
-          } else {
-            // Jika role tidak sesuai (misal staf BKK nyasar), balikkan ke login
-            console.warn("Akses ditolak: Role tidak valid.");
-            router.push("/login");
-          }
-        } else {
-          router.push("/login");
-        }
-      } catch (err) {
-        console.error("Gagal melakukan verifikasi hak akses:", err);
-        router.push("/login");
-      }
-    });
-
-    return () => unsubscribe();
-  }, [router]);
-
   // --- AMBIL DATA PPDB FROM FIRESTORE ---
-  const ambilDataPPDB = async () => {
+  const ambilDataPPDB = useCallback(async () => {
     setLoading(true);
     try {
       const q = query(collection(db, "ppdb"), orderBy("createdAt", "desc"));
@@ -83,9 +44,54 @@ export default function AdminPPDBPage() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // --- 🛡️ PROTEKSI HALAMAN & AUTOMATIC FETCH ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.email || ""));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+
+          // 🎯 1. Konversi role ke Array (Mendukung data lama & baru)
+          const roles: string[] = Array.isArray(data.role) ? data.role : [data.role];
+
+          // 🎯 2. Cek apakah punya akses panitia_ppdb atau superadmin
+          const hasAccess = roles.includes("panitia_ppdb") || roles.includes("superadmin");
+
+          if (hasAccess) {
+            setPanitiaName(data.nama || "Panitia PPDB");
+            // 🎯 3. Ambil data PPDB otomatis setelah auth terverifikasi!
+            await ambilDataPPDB();
+          } else {
+            alert("Anda tidak memiliki akses ke modul PPDB!");
+            router.push("/admin/dashboard");
+          }
+        } else {
+          await auth.signOut();
+          router.push("/login");
+        }
+      } catch (err) {
+        console.error("Gagal verifikasi hak akses:", err);
+        router.push("/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router, ambilDataPPDB]);
+
+  // --- HANDLER NAVIGASI KEMBALI KE DASHBOARD (TANPA LOGOUT) ---
+  const handleKembaliKeDashboard = () => {
+    router.push("/admin/dashboard");
   };
 
-  // --- HANDLER KELUAR SISTEM ---
+  // --- HANDLER KELUAR SISTEM (LOGOUT TOTAL) ---
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
@@ -187,22 +193,13 @@ export default function AdminPPDBPage() {
   // --- LOGIKA FILTER SEARCH & DROP DOWN JURUSAN ---
   const pendaftarDifilter = listPendaftar.filter((p) => {
     const cocokSearch =
-      p.namaLengkap.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.nisn.includes(searchQuery) ||
-      p.asalSekolah.toLowerCase().includes(searchQuery.toLowerCase());
+      (p.namaLengkap || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.nisn || "").includes(searchQuery) ||
+      (p.asalSekolah || "").toLowerCase().includes(searchQuery.toLowerCase());
     
     const cocokJurusan = filterJurusan === "" || p.pilihanJurusan === filterJurusan;
     return cocokSearch && cocokJurusan;
   });
-
-  // Tampilkan loading screen penuh saat mengecek sesi user
-  if (loadingAuth) {
-    return (
-      <div className="min-h-screen grid place-items-center bg-slate-50 dark:bg-slate-950">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-16 text-foreground">
@@ -213,7 +210,7 @@ export default function AdminPPDBPage() {
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">Dashboard Panitia PPDB</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Petugas: <span className="font-semibold text-foreground">{panitiaName}</span> • Total pendaftar: <span className="font-bold text-primary">{listPendaftar.length} siswa</span>
+              Petugas: <span className="font-semibold text-foreground">{panitiaName || "Panitia PPDB"}</span> • Total pendaftar: <span className="font-bold text-primary">{listPendaftar.length} siswa</span>
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -226,6 +223,13 @@ export default function AdminPPDBPage() {
             <Button onClick={ambilDataPPDB} variant="ghost" size="sm">
               <RefreshCw className="mr-2 h-4 w-4" /> Refresh
             </Button>
+            
+            {/* 🎯 TOMBOL NAVIGASI HUB DASHBOARD (Pindah Modul Tanpa Logout) */}
+            <Button onClick={handleKembaliKeDashboard} variant="outline" size="sm" className="gap-1.5 rounded-xl border-slate-300">
+              <LayoutGrid className="h-4 w-4" /> Dashboard Hub
+            </Button>
+
+            {/* 🎯 TOMBOL LOGOUT TOTAL */}
             <Button onClick={handleLogout} variant="destructive" size="sm" className="gap-1.5 rounded-xl">
               <LogOut className="h-4 w-4" /> Keluar
             </Button>
@@ -267,8 +271,9 @@ export default function AdminPPDBPage() {
 
         {/* Data Table */}
         {loading ? (
-          <div className="flex justify-center items-center py-32 print:hidden">
+          <div className="flex flex-col justify-center items-center py-32 print:hidden gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground font-medium">Memuat data pendaftar...</p>
           </div>
         ) : pendaftarDifilter.length === 0 ? (
           <div className="text-center py-20 border rounded-2xl bg-card">
@@ -302,7 +307,7 @@ export default function AdminPPDBPage() {
                     </td>
                     <td className="px-6 py-4">
                       <a
-                        href={`https://wa.me/${p.whatsapp.replace(/^0/, "62")}`}
+                        href={`https://wa.me/${p.whatsapp ? p.whatsapp.replace(/^0/, "62") : ""}`}
                         target="_blank"
                         rel="noreferrer"
                         className="text-primary hover:underline font-medium print:text-black print:no-underline"
@@ -321,7 +326,7 @@ export default function AdminPPDBPage() {
                           Ditolak
                         </span>
                       )}
-                      {p.statusPendaftaran === "Menunggu Verifikasi" && (
+                      {(!p.statusPendaftaran || p.statusPendaftaran === "Menunggu Verifikasi") && (
                         <span className="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-950/30 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-500 border border-amber-200 dark:border-amber-900 print:text-black print:border-none">
                           Pending
                         </span>

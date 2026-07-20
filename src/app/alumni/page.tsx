@@ -59,9 +59,9 @@ export default function AlumniPage() {
   };
 
   return (
-    <main className="pt-24 min-h-screen bg-background">
+    <div className="py-6 sm:py-10">
       {/* HEADER SECTION */}
-      <section className="container-page py-12">
+      <section className="container-page py-8">
         <SectionHeading 
           eyebrow="Tracer Study & Direktori" 
           title="Kisah Sukses Alumni SMK Al Kaaffah" 
@@ -70,7 +70,7 @@ export default function AlumniPage() {
         />
 
         {/* SEARCH & FILTER BAR */}
-        <div className="mt-10 flex flex-col md:flex-row gap-4 items-center justify-between border bg-card p-4 rounded-2xl shadow-soft">
+        <div className="mt-10 flex flex-col md:flex-row gap-4 items-center justify-between border bg-card/80 backdrop-blur-sm p-4 rounded-2xl shadow-soft">
           <div className="relative w-full md:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input 
@@ -78,7 +78,7 @@ export default function AlumniPage() {
               placeholder="Cari nama atau tempat..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-secondary/50 rounded-xl pl-9 pr-4 py-2 text-sm border focus:outline-none focus:border-primary"
+              className="w-full bg-secondary/50 rounded-xl pl-9 pr-4 py-2 text-sm border focus:outline-none focus:border-primary transition-colors"
             />
           </div>
           <div className="flex flex-wrap gap-2 w-full md:w-auto">
@@ -88,7 +88,7 @@ export default function AlumniPage() {
                 onClick={() => setActiveFilter(f)}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   activeFilter === f 
-                    ? "bg-gradient-primary text-white" 
+                    ? "bg-gradient-primary text-white shadow-sm" 
                     : "bg-secondary text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -100,23 +100,25 @@ export default function AlumniPage() {
       </section>
 
       {/* CARDS LIST SECTION */}
-      <section className="container-page pb-20">
+      <section className="container-page pb-16">
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : filteredAlumni.length === 0 ? (
-          <p className="text-center py-20 text-muted-foreground">Data alumni tidak ditemukan.</p>
+          <div className="text-center py-20 border rounded-2xl bg-card/50 backdrop-blur-sm">
+            <p className="text-muted-foreground">Data alumni tidak ditemukan.</p>
+          </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredAlumni.map((alumni, i) => (
               <Reveal key={alumni.id} delay={i * 0.05}>
-                <div className="h-full border bg-card rounded-2xl p-6 shadow-soft flex flex-col justify-between group hover:shadow-elegant transition-all">
+                <div className="h-full border bg-card/90 backdrop-blur-sm rounded-2xl p-6 shadow-soft flex flex-col justify-between group hover:shadow-elegant transition-all">
                   <div>
                     <div className="flex items-center gap-4">
-                      <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-primary text-white text-lg font-bold">
+                      <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-primary text-white text-lg font-bold overflow-hidden shrink-0">
                         {alumni.fotoUrl ? (
-                          <img src={alumni.fotoUrl} alt={alumni.nama} className="h-full w-full object-cover rounded-full" />
+                          <img src={alumni.fotoUrl} alt={alumni.nama} className="h-full w-full object-cover" />
                         ) : (
                           alumni.nama.charAt(0)
                         )}
@@ -149,6 +151,6 @@ export default function AlumniPage() {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

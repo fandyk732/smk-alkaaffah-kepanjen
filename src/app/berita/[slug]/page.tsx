@@ -6,13 +6,12 @@ import { Reveal } from "@/components/motion-primitives";
 import { Button } from "@/components/ui/button";
 import { school } from "@/data/site";
 
-// Import Firestore SDK sisi server (Admin atau standard web sdk aman digunakan di server component)
+// Import Firestore SDK sisi server
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 
 type Params = Promise<{ slug: string }>;
 
-// Interface data berita agar sesuai database
 interface Berita {
   judul: string;
   kategori: string;
@@ -23,7 +22,6 @@ interface Berita {
   slug: string;
 }
 
-// Fungsi pembantu untuk mengambil detail berita dari Firestore berdasarkan slug
 async function dapatkanBeritaDariFirestore(slug: string): Promise<Berita | null> {
   try {
     const q = query(collection(db, "berita"), where("slug", "==", slug), limit(1));
@@ -39,7 +37,6 @@ async function dapatkanBeritaDariFirestore(slug: string): Promise<Berita | null>
   }
 }
 
-// Fungsi pembantu untuk mengambil berita terkait (3 berita selain berita yang sedang dibuka)
 async function dapatkanBeritaTerkait(slugSekarang: string): Promise<Berita[]> {
   try {
     const q = query(collection(db, "berita"), limit(4));
@@ -59,15 +56,14 @@ async function dapatkanBeritaTerkait(slugSekarang: string): Promise<Berita[]> {
   }
 }
 
-// 1. Generate Metadata secara Dinamis berdasarkan data Firestore
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
   const a = await dapatkanBeritaDariFirestore(slug);
 
   if (!a) return { title: "Berita tidak ditemukan — " + school.name, robots: { index: false } };
 
-  // Ambil 150 karakter pertama dari konten sebagai deskripsi SEO
-  const deskripsiSeo = a.konten.substring(0, 150) + "...";
+  const deskripsiBersih = a.konten.replace(/<[^>]*>?/gm, '');
+  const deskripsiSeo = deskripsiBersih.substring(0, 150) + "...";
 
   return {
     title: `${a.judul} — ${school.name}`,
@@ -82,12 +78,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-// 2. Tampilan Utama Artikel (Server Component)
 export default async function ArticlePage({ params }: { params: Params }) {
   const { slug } = await params;
   const article = await dapatkanBeritaDariFirestore(slug);
 
-  // Jika slug tidak ditemukan di Firestore, langsung arahkan ke halaman 404 buatan Next.js
   if (!article) notFound();
 
   const related = await dapatkanBeritaTerkait(slug);
@@ -111,7 +105,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      
+
       {/* Tombol Kembali */}
       <Button asChild variant="ghost" size="sm" className="mb-6">
         <Link href="/berita">
@@ -132,7 +126,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
       </div>
 
       {/* Judul Utama */}
-      <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+      <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl break-words">
         {article.judul}
       </h1>
 
@@ -145,13 +139,22 @@ export default async function ArticlePage({ params }: { params: Params }) {
         />
       </div>
 
-      {/* Konten Artikel */}
-      <div className="prose mt-8 max-w-none text-foreground dark:prose-invert">
-        {article.konten.split('\n\n').map((paragraph, index) => (
-          <p key={index} className="text-lg leading-relaxed mb-6 whitespace-pre-line">
-            {paragraph}
-          </p>
-        ))}
+      {/* 🎯 KONTEN ARTIKEL DENGAN AUTO-WRAP CSS & BREAK-WORDS */}
+      <div className="prose prose-slate dark:prose-invert mt-8 max-w-none text-foreground leading-relaxed w-full overflow-hidden">
+        <div 
+          dangerouslySetInnerHTML={{ __html: article.konten }} 
+          className="
+            break-words [overflow-wrap:anywhere]
+            [&_p]:mb-4 [&_p]:text-lg [&_p]:leading-relaxed [&_p]:break-words
+            [&_a]:text-primary [&_a]:underline [&_a]:break-all hover:[&_a]:opacity-80
+            [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4
+            [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4
+            [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-6
+            [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:break-words
+            [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:break-words
+            [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl
+          "
+        />
       </div>
 
       <hr className="my-12" />
@@ -176,7 +179,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
                     />
                   </div>
                   <div className="p-4">
-                    <h3 className="text-sm font-semibold leading-snug group-hover:text-primary line-clamp-2">
+                    <h3 className="text-sm font-semibold leading-snug group-hover:text-primary line-clamp-2 break-words">
                       {n.judul}
                     </h3>
                   </div>

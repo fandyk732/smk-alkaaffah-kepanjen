@@ -2,118 +2,296 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signInWithEmailAndPassword 
+} from "firebase/auth";
+import { 
+  doc, 
+  getDoc, 
+  collection, 
+  query, 
+  where, 
+  getDocs 
+} from "firebase/firestore";
+import { Loader2, Eye, EyeOff, ShieldAlert, X, UserCheck } from "lucide-react";
+
+interface SuperadminInfo {
+  nama?: string;
+  email: string;
+}
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  
+  // State Form Input
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  // State Modal Lupa Password
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [loadingSuperadmin, setLoadingSuperadmin] = useState(false);
+  const [superadmins, setSuperadmins] = useState<SuperadminInfo[]>([]);
 
+  // 🎯 HELPER UTAMA: CEK ROLE & REDIRECT OTOMATIS BERDASARKAN JUMLAH ROLE
+  const handleArahkanBerdasarkanRole = async (userEmail: string) => {
     try {
-      // 1. Cek email & password ke Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // 2. Ambil data role staf dari Firestore collection 'users'
-      const userDocRef = doc(db, "users", user.email || "");
-      const userDoc = await getDoc(userDocRef);
+      const userRef = doc(db, "users", userEmail.toLowerCase().trim());
+      const userDoc = await getDoc(userRef);
 
       if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const role = userData.role;
+        const data = userDoc.data();
+        // Backward compatibility: Handle jika role masih String tunggal atau sudah Array
+        const roles: string[] = Array.isArray(data.role) ? data.role : [data.role];
 
-        // 3. Arahkan staf ke halaman masing-masing sesuai role
-        if (role === "bkk" || role === "superadmin") {
-          router.push("/admin/alumni");
-        } else if (role === "panitia_ppdb") {
-          router.push("/admin/ppdb");
-        } else if (role === "admin_artikel") {
+        if (roles.length === 0) {
+          alert("Akun Anda belum memiliki hak akses. Hubungi Superadmin.");
+          await auth.signOut();
+          return;
+        }
+
+        // 1. Jika punya role 'superadmin' -> langsung lempar ke Superadmin Portal
+        if (roles.includes("superadmin")) {
+          router.push("/superadmin/users");
+          return;
+        }
+
+        // 2. Jika punya LEBIH DARI 1 ROLE -> Lempar ke Dashboard Hub / Selection Panel
+        if (roles.length > 1) {
+          router.push("/admin/dashboard");
+          return;
+        }
+
+        // 3. Jika HANYA PUNYA 1 ROLE -> Langsung ke modul spesifik
+        const singleRole = roles[0];
+        if (singleRole === "admin_artikel") {
           router.push("/admin/artikel");
+        } else if (singleRole === "panitia_ppdb") {
+          router.push("/admin/ppdb");
+        } else if (singleRole === "admin_alumni") {
+          router.push("/admin/alumni");
         } else {
-          setError("Akun Anda tidak memiliki hak akses role.");
+          alert("Role tidak dikenali. Hubungi Superadmin.");
+          await auth.signOut();
         }
       } else {
-        setError("Email Anda terdaftar di Auth, tapi data role di Firestore belum dibuat.");
+        alert("Akun Anda belum terdaftar sebagai admin. Minta Superadmin mendaftarkan email Anda terlebih dahulu.");
+        await auth.signOut();
       }
-    } catch (err: any) {
-      console.error("Firebase Auth Error:", err.code);
-      
-      // 🎯 INJEKSI DI SINI: Filter kode error Firebase menjadi bahasa manusia
-      if (
-        err.code === "auth/invalid-credential" || 
-        err.code === "auth/user-not-found" || 
-        err.code === "auth/wrong-password"
-      ) {
-        setError("Email atau password yang lo masukkan salah, bro. Coba cek lagi.");
-      } else if (err.code === "auth/too-many-requests") {
-        setError("Terlalu banyak percobaan login gagal. Akun diblokir sementara, coba beberapa saat lagi.");
-      } else if (err.code === "auth/network-request-failed") {
-        setError("Koneksi internet bermasalah. Cek jaringan lo, bro.");
-      } else {
-        setError("Terjadi kesalahan sistem. Silakan hubungi admin IT sekolah.");
-      }
+    } catch (error) {
+      console.error("Gagal verifikasi role:", error);
+      alert("Terjadi kesalahan saat memeriksa hak akses.");
+      await auth.signOut();
     } finally {
       setLoading(false);
     }
   };
 
+  // 1. LOGIN DENGAN GOOGLE
+  const handleLoginGoogle = async () => {
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      if (result.user.email) {
+        await handleArahkanBerdasarkanRole(result.user.email);
+      }
+    } catch (error) {
+      console.error("Login Google Gagal:", error);
+      setLoading(false);
+    }
+  };
+
+  // 2. LOGIN DENGAN EMAIL & PASSWORD
+  const handleLoginEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      if (result.user.email) {
+        await handleArahkanBerdasarkanRole(result.user.email);
+      }
+    } catch (error) {
+      console.error("Login Email Gagal:", error);
+      alert("Email atau password salah!");
+      setLoading(false);
+    }
+  };
+
+  // 3. FITUR LUPA PASSWORD (FETCH DAFTAR SUPERADMIN MEMAKAI QUERY ARRAY & STRING)
+  const handleBukaModalLupaPassword = async () => {
+    setShowResetModal(true);
+    setLoadingSuperadmin(true);
+
+    try {
+      // Query 1: Cek dokumen yang rolenya mengandung "superadmin" di dalam Array
+      const qArray = query(
+        collection(db, "users"), 
+        where("role", "array-contains", "superadmin")
+      );
+      
+      // Query 2: Fallback jika masih ada data lama bernilai string "superadmin"
+      const qString = query(
+        collection(db, "users"), 
+        where("role", "==", "superadmin")
+      );
+
+      const [snapArray, snapString] = await Promise.all([
+        getDocs(qArray),
+        getDocs(qString)
+      ]);
+
+      const adminMap = new Map<string, SuperadminInfo>();
+
+      // Masukkan hasil query array
+      snapArray.forEach((docSnap) => {
+        const data = docSnap.data();
+        adminMap.set(docSnap.id, {
+          nama: data.nama || "Superadmin",
+          email: data.email || docSnap.id,
+        });
+      });
+
+      // Masukkan hasil query string
+      snapString.forEach((docSnap) => {
+        const data = docSnap.data();
+        adminMap.set(docSnap.id, {
+          nama: data.nama || "Superadmin",
+          email: data.email || docSnap.id,
+        });
+      });
+
+      setSuperadmins(Array.from(adminMap.values()));
+    } catch (error) {
+      console.error("Gagal mengambil data Superadmin:", error);
+    } finally {
+      setLoadingSuperadmin(false);
+    }
+  };
+
   return (
-    <main className="min-h-screen grid place-items-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-8 shadow-md">
-        <div className="text-center mb-8">
-          <h1 className="text-xl font-black text-gray-800">Sistem Portal Staf</h1>
-          <p className="text-xs text-gray-500 mt-1">SMK Al Kaaffah Kepanjen</p>
-        </div>
-
-        {error && (
-          <div className="mb-4 text-xs bg-red-50 border border-red-200 text-red-600 p-3 rounded-xl">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-4">
+    <div className="min-h-screen grid place-items-center bg-slate-950 text-white p-4 relative">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
+        <h1 className="text-2xl font-bold text-center mb-2">Portal Admin</h1>
+        <p className="text-slate-400 text-sm text-center mb-8">
+          Silakan masuk menggunakan akun terdaftar.
+        </p>
+        
+        {/* Form Login Email */}
+        <form onSubmit={handleLoginEmail} className="space-y-4">
           <div>
-            <label className="text-xs font-bold block mb-1 text-gray-600">EMAIL RESMI</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               required
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="nama@smkalkaaffah.sch.id" 
-              className="w-full bg-white rounded-xl px-4 py-2.5 text-sm border border-gray-300 focus:outline-none focus:border-blue-600 text-black"
+              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition"
             />
           </div>
 
-          <div>
-            <label className="text-xs font-bold block mb-1 text-gray-600">PASSWORD</label>
-            <input 
-              type="password" 
+          {/* Input Password + Tombol Toggle Lihat Password */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
               required
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••" 
-              className="w-full bg-white rounded-xl px-4 py-2.5 text-sm border border-gray-300 focus:outline-none focus:border-blue-600 text-black"
+              className="w-full pl-4 pr-12 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1"
+              title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
           </div>
 
-          <button 
-            type="submit" 
-            disabled={loading} 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold mt-2 text-sm disabled:bg-gray-400 transition-colors"
+          {/* Tombol Lupa Password */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleBukaModalLupaPassword}
+              className="text-xs text-slate-400 hover:text-blue-400 transition"
+            >
+              Lupa Password?
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition flex justify-center items-center gap-2 disabled:opacity-50"
           >
-            {loading ? "Memverifikasi..." : "Masuk ke Dashboard"}
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Masuk"}
           </button>
         </form>
       </div>
-    </main>
+
+      {/* 🛑 MODAL NOTIFIKASI HUBUNGI SUPERADMIN */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+            {/* Tombol Close */}
+            <button
+              onClick={() => setShowResetModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition p-1"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Header Icon */}
+            <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mb-4">
+              <ShieldAlert className="h-6 w-6" />
+            </div>
+
+            <h3 className="text-lg font-semibold text-white mb-2">Lupa Password?</h3>
+            <p className="text-slate-400 text-sm mb-4 leading-relaxed">
+              Untuk keamanan sistem, perbaikan atau reset password akun dilakukan secara internal. Silakan hubungi <strong className="text-slate-200">Superadmin</strong> di bawah ini untuk mereset akun Anda:
+            </p>
+
+            {/* Daftar Superadmin */}
+            <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 mb-6 space-y-3 max-h-48 overflow-y-auto">
+              {loadingSuperadmin ? (
+                <div className="flex items-center justify-center py-4 text-slate-500 gap-2 text-xs">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Memuat data admin...
+                </div>
+              ) : superadmins.length > 0 ? (
+                superadmins.map((admin, idx) => (
+                  <div key={idx} className="flex items-start gap-3 text-xs">
+                    <UserCheck className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-medium text-slate-200">{admin.nama}</p>
+                      <p className="text-slate-400 select-all font-mono">{admin.email}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-slate-500 text-center py-2">
+                  Kontak Superadmin: <br />
+                  <span className="font-mono text-slate-300">Hubungi Administrator Utama</span>
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowResetModal(false)}
+              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-medium transition"
+            >
+              Saya Mengerti
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { Briefcase, GraduationCap, Rocket, LogOut, Plus, Trash2, UserCheck, ShieldAlert } from "lucide-react";
+import { Briefcase, GraduationCap, Rocket, LogOut, Plus, Trash2, UserCheck, ShieldAlert, LayoutGrid, Loader2 } from "lucide-react";
 
 interface Alumni {
   id: string;
@@ -24,6 +24,7 @@ export default function AdminAlumniPage() {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loadingData, setLoadingData] = useState(true);
   const [alumniList, setAlumniList] = useState<Alumni[]>([]);
+  const [adminName, setAdminName] = useState("");
 
   // Form States
   const [nama, setNama] = useState("");
@@ -35,16 +36,43 @@ export default function AdminAlumniPage() {
   const [testimoni, setTestimoni] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. Proteksi Halaman & Cek Auth
+  // 1. 🛡️ Proteksi Halaman & Verifikasi Hak Akses
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         router.push("/login");
-      } else {
-        setLoadingAuth(false);
-        ambilDataAlumni();
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.email || ""));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+
+          // Konversi role ke Array (Mendukung data string lama & array baru)
+          const roles: string[] = Array.isArray(data.role) ? data.role : [data.role];
+
+          // Cek akses admin_alumni atau superadmin
+          const hasAccess = roles.includes("admin_alumni") || roles.includes("superadmin");
+
+          if (hasAccess) {
+            setAdminName(data.nama || "Admin Alumni");
+            setLoadingAuth(false);
+            await ambilDataAlumni();
+          } else {
+            alert("Anda tidak memiliki akses ke modul Alumni & BKK!");
+            router.push("/admin/dashboard");
+          }
+        } else {
+          await auth.signOut();
+          router.push("/login");
+        }
+      } catch (err) {
+        console.error("Gagal verifikasi hak akses:", err);
+        router.push("/login");
       }
     });
+
     return () => unsubscribe();
   }, [router]);
 
@@ -115,7 +143,12 @@ export default function AdminAlumniPage() {
     }
   };
 
-  // 5. Handler Logout
+  // 🎯 5. Handler Navigasi Kembali ke Dashboard Hub (Tanpa Logout)
+  const handleKembaliKeDashboard = () => {
+    router.push("/admin/dashboard");
+  };
+
+  // 🎯 6. Handler Logout Total
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
@@ -124,14 +157,17 @@ export default function AdminAlumniPage() {
   if (loadingAuth) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-xs text-muted-foreground">Memeriksa hak akses...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-secondary/20 pt-6 pb-12">
-      <div className="container-page max-w-7xl">
+    <main className="min-h-screen bg-secondary/20 pt-20 pb-12">
+      <div className="container-page max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* TOPBAR HEAD */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card border p-4 rounded-2xl shadow-soft mb-8 gap-4">
@@ -140,13 +176,24 @@ export default function AdminAlumniPage() {
               <UserCheck className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-lg font-black tracking-tight leading-none">Dashboard BKK</h1>
-              <p className="text-xs text-muted-foreground mt-1">Pengelolaan Direktori & Tracer Study Alumni</p>
+              <h1 className="text-lg font-black tracking-tight leading-none">Dashboard BKK & Alumni</h1>
+              <p className="text-xs text-muted-foreground mt-1">
+                Petugas: <span className="font-semibold text-foreground">{adminName}</span> • Pengelolaan Direktori Tracer Study
+              </p>
             </div>
           </div>
-          <Button variant="destructive" size="sm" onClick={handleLogout} className="gap-2 rounded-xl">
-            <LogOut className="h-4 w-4" /> Keluar
-          </Button>
+          
+          <div className="flex items-center gap-2">
+            {/* 🎯 Tombol Pindah Modul */}
+            <Button variant="outline" size="sm" onClick={handleKembaliKeDashboard} className="gap-1.5 rounded-xl border-slate-300">
+              <LayoutGrid className="h-4 w-4" /> Dashboard Hub
+            </Button>
+
+            {/* 🎯 Tombol Logout Total */}
+            <Button variant="destructive" size="sm" onClick={handleLogout} className="gap-1.5 rounded-xl">
+              <LogOut className="h-4 w-4" /> Keluar
+            </Button>
+          </div>
         </div>
 
         {/* MAIN GRID */}
@@ -255,7 +302,7 @@ export default function AdminAlumniPage() {
 
             {loadingData ? (
               <div className="flex justify-center py-20">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : alumniList.length === 0 ? (
               <div className="text-center py-20 border border-dashed rounded-xl flex flex-col items-center justify-center text-muted-foreground text-sm">
