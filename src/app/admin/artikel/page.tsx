@@ -70,9 +70,6 @@ export default function AdminArtikelPage() {
       ["link", "clean"],
     ],
   };
-
-  
-
   // --- 🛡️ PROTEKSI HALAMAN (SUPPORT ARRAY ROLE & STRING ROLE) ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -113,11 +110,6 @@ export default function AdminArtikelPage() {
     return () => unsubscribe();
   }, [router]);
 
-   // --- HANDLER NAVIGASI KEMBALI KE DASHBOARD (TANPA LOGOUT) ---
-    const handleKembaliKeDashboard = () => {
-      router.push("/admin/dashboard");
-    };
-  
   // 1. Ambil List Berita
   const ambilBerita = async () => {
     setLoadingFetch(true);
