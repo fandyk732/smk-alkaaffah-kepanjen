@@ -28,6 +28,9 @@ export default function AdminPPDBPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
 
+  // 🎯 State untuk menyimpan data siswa yang sedang dicetak bukti individunya
+  const [selectedIndividu, setSelectedIndividu] = useState<Pendaftar | null>(null);
+
   // --- AMBIL DATA PPDB FROM FIRESTORE ---
   const ambilDataPPDB = useCallback(async () => {
     setLoading(true);
@@ -62,8 +65,8 @@ export default function AdminPPDBPage() {
           // 🎯 1. Konversi role ke Array (Mendukung data lama & baru)
           const roles: string[] = Array.isArray(data.role) ? data.role : [data.role];
 
-          // 🎯 2. Cek apakah punya akses panitia_PPDB atau superadmin
-          const hasAccess = roles.includes("panitia_PPDB") || roles.includes("superadmin");
+          // 🎯 2. Cek apakah punya akses panitia_PPDB, admin_ppdb, atau superadmin
+          const hasAccess = roles.includes("panitia_PPDB") || roles.includes("admin_ppdb") || roles.includes("superadmin");
 
           if (hasAccess) {
             setPanitiaName(data.nama || "Panitia PPDB");
@@ -100,7 +103,7 @@ export default function AdminPPDBPage() {
   // --- UBAH STATUS PENDAFTARAN SISWA ---
   const ubahStatus = async (id: string, statusBaru: "Diterima" | "Ditolak") => {
     try {
-      const docRef = doc(db, "PPDB", id);
+      const docRef = doc(db, "ppdb", id);
       await updateDoc(docRef, { statusPendaftaran: statusBaru });
       
       setListPendaftar((prev) =>
@@ -138,56 +141,20 @@ export default function AdminPPDBPage() {
     document.body.removeChild(link);
   };
 
+  // --- FUNGSI PRINT SEMUA TABEL ---
   const printSemua = () => {
-    window.print();
+    setSelectedIndividu(null); // Clear mode individu agar print tabel aktif
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
+  // 🎯 FUNGSI PRINT INDIVIDU NATIVE (100% AMAN DI BROWSER HP / MOBILE / PC)
   const printIndividu = (pendaftar: Pendaftar) => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Bukti Pendaftaran - ${pendaftar.namaLengkap}</title>
-          <style>
-            body { font-family: sans-serif; padding: 40px; color: #333; }
-            .header { text-align: center; border-bottom: 3px double #333; padding-bottom: 20px; mb: 30px; }
-            .title { font-size: 24px; font-weight: bold; margin: 0; }
-            .subtitle { font-size: 14px; margin: 5px 0 0 0; color: #666; }
-            table { width: 100%; margin-top: 30px; border-collapse: collapse; }
-            td { padding: 12px; font-size: 16px; border-bottom: 1px solid #ddd; }
-            td.label { font-weight: bold; width: 30%; color: #555; }
-            .footer { margin-top: 60px; text-align: right; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="title">SMK AL KAAFFAH KEPANJEN</div>
-            <div class="subtitle">Bukti Pendaftaran Peserta Didik Baru (PPDB)</div>
-          </div>
-          <h3 style="text-align: center; margin-top: 20px;">BIODATA CALON SISWA</h3>
-          <table>
-            <tr><td class="label">Nama Lengkap</td><td>: ${pendaftar.namaLengkap}</td></tr>
-            <tr><td class="label">NISN</td><td>: ${pendaftar.nisn}</td></tr>
-            <tr><td class="label">Asal Sekolah</td><td>: ${pendaftar.asalSekolah}</td></tr>
-            <tr><td class="label">Pilihan Jurusan</td><td>: ${pendaftar.pilihanJurusan}</td></tr>
-            <tr><td class="label">No. WhatsApp</td><td>: ${pendaftar.whatsapp}</td></tr>
-            <tr><td class="label">Status Saat Ini</td><td>: <strong>${pendaftar.statusPendaftaran}</strong></td></tr>
-          </table>
-          <div class="footer">
-            <p>Kepanjen, ${new Date().toLocaleDateString("id-ID")}</p>
-            <p>Panitia PPDB,</p>
-            <br/><br/><br/>
-            <p>_______________________</p>
-          </div>
-          <script>
-            window.onload = function() { window.print(); window.close(); }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    setSelectedIndividu(pendaftar);
+    setTimeout(() => {
+      window.print();
+    }, 150);
   };
 
   // --- LOGIKA FILTER SEARCH & DROP DOWN JURUSAN ---
@@ -236,11 +203,13 @@ export default function AdminPPDBPage() {
           </div>
         </div>
 
-        {/* Laporan Print Area */}
-        <div className="hidden print:block text-center border-b-2 pb-4 mb-6">
-          <h1 className="text-2xl font-bold uppercase">Laporan Pendaftaran PPDB</h1>
-          <p className="text-sm">SMK Al Kaaffah Kepanjen — Petugas Cetak: {panitiaName} — Tanggal: {new Date().toLocaleDateString("id-ID")}</p>
-        </div>
+        {/* Laporan Print Area (Hanya Muncul saat Cetak Semua) */}
+        {!selectedIndividu && (
+          <div className="hidden print:block text-center border-b-2 pb-4 mb-6">
+            <h1 className="text-2xl font-bold uppercase text-black">Laporan Pendaftaran PPDB</h1>
+            <p className="text-sm text-black">SMK Al Kaaffah Kepanjen — Petugas Cetak: {panitiaName} — Tanggal: {new Date().toLocaleDateString("id-ID")}</p>
+          </div>
+        )}
 
         {/* Search Bar & Filter */}
         <div className="grid gap-4 sm:grid-cols-3 mb-6 print:hidden">
@@ -296,12 +265,12 @@ export default function AdminPPDBPage() {
                 {pendaftarDifilter.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition print:hover:bg-transparent">
                     <td className="px-6 py-4">
-                      <p className="font-bold">{p.namaLengkap}</p>
-                      <p className="text-xs text-muted-foreground font-mono">NISN: {p.nisn}</p>
+                      <p className="font-bold print:text-black">{p.namaLengkap}</p>
+                      <p className="text-xs text-muted-foreground font-mono print:text-black">NISN: {p.nisn}</p>
                     </td>
-                    <td className="px-6 py-4 font-medium">{p.asalSekolah}</td>
+                    <td className="px-6 py-4 font-medium print:text-black">{p.asalSekolah}</td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-800 dark:text-slate-100 border print:border-none print:bg-transparent print:p-0">
+                      <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-800 dark:text-slate-100 border print:border-none print:bg-transparent print:p-0 print:text-black">
                         {p.pilihanJurusan}
                       </span>
                     </td>
@@ -367,6 +336,109 @@ export default function AdminPPDBPage() {
           </div>
         )}
       </div>
+
+      {/* =========================================================================
+          📄 TEMPLATE SURAT BUKTI INDIVIDU (KHUSUS DIPRINT OLEH BROWSER MOBILE & PC)
+          ========================================================================= */}
+      {selectedIndividu && (
+        <>
+          <style jsx global>{`
+            @media print {
+              body * {
+                visibility: hidden !important;
+              }
+
+              #area-bukti-individu, #area-bukti-individu * {
+                visibility: visible !important;
+              }
+
+              #area-bukti-individu {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                box-shadow: none !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+              }
+
+              @page {
+                size: A4 portrait;
+                margin: 0;
+              }
+            }
+          `}</style>
+
+          <div className="hidden print:block">
+            <div
+              id="area-bukti-individu"
+              className="w-[210mm] min-h-[297mm] p-[15mm] text-black font-serif text-[15px] leading-relaxed bg-white"
+              style={{ fontFamily: "'Times New Roman', Times, serif" }}
+            >
+              {/* Kop Surat Header */}
+              <div className="text-center border-b-4 border-black pb-3 mb-6">
+                <h2 className="text-[20px] font-bold uppercase tracking-wide m-0 text-black">YAYASAN AL KAAFFAH KEPANJEN</h2>
+                <h1 className="text-[22px] font-bold uppercase tracking-wide m-0 text-black">SMK AL KAAFFAH KEPANJEN</h1>
+                <p className="text-[13px] italic m-0 mt-1 text-black">Jl. Semeru Nomor 18a Dilem, Kepanjen, Kabupaten Malang, Jawa Timur</p>
+              </div>
+
+              {/* Judul Surat */}
+              <div className="text-center mb-6">
+                <p className="text-[17px] font-bold underline m-0 text-black">BUKTI PENDAFTARAN PPDB</p>
+                <p className="text-[14px] m-0 text-black">Tahun Ajaran {new Date().getFullYear()}/{new Date().getFullYear() + 1}</p>
+              </div>
+
+              <p className="text-justify mb-4 text-black">
+                Berikut adalah bukti data pendaftaran Penerimaan Peserta Didik Baru (PPDB) SMK Al Kaaffah Kepanjen:
+              </p>
+
+              {/* Tabel Identitas Siswa */}
+              <table className="w-[90%] mx-auto my-6 border-collapse text-[15px] text-black">
+                <tbody>
+                  <tr className="border-b border-gray-300">
+                    <td className="py-2.5 w-[35%] font-bold">Nama Lengkap</td>
+                    <td className="py-2.5">: {selectedIndividu.namaLengkap}</td>
+                  </tr>
+                  <tr className="border-b border-gray-300">
+                    <td className="py-2.5 font-bold">NISN</td>
+                    <td className="py-2.5">: {selectedIndividu.nisn}</td>
+                  </tr>
+                  <tr className="border-b border-gray-300">
+                    <td className="py-2.5 font-bold">Asal Sekolah</td>
+                    <td className="py-2.5">: {selectedIndividu.asalSekolah}</td>
+                  </tr>
+                  <tr className="border-b border-gray-300">
+                    <td className="py-2.5 font-bold">Pilihan Jurusan</td>
+                    <td className="py-2.5">: <strong>{selectedIndividu.pilihanJurusan}</strong></td>
+                  </tr>
+                  <tr className="border-b border-gray-300">
+                    <td className="py-2.5 font-bold">No. WhatsApp</td>
+                    <td className="py-2.5">: {selectedIndividu.whatsapp}</td>
+                  </tr>
+                  <tr className="border-b border-gray-300">
+                    <td className="py-2.5 font-bold">Status Pendaftaran</td>
+                    <td className="py-2.5">: <strong>{selectedIndividu.statusPendaftaran || "Menunggu Verifikasi"}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p className="text-justify my-4 text-black text-[13px] italic">
+                *Simpan bukti pendaftaran ini sebagai bukti verifikasi ulang saat proses pendaftaran fisik di sekolah.
+              </p>
+
+              {/* Tanda Tangan */}
+              <div className="mt-16 float-right text-center w-[250px] text-black">
+                <p className="m-0">Kepanjen, {new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="m-0 mb-16">Panitia PPDB,</p>
+                <p className="m-0 font-bold underline">{panitiaName || "Panitia PPDB"}</p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   );
 }
