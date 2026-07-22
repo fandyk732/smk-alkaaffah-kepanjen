@@ -32,7 +32,7 @@ export default function AdminPPDBPage() {
   const ambilDataPPDB = useCallback(async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, "PPDB"), orderBy("createdAt", "desc"));
+      const q = query(collection(db, "ppdb"), orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
       const data: Pendaftar[] = [];
       querySnapshot.forEach((doc) => {

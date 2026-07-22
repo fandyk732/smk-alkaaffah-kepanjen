@@ -35,7 +35,7 @@ export default function PengumumanPage() {
     try {
       // Cari di Firestore yang NISN-nya cocok
       const q = query(
-        collection(db, "PPDB"),
+        collection(db, "ppdb"),
         where("nisn", "==", nisnInput.trim()),
         limit(1)
       );
@@ -279,7 +279,7 @@ export default function PengumumanPage() {
               </p>
 
               {/* Tanda Tangan */}
-              <div className="mt-12 float-right text-center w-[250px] text-black">
+              <div className="mt-12 float-right text-center w-62.5 text-black">
                 <p className="m-0">Malang, {new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 <p className="m-0 mb-16">Kepala Sekolah,</p>
                 <p className="m-0 font-bold underline">Maya Dian Rosita, S.A.P</p>
