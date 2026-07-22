@@ -36,7 +36,7 @@ export function FormPPDB() {
     }
 
     try {
-      await addDoc(collection(db, "PPDB"), {
+      await addDoc(collection(db, "ppdb"), {
         ...formData,
         statusPendaftaran: "Menunggu Verifikasi",
         createdAt: serverTimestamp(),
