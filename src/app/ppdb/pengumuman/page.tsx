@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { Search, CheckCircle2, XCircle, Clock, Loader2, Award, Printer } from "lucide-react";
@@ -19,6 +19,9 @@ export default function PengumumanPage() {
   const [dataSiswa, setDataSiswa] = useState<Siswa | null>(null);
   const [loading, setLoading] = useState(false);
   const [sudahCari, setSudahCari] = useState(false);
+
+  // Ref untuk Surat Keterangan Fisik
+  const suratRef = useRef<HTMLDivElement>(null);
 
   // Fungsi Cek Kelulusan berdasarkan NISN
   const cekKelulusan = async (e: React.FormEvent) => {
@@ -52,87 +55,9 @@ export default function PengumumanPage() {
     }
   };
 
-  // Fungsi Print Surat Keterangan Hasil Seleksi Pribadi
-  const printSuratKelulusan = (siswa: Siswa) => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    const statusTeks = 
-      siswa.statusPendaftaran === "Diterima" ? "DINYATAKAN LULUS / DITERIMA" :
-      siswa.statusPendaftaran === "Ditolak" ? "DINYATAKAN TIDAK LULUS" : "MASIH DALAM PROSES VERIFIKASI";
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Surat Hasil Seleksi PPDB - ${siswa.namaLengkap}</title>
-          <style>
-            body { font-family: 'Times New Roman', Times, serif; padding: 50px; color: #000; line-height: 1.6; }
-            .kop-surat { text-align: center; border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
-            .kop-title { font-size: 22px; font-weight: bold; margin: 0; }
-            .kop-sub { font-size: 14px; margin: 5px 0 0 0; }
-            .nomor-surat { text-align: center; margin-bottom: 30px; font-size: 16px; }
-            .content { font-size: 16px; text-align: justify; }
-            .tabel-data { width: 80%; margin: 20px auto; border-collapse: collapse; }
-            .tabel-data td { padding: 8px; font-size: 16px; }
-            .box-status { width: 70%; margin: 30px auto; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; border: 3px solid #000; }
-            .diterima { background-color: #f0fdf4; border-color: #166534; color: #166534; }
-            .ditolak { background-color: #fef2f2; border-color: #991b1b; color: #991b1b; }
-            .footer { margin-top: 50px; float: right; text-align: center; font-size: 16px; width: 250px; }
-          </style>
-        </head>
-        <body>
-          <div class="kop-surat">
-            <div class="kop-title">YAYASAN AL KAAFFAH KEPANJEN</div>
-            <div class="kop-title">SMK AL KAAFFAH KEPANJEN</div>
-            <div class="kop-sub">Jl. Raya Dilem No.07, Dilem, Kepanjen, Malang, Jawa Timur</div>
-          </div>
-          
-          <div class="nomor-surat">
-            <strong><u>SURAT KETERANGAN HASIL SELEKSI PPDB</u></strong><br/>
-            Nomor: P/045/PPDB-${new Date().getFullYear()}
-          </div>
-          
-          <div class="content">
-            Berdasarkan hasil seleksi administrasi, ujian akademik, dan wawancara yang telah dilaksanakan oleh Panitia Penerimaan Peserta Didik Baru (PPDB) SMK Al Kaaffah Kepanjen, dengan ini menerangkan bahwa:
-          </div>
-          
-          <table class="tabel-data">
-            <tr><td style="width: 35%;">Nama Lengkap</td><td>: ${siswa.namaLengkap}</td></tr>
-            <tr><td>NISN</td><td>: ${siswa.nisn}</td></tr>
-            <tr><td>Asal Sekolah</td><td>: ${siswa.asalSekolah}</td></tr>
-            <tr><td>Kompetensi Keahlian</td><td>: ${siswa.pilihanJurusan}</td></tr>
-          </table>
-          
-          <div class="content">
-            Berdasarkan hasil rapat pleno panitia seleksi, yang bersangkutan di atas:
-          </div>
-          
-          <div class="box-status ${siswa.statusPendaftaran === 'Diterima' ? 'diterima' : siswa.statusPendaftaran === 'Ditolak' ? 'ditolak' : ''}">
-            ${statusTeks}
-          </div>
-          
-          <div class="content" style="margin-top: 20px;">
-            ${siswa.statusPendaftaran === 'Diterima' 
-              ? 'Selamat bagi calon peserta didik yang dinyatakan diterima. Harap segera melakukan daftar ulang sesuai jadwal yang ditentukan oleh panitia.' 
-              : siswa.statusPendaftaran === 'Ditolak' 
-              ? 'Terima kasih telah berpartisipasi dalam seleksi PPDB SMK Al Kaaffah. Tetap semangat dan semoga sukses di jenjang berikutnya.'
-              : 'Data Anda masih dalam tahap review berkas oleh panitia. Mohon cek kembali halaman ini secara berkala.'}
-          </div>
-
-          <div class="footer">
-            Malang, ${new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}<br/>
-            Kepala Sekolah,
-            <br/><br/><br/><br/>
-            <strong><u>Maya Dian Rosita, S.A.P</u></strong>
-          </div>
-
-          <script>
-            window.onload = function() { window.print(); window.close(); }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+  // 🎯 FUNGSI CETAK/SAVE PDF NATIVE (100% BEBAS ERROR LAB/OKLCH COLOR)
+  const downloadPDFSurat = () => {
+    window.print();
   };
 
   return (
@@ -228,14 +153,14 @@ export default function PengumumanPage() {
                 </div>
               </div>
 
-              {/* Tombol Print Surat Kelulusan Resmi */}
+              {/* 🎯 TOMBOL CETAK / SIMPAN PDF */}
               {dataSiswa.statusPendaftaran !== "Menunggu Verifikasi" && (
                 <div className="mt-8 flex justify-center">
                   <Button 
-                    onClick={() => printSuratKelulusan(dataSiswa)}
-                    className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 rounded-xl"
+                    onClick={downloadPDFSurat}
+                    className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 rounded-xl px-6"
                   >
-                    <Printer className="h-4 w-4 mr-2" /> Cetak Surat Keterangan Resmi
+                    <Printer className="h-4 w-4 mr-2" /> Cetak / Simpan Surat (PDF)
                   </Button>
                 </div>
               )}
@@ -245,6 +170,125 @@ export default function PengumumanPage() {
         </div>
 
       </div>
+
+      {/* =========================================================================
+          📄 KOP SURAT (TAMPIL HANYA KETIKA DI-PRINT / DITAMBAHKAN STYLESHEET PRINT)
+          ========================================================================= */}
+      {dataSiswa && (
+        <>
+          <style jsx global>{`
+            @media print {
+              /* Sembunyikan elemen visual situs saat print */
+              body * {
+                visibility: hidden !important;
+              }
+
+              /* Munculkan HANYA area surat resmi */
+              #area-surat-pdf, #area-surat-pdf * {
+                visibility: visible !important;
+              }
+
+              /* Posisi presisi di kertas A4 */
+              #area-surat-pdf {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                box-shadow: none !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+              }
+
+              @page {
+                size: A4 portrait;
+                margin: 0;
+              }
+            }
+          `}</style>
+
+          <div className="hidden print:block">
+            <div
+              id="area-surat-pdf"
+              ref={suratRef}
+              className="w-[210mm] min-h-[297mm] p-[15mm] text-black font-serif text-[15px] leading-relaxed bg-white"
+              style={{ fontFamily: "'Times New Roman', Times, serif" }}
+            >
+              {/* Kop Surat Header */}
+              <div className="text-center border-b-4 border-black pb-3 mb-6">
+                <h2 className="text-[20px] font-bold uppercase tracking-wide m-0 text-black">YAYASAN AL KAAFFAH KEPANJEN</h2>
+                <h1 className="text-[22px] font-bold uppercase tracking-wide m-0 text-black">SMK AL KAAFFAH KEPANJEN</h1>
+                <p className="text-[13px] italic m-0 mt-1 text-black">Jl. Semeru Nomor 18a Dilem, Kepanjen, Kabupaten Malang, Jawa Timur</p>
+              </div>
+
+              {/* Judul Surat */}
+              <div className="text-center mb-6">
+                <p className="text-[17px] font-bold underline m-0 text-black">SURAT KETERANGAN HASIL SELEKSI PPDB</p>
+                <p className="text-[14px] m-0 text-black">Nomor: P/045/PPDB-{new Date().getFullYear()}</p>
+              </div>
+
+              <p className="text-justify mb-4 text-black">
+                Berdasarkan hasil seleksi administrasi, ujian akademik, dan wawancara yang telah dilaksanakan oleh Panitia Penerimaan Peserta Didik Baru (PPDB) SMK Al Kaaffah Kepanjen, dengan ini menerangkan bahwa:
+              </p>
+
+              {/* Tabel Identitas Siswa */}
+              <table className="w-[90%] mx-auto my-4 border-collapse text-[15px] text-black">
+                <tbody>
+                  <tr>
+                    <td className="py-1.5 w-[35%] font-medium">Nama Lengkap</td>
+                    <td className="py-1.5">: <strong>{dataSiswa.namaLengkap}</strong></td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5 font-medium">NISN</td>
+                    <td className="py-1.5">: {dataSiswa.nisn}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5 font-medium">Asal Sekolah</td>
+                    <td className="py-1.5">: {dataSiswa.asalSekolah}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5 font-medium">Kompetensi Keahlian</td>
+                    <td className="py-1.5">: <strong>{dataSiswa.pilihanJurusan}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p className="text-justify my-4 text-black">
+                Berdasarkan hasil rapat pleno panitia seleksi, yang bersangkutan di atas:
+              </p>
+
+              {/* Box Keputusan */}
+              <div 
+                className="w-[80%] mx-auto my-6 p-4 text-center font-bold text-[18px] border-2 rounded-lg"
+                style={{
+                  backgroundColor: dataSiswa.statusPendaftaran === 'Diterima' ? '#f0fdf4' : '#fef2f2',
+                  borderColor: dataSiswa.statusPendaftaran === 'Diterima' ? '#15803d' : '#b91c1c',
+                  color: dataSiswa.statusPendaftaran === 'Diterima' ? '#166534' : '#991b1b'
+                }}
+              >
+                {dataSiswa.statusPendaftaran === "Diterima" 
+                  ? "DINYATAKAN LULUS / DITERIMA" 
+                  : "DINYATAKAN TIDAK LULUS"}
+              </div>
+
+              <p className="text-justify my-4 text-black">
+                {dataSiswa.statusPendaftaran === 'Diterima' 
+                  ? 'Selamat bagi calon peserta didik yang dinyatakan diterima. Harap segera melakukan daftar ulang sesuai jadwal yang ditentukan oleh panitia.' 
+                  : 'Terima kasih telah berpartisipasi dalam seleksi PPDB SMK Al Kaaffah. Tetap semangat dan semoga sukses di jenjang berikutnya.'}
+              </p>
+
+              {/* Tanda Tangan */}
+              <div className="mt-12 float-right text-center w-[250px] text-black">
+                <p className="m-0">Malang, {new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="m-0 mb-16">Kepala Sekolah,</p>
+                <p className="m-0 font-bold underline">Maya Dian Rosita, S.A.P</p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   );
 }
