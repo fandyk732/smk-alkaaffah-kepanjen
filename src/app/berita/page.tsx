@@ -3,12 +3,18 @@ import { BeritaPage } from "@/components/pages/berita-page";
 import { school } from "@/data/site";
 
 export const metadata: Metadata = {
-  title: `Berita & Artikel — ${school.name}`,
-  description: "Kabar terbaru, kegiatan, prestasi, dan artikel dari SMK Al Kaaffah Kepanjen.",
-  alternates: { canonical: "/berita" },
-  openGraph: { title: `Berita & Artikel — ${school.name}`, url: "/berita" },
+  title: `Berita & Informasi — ${school.name}`,
+  description:
+    "Kabar terbaru, kegiatan sekolah, pengumuman, dan prestasi siswa SMK Al Kaaffah Kepanjen.",
+  alternates: {
+    canonical: "/berita",
+  },
 };
 
 export default function Page() {
-  return <BeritaPage />;
+  return (
+    <main className="min-h-screen w-full overflow-x-hidden pt-20 pb-16">
+      <BeritaPage />
+    </main>
+  );
 }
