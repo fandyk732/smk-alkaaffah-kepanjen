@@ -28,14 +28,27 @@ interface Berita {
 const categories = ["Semua", "Berita", "Pengumuman", "Prestasi", "Event"];
 const PER_PAGE = 6;
 
-// 🎯 HELPER STRIP HTML (SUPER BERSIH: Hapus Tag HTML + Semua Entity &nbsp; &lt; dll)
 const stripHtml = (htmlString: string) => {
   if (!htmlString) return "";
-  return htmlString
-    .replace(/<[^>]*>/g, "")        // Hapus semua tag HTML (<p>, <a>, <strong>, dll)
-    .replace(/&[a-z0-9#]+;/gi, " ") // Hapus SEMUA HTML Entities (&nbsp;, &gt;, &lt;, dll)
-    .replace(/\s+/g, " ")           // Bersihkan spasi ganda berlebih
+
+  // 1. Unescape dulu entitas HTML yang ter-escape (misal &lt;p&gt; atau string mentah)
+  let decoded = htmlString
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+
+  // 2. Bersihkan semua tag HTML (<p>, <strong>, <em>, dll)
+  let cleanText = decoded.replace(/<[^>]*>?/gm, " ");
+
+  // 3. Bersihkan sisa spasi khusus (&nbsp; dll) & spasi ganda
+  cleanText = cleanText
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
     .trim();
+
+  return cleanText;
 };
 
 export function BeritaPage() {

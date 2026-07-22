@@ -22,6 +22,28 @@ interface Berita {
   slug: string;
 }
 
+// 🎯 HELPER 1: Unescape Entitas HTML yang Ter-escape dari Firestore/Quill Editor
+const decodeHtml = (htmlString: string) => {
+  if (!htmlString) return "";
+  return htmlString
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+};
+
+// 🎯 HELPER 2: Strip HTML Bersih Total (Untuk Meta SEO & Excerpt)
+const stripHtml = (htmlString: string) => {
+  if (!htmlString) return "";
+  const decoded = decodeHtml(htmlString);
+  return decoded
+    .replace(/<[^>]*>?/gm, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 async function dapatkanBeritaDariFirestore(slug: string): Promise<Berita | null> {
   try {
     const q = query(collection(db, "berita"), where("slug", "==", slug), limit(1));
@@ -62,8 +84,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
   if (!a) return { title: "Berita tidak ditemukan — " + school.name, robots: { index: false } };
 
-  const deskripsiBersih = a.konten.replace(/<[^>]*>?/gm, '');
-  const deskripsiSeo = deskripsiBersih.substring(0, 150) + "...";
+  // 🎯 Pakai stripHtml biar deskripsi SEO di Google bersih dari tag & entity HTML
+  const deskripsiBersih = stripHtml(a.konten);
+  const deskripsiSeo = deskripsiBersih.substring(0, 150) + (deskripsiBersih.length > 150 ? "..." : "");
 
   return {
     title: `${a.judul} — ${school.name}`,
@@ -100,7 +123,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
   };
 
   return (
-    <article className="container-page max-w-3xl py-32 text-foreground">
+    <article className="container-page max-w-3xl py-24 sm:py-32 text-foreground">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -115,12 +138,12 @@ export default async function ArticlePage({ params }: { params: Params }) {
 
       {/* Kategori & Tanggal */}
       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <Tag className="h-4 w-4 text-primary" />
+        <span className="flex items-center gap-1.5 font-medium text-primary">
+          <Tag className="h-4 w-4" />
           {article.kategori}
         </span>
         <span className="flex items-center gap-1.5">
-          <Calendar className="h-4 w-4 text-primary" />
+          <Calendar className="h-4 w-4 text-muted-foreground" />
           {article.tanggal}
         </span>
       </div>
@@ -131,7 +154,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
       </h1>
 
       {/* Gambar Utama */}
-      <div className="mt-8 overflow-hidden rounded-2xl border shadow-soft aspect-video">
+      <div className="mt-8 overflow-hidden rounded-2xl border shadow-soft aspect-video bg-muted">
         <img 
           src={article.gambar} 
           alt={article.judul} 
@@ -139,16 +162,18 @@ export default async function ArticlePage({ params }: { params: Params }) {
         />
       </div>
 
-      {/* KONTEN ARTIKEL */}
+      {/* KONTEN ARTIKEL UTAMA */}
       <div className="mt-8 max-w-none text-foreground leading-relaxed w-full overflow-hidden">
+        {/* 🎯 DI SINI KUNCI BIKIN KONTEN ARTIKEL RAPI DAN FORMATNYA JALAN */}
         <div 
-          dangerouslySetInnerHTML={{ __html: article.konten }} 
+          dangerouslySetInnerHTML={{ __html: decodeHtml(article.konten) }} 
           className="
             prose prose-slate dark:prose-invert max-w-none
             wrap-break-word
-            prose-p:text-lg prose-p:leading-relaxed
+            prose-p:text-base sm:prose-p:text-lg prose-p:leading-relaxed
             prose-a:text-primary prose-a:no-underline hover:prose-a:underline
             prose-img:rounded-xl prose-img:w-full prose-img:object-cover
+            prose-strong:font-bold prose-strong:text-foreground
           "
         />
       </div>
@@ -164,9 +189,9 @@ export default async function ArticlePage({ params }: { params: Params }) {
               <Reveal key={n.slug} delay={i * 0.07}>
                 <Link 
                   href={`/berita/${n.slug}`} 
-                  className="group block overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-soft h-full"
+                  className="group block overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-soft h-full flex flex-col"
                 >
-                  <div className="aspect-video overflow-hidden bg-muted">
+                  <div className="aspect-video overflow-hidden bg-muted relative shrink-0">
                     <img 
                       src={n.gambar} 
                       alt={n.judul} 
@@ -174,7 +199,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
                     />
                   </div>
-                  <div className="p-4">
+                  <div className="p-4 flex flex-col justify-between grow">
                     <h3 className="text-sm font-semibold leading-snug group-hover:text-primary line-clamp-2 wrap-break-word">
                       {n.judul}
                     </h3>
