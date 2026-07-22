@@ -17,10 +17,9 @@ import {
   getDoc
 } from "firebase/firestore";
 import { Edit2, Trash2, Plus, Save, X, Loader2, LogOut, LayoutGrid } from "lucide-react";
-
 import dynamic from "next/dynamic";
-import "react-quill-new/dist/quill.snow.css"; 
 
+// 🎯 DYNAMIC IMPORT REACT-QUILL (Bebas Import CSS Lokal biar Gak Module Not Found)
 const ReactQuill = dynamic(() => import("react-quill-new"), { 
   ssr: false,
   loading: () => (
@@ -237,7 +236,9 @@ export default function AdminArtikelPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pt-28 pb-20 px-4 sm:px-6 lg:px-8 [color-scheme:light]">
-      {/* 🎯 FIX 1: Tambahkan w-full & overflow-hidden agar pembungkus utama tidak jebol */}
+      {/* 🎯 LOAD STYLESHEET QUILL SECARA DIRECT VIA HTML (ANTI MODULE NOT FOUND) */}
+      <link rel="stylesheet" href="https://unpkg.com/react-quill-new@2.0.0/dist/quill.snow.css" />
+
       <div className="max-w-4xl w-full mx-auto space-y-12 overflow-hidden">
         
         {/* ================= FORM INPUT / EDIT ================= */}
@@ -327,7 +328,6 @@ export default function AdminArtikelPage() {
               </div>
             </div>
 
-            {/* 🎯 FIX 2: Bawaan styling Quill di-breakdown agar tidak melar dan font tidak membengkak */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Isi Artikel / Berita
@@ -335,14 +335,7 @@ export default function AdminArtikelPage() {
               <div className="bg-white text-slate-900 rounded-lg border border-slate-200 overflow-hidden 
                 [&_.ql-editor]:min-h-[220px] 
                 [&_.ql-editor]:max-w-full 
-                [&_.ql-editor]:break-words 
-                [&_.ql-editor_img]:max-w-full 
-                [&_.ql-editor_img]:h-auto 
-                [&_.ql-editor_iframe]:max-w-full
-                [&_.ql-editor_h2]:text-xl 
-                [&_.ql-editor_h2]:font-bold 
-                [&_.ql-editor_h3]:text-lg 
-                [&_.ql-editor_h3]:font-bold">
+                [&_.ql-editor]:break-words">
                 <ReactQuill 
                   theme="snow"
                   value={konten}
@@ -404,7 +397,6 @@ export default function AdminArtikelPage() {
               Belum ada berita yang diterbitkan.
             </div>
           ) : (
-            /* 🎯 FIX 3: Tambahkan min-w-full pada table biar ga gepeng tapi tetep scrollable di layar kecil */
             <div className="overflow-x-auto w-full">
               <table className="w-full min-w-[600px] text-left border-collapse">
                 <thead>
