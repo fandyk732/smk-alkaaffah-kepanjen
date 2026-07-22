@@ -1,3 +1,4 @@
+@import "react-quill-new/dist/quill.snow.css";
 @import "tailwindcss" source(none);
 @source "../";
 @import "tw-animate-css";
