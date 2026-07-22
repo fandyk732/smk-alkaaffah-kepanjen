@@ -11,8 +11,8 @@ import { FormPPDB } from "@/components/pages/form-ppdb"; // Import komponen form
 export const metadata: Metadata = {
   title: `PPDB — ${school.name}`,
   description: "Informasi Penerimaan Peserta Didik Baru (PPDB) SMK Al Kaaffah Kepanjen: syarat, alur, dan pendaftaran online.",
-  alternates: { canonical: "/ppdb" },
-  openGraph: { title: `PPDB — ${school.name}`, url: "/ppdb" },
+  alternates: { canonical: "/PPDB" },
+  openGraph: { title: `PPDB — ${school.name}`, url: "/PPDB" },
 };
 
 const requirements = [
@@ -32,7 +32,7 @@ const faqs = [
   { q: "Program keahlian apa saja yang tersedia?", a: "Tersedia TKJ, TAV, TKR, dan DM." },
 ];
 
-export default function PpdbPage() {
+export default function PPDBPage() {
   return (
     <>
       <PageHero eyebrow="PPDB 2026/2027" title="Penerimaan Peserta Didik Baru" description="Bergabunglah dengan SMK Al Kaaffah Kepanjen dan mulai perjalanan menuju masa depan gemilang." />

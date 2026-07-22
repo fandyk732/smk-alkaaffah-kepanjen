@@ -126,7 +126,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
       </div>
 
       {/* Judul Utama */}
-      <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl break-words">
+      <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl wrap-break-word">
         {article.judul}
       </h1>
 
@@ -139,20 +139,16 @@ export default async function ArticlePage({ params }: { params: Params }) {
         />
       </div>
 
-      {/* 🎯 KONTEN ARTIKEL DENGAN AUTO-WRAP CSS & BREAK-WORDS */}
-      <div className="prose prose-slate dark:prose-invert mt-8 max-w-none text-foreground leading-relaxed w-full overflow-hidden">
+      {/* KONTEN ARTIKEL */}
+      <div className="mt-8 max-w-none text-foreground leading-relaxed w-full overflow-hidden">
         <div 
           dangerouslySetInnerHTML={{ __html: article.konten }} 
           className="
-            break-words [overflow-wrap:anywhere]
-            [&_p]:mb-4 [&_p]:text-lg [&_p]:leading-relaxed [&_p]:break-words
-            [&_a]:text-primary [&_a]:underline [&_a]:break-all hover:[&_a]:opacity-80
-            [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4
-            [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4
-            [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-6
-            [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:break-words
-            [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:break-words
-            [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl
+            prose prose-slate dark:prose-invert max-w-none
+            wrap-break-word
+            prose-p:text-lg prose-p:leading-relaxed
+            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+            prose-img:rounded-xl prose-img:w-full prose-img:object-cover
           "
         />
       </div>
@@ -179,7 +175,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
                     />
                   </div>
                   <div className="p-4">
-                    <h3 className="text-sm font-semibold leading-snug group-hover:text-primary line-clamp-2 break-words">
+                    <h3 className="text-sm font-semibold leading-snug group-hover:text-primary line-clamp-2 wrap-break-word">
                       {n.judul}
                     </h3>
                   </div>

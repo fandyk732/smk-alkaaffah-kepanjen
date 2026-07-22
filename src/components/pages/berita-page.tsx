@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 // Import Firestore
-import { db } from "@/lib/firebase"; // Sesuaikan path jika berbeda, misal "@/firebase"
+import { db } from "@/lib/firebase"; 
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
 // Definisikan tipe data berita dari Firestore
@@ -27,6 +27,15 @@ interface Berita {
 // Kategorinya disesuaikan dengan opsi di form admin lo kemarin
 const categories = ["Semua", "Berita", "Pengumuman", "Prestasi", "Event"];
 const PER_PAGE = 6;
+
+// 🎯 HELPER STRIP HTML (Membersihkan tag <p>, <b>, <i>, dll. dari Quill)
+const stripHtml = (htmlString: string) => {
+  if (!htmlString) return "";
+  return htmlString
+    .replace(/<[^>]*>/g, "") // Hapus semua tag HTML
+    .replace(/&nbsp;/g, " ")  // Ubah entity &nbsp; jadi spasi biasa
+    .trim();
+};
 
 export function BeritaPage() {
   const [q, setQ] = useState("");
@@ -133,7 +142,6 @@ export function BeritaPage() {
                       loading="lazy" 
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
                       onError={(e) => {
-                        // Fallback jika image link pecah
                         (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800";
                       }}
                     />
@@ -146,9 +154,10 @@ export function BeritaPage() {
                     <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2">
                       {n.judul}
                     </h3>
-                    {/* Potong konten secara otomatis untuk dijadikan excerpt/ringkasan */}
+                    
+                    {/* 🎯 DI SINI PERUBAHANNYA: Menggunakan stripHtml(n.konten) */}
                     <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                      {n.konten}
+                      {stripHtml(n.konten)}
                     </p>
                   </div>
                 </Link>

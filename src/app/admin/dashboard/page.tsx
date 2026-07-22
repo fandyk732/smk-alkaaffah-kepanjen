@@ -109,7 +109,7 @@ export default function AdminDashboardHub() {
           )}
 
           {/* 2. Panitia PPDB */}
-          {(userRoles.includes("panitia_ppdb") || userRoles.includes("superadmin")) && (
+          {(userRoles.includes("panitia_PPDB") || userRoles.includes("superadmin")) && (
             <Link
               href="/admin/ppdb"
               className="group bg-slate-900 border border-slate-800 hover:border-emerald-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-emerald-500/5 flex items-start gap-4"

@@ -32,7 +32,7 @@ export default function AdminPPDBPage() {
   const ambilDataPPDB = useCallback(async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, "ppdb"), orderBy("createdAt", "desc"));
+      const q = query(collection(db, "PPDB"), orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
       const data: Pendaftar[] = [];
       querySnapshot.forEach((doc) => {
@@ -62,8 +62,8 @@ export default function AdminPPDBPage() {
           // 🎯 1. Konversi role ke Array (Mendukung data lama & baru)
           const roles: string[] = Array.isArray(data.role) ? data.role : [data.role];
 
-          // 🎯 2. Cek apakah punya akses panitia_ppdb atau superadmin
-          const hasAccess = roles.includes("panitia_ppdb") || roles.includes("superadmin");
+          // 🎯 2. Cek apakah punya akses panitia_PPDB atau superadmin
+          const hasAccess = roles.includes("panitia_PPDB") || roles.includes("superadmin");
 
           if (hasAccess) {
             setPanitiaName(data.nama || "Panitia PPDB");
@@ -100,7 +100,7 @@ export default function AdminPPDBPage() {
   // --- UBAH STATUS PENDAFTARAN SISWA ---
   const ubahStatus = async (id: string, statusBaru: "Diterima" | "Ditolak") => {
     try {
-      const docRef = doc(db, "ppdb", id);
+      const docRef = doc(db, "PPDB", id);
       await updateDoc(docRef, { statusPendaftaran: statusBaru });
       
       setListPendaftar((prev) =>

@@ -32,7 +32,7 @@ export default function PengumumanPage() {
     try {
       // Cari di Firestore yang NISN-nya cocok
       const q = query(
-        collection(db, "ppdb"),
+        collection(db, "PPDB"),
         where("nisn", "==", nisnInput.trim()),
         limit(1)
       );

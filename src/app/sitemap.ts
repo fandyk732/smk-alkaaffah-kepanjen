@@ -4,7 +4,7 @@ import { news } from "@/data/site";
 const BASE_URL = "https://smkalkaaffah.sch.id";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const paths = ["/", "/profil", "/program", "/berita", "/galeri", "/ppdb", "/kontak",
+  const paths = ["/", "/profil", "/program", "/berita", "/galeri", "/PPDB", "/kontak",
     ...news.map((n) => `/berita/${n.slug}`)];
   return paths.map((p) => ({
     url: `${BASE_URL}${p}`,

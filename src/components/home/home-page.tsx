@@ -30,6 +30,15 @@ interface Berita {
   tanggal: string;
 }
 
+// 🎯 HELPER STRIP HTML (Mencabutsemua tag <p>, <strong>, <a>, &nbsp; dll)
+const stripHtml = (htmlString: string) => {
+  if (!htmlString) return "";
+  return htmlString
+    .replace(/<[^>]*>/g, "") // Hapus semua tag HTML
+    .replace(/&nbsp;/g, " ")  // Ubah &nbsp; jadi spasi normal
+    .trim();
+};
+
 export function HomePage() {
   const [beritaTerbaru, setBeritaTerbaru] = useState<Berita[]>([]);
   const [loadingBerita, setLoadingBerita] = useState(true);
@@ -136,7 +145,7 @@ export function HomePage() {
         </motion.div>
       </section>
 
-      {/* 2. NEWS SECTION (SEKARANG SUDAH DI SINI, TEPAT DI BAWAH HERO) */}
+      {/* 2. NEWS SECTION */}
       <section className="container-page py-16 border-t border-muted/30">
         <div className="flex items-end justify-between gap-4">
           <SectionHeading align="left" eyebrow="Berita Terbaru" title="Kabar & kegiatan sekolah" />
@@ -178,8 +187,10 @@ export function HomePage() {
                     <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2">
                       {n.judul}
                     </h3>
+
+                    {/* 🎯 BERSIHKAN KONTEN MENGGUNAKAN stripHtml */}
                     <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                      {n.konten}
+                      {stripHtml(n.konten)}
                     </p>
                   </div>
                 </Link>
