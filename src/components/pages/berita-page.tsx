@@ -28,12 +28,13 @@ interface Berita {
 const categories = ["Semua", "Berita", "Pengumuman", "Prestasi", "Event"];
 const PER_PAGE = 6;
 
-// 🎯 HELPER STRIP HTML (Membersihkan tag <p>, <b>, <i>, dll. dari Quill)
+// 🎯 HELPER STRIP HTML (SUPER BERSIH: Hapus Tag HTML + Semua Entity &nbsp; &lt; dll)
 const stripHtml = (htmlString: string) => {
   if (!htmlString) return "";
   return htmlString
-    .replace(/<[^>]*>/g, "") // Hapus semua tag HTML
-    .replace(/&nbsp;/g, " ")  // Ubah entity &nbsp; jadi spasi biasa
+    .replace(/<[^>]*>/g, "")        // Hapus semua tag HTML (<p>, <a>, <strong>, dll)
+    .replace(/&[a-z0-9#]+;/gi, " ") // Hapus SEMUA HTML Entities (&nbsp;, &gt;, &lt;, dll)
+    .replace(/\s+/g, " ")           // Bersihkan spasi ganda berlebih
     .trim();
 };
 
@@ -42,7 +43,7 @@ export function BeritaPage() {
   const [cat, setCat] = useState("Semua");
   const [page, setPage] = useState(1);
   
-  // State baru untuk menampung data dari Firestore dan status loading
+  // State untuk menampung data dari Firestore dan status loading
   const [daftarBerita, setDaftarBerita] = useState<Berita[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -133,9 +134,10 @@ export function BeritaPage() {
               <Reveal key={n.slug} delay={i * 0.06}>
                 <Link 
                   href={`/berita/${n.slug}`} 
-                  className="group block h-full overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-elegant"
+                  className="group block h-full overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-elegant flex flex-col"
                 >
-                  <div className="aspect-video overflow-hidden bg-slate-100 dark:bg-slate-800">
+                  {/* 🎯 FIX GAMBAR MOBILE: Dikunci dengan aspect-video & object-cover */}
+                  <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
                     <img 
                       src={n.gambar} 
                       alt={n.judul} 
@@ -146,19 +148,22 @@ export function BeritaPage() {
                       }}
                     />
                   </div>
-                  <div className="p-5">
-                    <div className="flex justify-between items-center text-xs font-semibold text-primary">
-                      <span>{n.kategori}</span>
-                      <span className="text-muted-foreground font-normal">{n.tanggal}</span>
+                  
+                  <div className="p-5 flex flex-col justify-between grow">
+                    <div>
+                      <div className="flex justify-between items-center text-xs font-semibold text-primary">
+                        <span>{n.kategori}</span>
+                        <span className="text-muted-foreground font-normal">{n.tanggal}</span>
+                      </div>
+                      <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2 wrap-break-word">
+                        {n.judul}
+                      </h3>
+                      
+                      {/* 🎯 FIX TEKS PREVIEW BERSIH TOTAL */}
+                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground wrap-break-word">
+                        {stripHtml(n.konten)}
+                      </p>
                     </div>
-                    <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2">
-                      {n.judul}
-                    </h3>
-                    
-                    {/* 🎯 DI SINI PERUBAHANNYA: Menggunakan stripHtml(n.konten) */}
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                      {stripHtml(n.konten)}
-                    </p>
                   </div>
                 </Link>
               </Reveal>
