@@ -54,26 +54,33 @@ export default function LoginPage() {
           return;
         }
 
+        // Standardisasi role ke lowercase untuk menghindari issue typo huruf besar/kecil
+        const normalizedRoles = roles.map((r) => r.toLowerCase().trim());
+
         // 1. Jika punya role 'superadmin' -> langsung lempar ke Superadmin Portal
-        if (roles.includes("superadmin")) {
+        if (normalizedRoles.includes("superadmin")) {
           router.push("/superadmin/users");
           return;
         }
 
         // 2. Jika punya LEBIH DARI 1 ROLE -> Lempar ke Dashboard Hub / Selection Panel
-        if (roles.length > 1) {
+        if (normalizedRoles.length > 1) {
           router.push("/admin/dashboard");
           return;
         }
 
         // 3. Jika HANYA PUNYA 1 ROLE -> Langsung ke modul spesifik
-        const singleRole = roles[0];
+        const singleRole = normalizedRoles[0];
         if (singleRole === "admin_artikel") {
           router.push("/admin/artikel");
-        } else if (singleRole === "panitia_ppdb") {
+        } else if (singleRole === "panitia_ppdb" || singleRole === "admin_ppdb") {
           router.push("/admin/ppdb");
         } else if (singleRole === "admin_alumni") {
           router.push("/admin/alumni");
+        } else if (singleRole === "admin_galeri") {
+          router.push("/admin/galeri"); // 🎯 INJEKSI HALAMAN GALERI
+        } else if (singleRole === "admin_prestasi") {
+          router.push("/admin/prestasi"); // 🎯 INJEKSI HALAMAN PRESTASI
         } else {
           alert("Role tidak dikenali. Hubungi Superadmin.");
           await auth.signOut();

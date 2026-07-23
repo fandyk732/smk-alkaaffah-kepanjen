@@ -13,7 +13,9 @@ import {
   ShieldCheck, 
   LogOut, 
   Loader2, 
-  LayoutGrid 
+  LayoutGrid,
+  Image as ImageIcon,
+  Trophy
 } from "lucide-react";
 
 export default function AdminDashboardHub() {
@@ -35,8 +37,11 @@ export default function AdminDashboardHub() {
           const data = userDoc.data();
           setUserName(data.nama || user.displayName || "Admin");
           
-          const roles = Array.isArray(data.role) ? data.role : [data.role];
-          setUserRoles(roles);
+          const rawRoles = Array.isArray(data.role) ? data.role : [data.role];
+          // Normalisasi ke lowercase untuk mencegah bug typo huruf besar/kecil
+          const normalizedRoles = rawRoles.map((r: string) => String(r).toLowerCase().trim());
+          
+          setUserRoles(normalizedRoles);
         } else {
           router.push("/login");
         }
@@ -53,6 +58,11 @@ export default function AdminDashboardHub() {
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
+  };
+
+  // Helper Pengecekan Role
+  const hasRole = (roleKey: string) => {
+    return userRoles.includes("superadmin") || userRoles.includes(roleKey.toLowerCase());
   };
 
   if (loading) {
@@ -89,7 +99,7 @@ export default function AdminDashboardHub() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           {/* 1. Admin Artikel */}
-          {(userRoles.includes("admin_artikel") || userRoles.includes("superadmin")) && (
+          {hasRole("admin_artikel") && (
             <Link
               href="/admin/artikel"
               className="group bg-slate-900 border border-slate-800 hover:border-blue-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-blue-500/5 flex items-start gap-4"
@@ -109,7 +119,7 @@ export default function AdminDashboardHub() {
           )}
 
           {/* 2. Panitia PPDB */}
-          {(userRoles.includes("panitia_PPDB") || userRoles.includes("superadmin")) && (
+          {(hasRole("panitia_ppdb") || hasRole("panitia_PPDB")) && (
             <Link
               href="/admin/ppdb"
               className="group bg-slate-900 border border-slate-800 hover:border-emerald-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-emerald-500/5 flex items-start gap-4"
@@ -129,7 +139,7 @@ export default function AdminDashboardHub() {
           )}
 
           {/* 3. Admin Alumni */}
-          {(userRoles.includes("admin_alumni") || userRoles.includes("superadmin")) && (
+          {hasRole("admin_alumni") && (
             <Link
               href="/admin/alumni"
               className="group bg-slate-900 border border-slate-800 hover:border-amber-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-amber-500/5 flex items-start gap-4"
@@ -148,7 +158,47 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 4. Portal Superadmin */}
+          {/* 4. Admin Galeri (Modul Baru) */}
+          {hasRole("admin_galeri") && (
+            <Link
+              href="/admin/galeri"
+              className="group bg-slate-900 border border-slate-800 hover:border-cyan-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-cyan-500/5 flex items-start gap-4"
+            >
+              <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl group-hover:scale-110 transition">
+                <ImageIcon className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-slate-100 group-hover:text-cyan-400 transition">
+                  Galeri & Dokumentasi
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Kelola foto kegiatan, album sekolah, dan dokumentasi acara.
+                </p>
+              </div>
+            </Link>
+          )}
+
+          {/* 5. Admin Prestasi (Modul Baru) */}
+          {hasRole("admin_prestasi") && (
+            <Link
+              href="/admin/prestasi"
+              className="group bg-slate-900 border border-slate-800 hover:border-rose-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-rose-500/5 flex items-start gap-4"
+            >
+              <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl group-hover:scale-110 transition">
+                <Trophy className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-slate-100 group-hover:text-rose-400 transition">
+                  Prestasi Sekolah
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Kelola daftar penghargaan, kejuaraan siswa, dan piala sekolah.
+                </p>
+              </div>
+            </Link>
+          )}
+
+          {/* 6. Portal Superadmin */}
           {userRoles.includes("superadmin") && (
             <Link
               href="/superadmin/users"
@@ -159,10 +209,10 @@ export default function AdminDashboardHub() {
               </div>
               <div>
                 <h3 className="font-bold text-lg text-slate-100 group-hover:text-purple-400 transition">
-                  Kelola Akun & User
+                  Kelola Akun & Role User
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Manajemen pendaftaran akun guru dan hak akses role.
+                  Manajemen pendaftaran akun guru dan pembagian hak akses sistem.
                 </p>
               </div>
             </Link>

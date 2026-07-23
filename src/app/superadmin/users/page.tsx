@@ -31,19 +31,21 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// 📝 OPTION ROLE YANG TERSEDIA
+// 📝 OPTION ROLE YANG TERSEDIA (DITAMBAHKAN ADMIN GALERI & PRESTASI)
 const AVAILABLE_ROLES = [
   { id: "superadmin", label: "Superadmin (Akses Penuh)" },
   { id: "admin_artikel", label: "Admin Artikel (Berita & Blog)" },
   { id: "panitia_PPDB", label: "Panitia PPDB" },
   { id: "admin_alumni", label: "Admin Alumni" },
+  { id: "admin_galeri", label: "Admin Galeri (Foto & Dok)" },
+  { id: "admin_prestasi", label: "Admin Prestasi (Kejuaraan)" },
 ];
 
 interface UserData {
   id: string; // Email dijadikan ID Document
   nama: string;
   email: string;
-  role: string[]; // 🔄 DIUBAH MENJADI ARRAY STRING
+  role: string[]; // 🔄 ARRAY OF STRING ROLES
   createdAt?: any;
 }
 
@@ -92,7 +94,7 @@ export default function SuperadminUsersPage() {
         }
 
         alert("Akses ditolak! Halaman ini khusus Superadmin.");
-        router.push("/admin/artikel");
+        router.push("/admin/dashboard");
       } catch (err) {
         console.error("Gagal verifikasi role superadmin:", err);
         router.push("/login");
@@ -279,7 +281,7 @@ export default function SuperadminUsersPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm">
           <div>
             <div className="flex items-center gap-2">
-              <Link href="/admin/artikel" className="text-slate-400 hover:text-slate-600 transition">
+              <Link href="/admin/dashboard" className="text-slate-400 hover:text-slate-600 transition">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <h1 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
