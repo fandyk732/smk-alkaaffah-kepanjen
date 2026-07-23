@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   ArrowRight, Network, Code2, Clapperboard, Calculator, Award, Quote,
@@ -123,8 +124,16 @@ export function HomePage() {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="relative"
         >
-          <div className="overflow-hidden rounded-3xl border shadow-elegant">
-            <img src={heroImg.src} width={1280} height={960} alt="Siswa SMK Al Kaaffah belajar di laboratorium komputer" className="h-full w-full object-cover" />
+          {/* 🚀 SESUDAH (NEXT.JS IMAGE DENGAN PRIORITY) */}
+          <div className="overflow-hidden rounded-3xl border shadow-elegant relative h-[350px] sm:h-[450px] lg:h-[500px]">
+            <Image 
+              src={heroImg} 
+              alt="Siswa SMK Al Kaaffah belajar di laboratorium komputer" 
+              priority // 👈 INI KUNCI BIKIN SKOR LCP KENCANG & HIJAU!
+              fill // Biar ukurannya responsive otomatis ngikutin container
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover" 
+            />
           </div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
