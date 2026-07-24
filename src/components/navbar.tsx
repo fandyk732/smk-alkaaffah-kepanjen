@@ -102,7 +102,7 @@ export function Navbar() {
             {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
           <Button asChild className="hidden sm:inline-flex bg-gradient-primary">
-            <Link href="/ppdb">Daftar PPDB</Link>
+            <Link href="/ppdb">Daftar SPMB</Link>
           </Button>
           <Button
             variant="ghost"
@@ -138,7 +138,7 @@ export function Navbar() {
                 </li>
               ))}
               <Button asChild className="mt-2 w-full bg-gradient-primary sm:hidden">
-                <Link href="/ppdb">Daftar PPDB</Link>
+                <Link href="/ppdb">Daftar SPMB</Link>
               </Button>
             </ul>
           </motion.div>

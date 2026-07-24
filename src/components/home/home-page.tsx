@@ -103,7 +103,7 @@ export function HomePage() {
             className="mt-8 flex flex-wrap gap-3"
           >
             <Button asChild size="lg" className="bg-gradient-primary">
-              <Link href="/ppdb">Daftar PPDB <ArrowRight className="ml-1 h-4 w-4" /></Link>
+              <Link href="/ppdb">Daftar SPMB<ArrowRight className="ml-1 h-4 w-4" /></Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/program">Lihat Kompetensi Keahlian</Link>
@@ -277,7 +277,7 @@ export function HomePage() {
 
       {/* 6. PROGRAMS SECTION */}
       <section className="container-page py-16">
-        <SectionHeading eyebrow="Program Keahlian" title="Pilih Kompetensi Keahlian sesuai passion-mu" description="Empat kompetensi keahlian yang dirancang mengikuti standar dunia industri." />
+        <SectionHeading eyebrow="Program Keahlian" title="Pilih Kompetensi Keahlian dan Program Unggulan Kami sesuai Passion-mu" description="Empat kompetensi Plus Program Unggulan keahlian yang dirancang mengikuti standar dunia industri." />
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {programs.map((p, i) => {
             const Icon = iconMap[p.icon as keyof typeof iconMap];
@@ -297,7 +297,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* 7. TKJ HIGHLIGHT SECTION */}
+      {/* 7. KELAS JEPANG HIGHLIGHT SECTION */}
       <section className="container-page py-16">
         <div className="overflow-hidden rounded-3xl border bg-gradient-primary text-primary-foreground shadow-elegant">
           <div className="grid gap-8 p-8 lg:grid-cols-2 lg:items-center lg:p-12">
@@ -307,20 +307,20 @@ export function HomePage() {
               </span>
               <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Kelas Bahasa Jepang</h2>
               <p className="mt-4 max-w-md opacity-90">
-                Jurusan favorit dengan fasilitas laboratorium jaringan lengkap, sertifikasi vendor,
-                dan langganan juara LKS. Siapkan dirimu menjadi network engineer profesional.
+                Kelas Khusus Bahasa Jepang yang kami siapkan untuk siswa maupun alumni,
+                agar dapat bersaing di dunia kerja global, khususnya di Jepang.
               </p>
               <ul className="mt-6 grid gap-2 text-sm">
-                {["Routing & Switching", "Server & Cloud", "Keamanan Jaringan", "Sertifikasi Cisco & MikroTik"].map((t) => (
+                {["Sensei berlisensi N1", "Fasilitas kelas modern", "Biaya Terjangkau", "Peluang kerja di Jepang"].map((t) => (
                   <li key={t} className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {t}</li>
                 ))}
               </ul>
               <Button asChild size="lg" variant="secondary" className="mt-8">
-                <Link href="/program">Pelajari TKJ <ArrowRight className="ml-1 h-4 w-4" /></Link>
+                <Link href="/program">Pelajari Semua Program Kami <ArrowRight className="ml-1 h-4 w-4" /></Link>
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {[{ v: "100%", l: "Praktik Industri" }, { v: "8+", l: "Sertifikasi" }, { v: "1st", l: "Juara LKS Provinsi" }, { v: "15+", l: "Mitra IT" }].map((b) => (
+              {[{ v: "10++", l: "Mitra Kerja di Jepang" }, { v: "JLPT N4/N3", l: "Sertifikasi" }, { v: "<1 tahun", l: "Peluang Karier" }, { v: ">40%", l: "Dana Talangan" }].map((b) => (
                 <div key={b.l} className="rounded-2xl bg-white/10 p-5 backdrop-blur">
                   <p className="text-3xl font-extrabold">{b.v}</p>
                   <p className="mt-1 text-sm opacity-90">{b.l}</p>
@@ -390,7 +390,7 @@ export function HomePage() {
             <div className="absolute -right-16 -top-16 h-56 w-56 animate-blob bg-primary/15 blur-2xl" />
             <h2 className="relative text-3xl font-extrabold tracking-tight sm:text-4xl">Siap menjadi bagian dari kami?</h2>
             <p className="relative mx-auto mt-4 max-w-xl text-muted-foreground">
-              Pendaftaran Peserta Didik Baru (PPDB) telah dibuka. Amankan kursimu sekarang dan mulai perjalanan menuju masa depan gemilang.
+              Sistem Penerimaan Murid Baru (SPMB) telah dibuka. Amankan kursimu sekarang dan mulai perjalanan menuju masa depan gemilang.
             </p>
             <div className="relative mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" className="bg-gradient-primary">

@@ -23,7 +23,7 @@ export const navItems = [
   { label: "Berita", to: "/berita" },
   { label: "Galeri", to: "/galeri" },
   { label: "Alumni", to: "/alumni" },
-  { label: "PPDB", to: "/ppdb" },
+  { label: "SPMB", to: "/ppdb" },
   { label: "Kontak", to: "/kontak" },
 ] as const;
 
@@ -36,14 +36,20 @@ export const stats = [
 
 export const programs = [
   {
+    title: "Kelas Bahasa Jepang",
+    code: "JB",
+    desc: "Kelas khusus bahasa Jepang untuk siswa dan alumni.",
+    icon: "BookOpen",
+  },
+  {
     title: "Teknik Komputer & Jaringan",
     code: "TKJ",
     desc: "Membangun, mengelola, dan mengamankan infrastruktur jaringan komputer modern.",
     icon: "Network",
   },
   {
-    title: "Teknik Elektronika Industri",
-    code: "TE",
+    title: "Teknik Audio Video",
+    code: "TAV",
     desc: "Memrancang Bangun Komponen Eletkronika, Instalasi Listik Industri, Instalasi PLTS, dan IoT.",
     icon: "",
   },

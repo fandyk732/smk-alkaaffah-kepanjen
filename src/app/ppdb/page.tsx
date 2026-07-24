@@ -9,10 +9,10 @@ import { school } from "@/data/site";
 import { FormPPDB } from "@/components/pages/form-ppdb"; // Import komponen form barusan
 
 export const metadata: Metadata = {
-  title: `PPDB — ${school.name}`,
-  description: "Informasi Penerimaan Peserta Didik Baru (PPDB) SMK Al Kaaffah Kepanjen: syarat, alur, dan pendaftaran online.",
+  title: `SPMB — ${school.name}`,
+  description: "Informasi Sistem Penerimaan Murid Baru (SPMB) SMK Al Kaaffah Kepanjen: syarat, alur, dan pendaftaran online.",
   alternates: { canonical: "/PPDB" },
-  openGraph: { title: `PPDB — ${school.name}`, url: "/PPDB" },
+  openGraph: { title: `SPMB — ${school.name}`, url: "/PPDB" },
 };
 
 const requirements = [
@@ -26,7 +26,7 @@ const steps = [
   { icon: CheckCircle2, t: "Pengumuman", d: "Daftar ulang bagi yang lolos." },
 ];
 const faqs = [
-  { q: "Kapan PPDB dibuka?", a: "PPDB dibuka mulai gelombang 1 hingga kuota terpenuhi. Pantau pengumuman resmi sekolah." },
+  { q: "Kapan SPMB dibuka?", a: "SPMB dibuka mulai gelombang 1 hingga kuota terpenuhi. Pantau pengumuman resmi sekolah." },
   { q: "Apakah ada biaya pendaftaran?", a: "Biaya pendaftaran sangat terjangkau dan tersedia program beasiswa bagi siswa berprestasi maupun kurang mampu." },
   { q: "Bisakah mendaftar secara online?", a: "Ya, seluruh proses pendaftaran dapat dilakukan secara online melalui website ini." },
   { q: "Program keahlian apa saja yang tersedia?", a: "Tersedia TKJ, TAV, TKR, dan DM." },
@@ -35,7 +35,7 @@ const faqs = [
 export default function PPDBPage() {
   return (
     <>
-      <PageHero eyebrow="PPDB 2026/2027" title="Penerimaan Peserta Didik Baru" description="Bergabunglah dengan SMK Al Kaaffah Kepanjen dan mulai perjalanan menuju masa depan gemilang." />
+      <PageHero eyebrow="SPMB 2027/2028" title="Sistem Penerimaan Murid Baru" description="Bergabunglah dengan SMK Al Kaaffah Kepanjen dan mulai perjalanan menuju masa depan gemilang." />
 
      {/* BANNER CEK PENGUMUMAN SELEKSI */}
 <section className="container-page py-6 max-w-2xl mx-auto">
@@ -59,7 +59,7 @@ export default function PPDBPage() {
         <Reveal>
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-foreground">Formulir Pendaftaran Online</h2>
-            <p className="text-sm text-muted-foreground mt-1">Kuota terbatas — silakan amankan kursi pendaftaranmu sekarang.</p>
+            <p className="text-sm text-muted-foreground mt-1">Kuota terbatas — silahkan amankan kursi pendaftaranmu sekarang.</p>
           </div>
           <FormPPDB />
         </Reveal>

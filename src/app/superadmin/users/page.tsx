@@ -35,7 +35,7 @@ import Link from "next/link";
 const AVAILABLE_ROLES = [
   { id: "superadmin", label: "Superadmin (Akses Penuh)" },
   { id: "admin_artikel", label: "Admin Artikel (Berita & Blog)" },
-  { id: "panitia_PPDB", label: "Panitia PPDB" },
+  { id: "panitia_PPDB", label: "Panitia SPMB" },
   { id: "admin_alumni", label: "Admin Alumni" },
   { id: "admin_galeri", label: "Admin Galeri (Foto & Dok)" },
   { id: "admin_prestasi", label: "Admin Prestasi (Kejuaraan)" },

@@ -67,7 +67,7 @@ export default function PengumumanPage() {
         {/* Card Input Pencarian */}
         <div className="bg-card border rounded-3xl p-6 sm:p-8 shadow-md text-center">
           <Award className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Pengumuman Hasil Seleksi PPDB</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Pengumuman Hasil Seleksi SPMB</h1>
           <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
             Masukkan Nomor Induk Siswa Nasional (NISN) resmi kamu untuk melihat status kelulusan penerimaan siswa baru.
           </p>
@@ -102,7 +102,7 @@ export default function PengumumanPage() {
             <div className="bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 p-6 rounded-2xl border border-red-200 dark:border-red-900 text-center">
               <p className="font-semibold">Data Tidak Ditemukan</p>
               <p className="text-xs mt-1 text-red-600/80 dark:text-red-400/80">
-                NISN <span className="font-mono font-bold">{nisnInput}</span> tidak terdaftar di sistem PPDB kami. Periksa kembali nomor yang kamu masukkan.
+                NISN <span className="font-mono font-bold">{nisnInput}</span> tidak terdaftar di sistem SPMB kami. Periksa kembali nomor yang kamu masukkan.
               </p>
             </div>
           ) : dataSiswa ? (
@@ -217,19 +217,19 @@ export default function PengumumanPage() {
             >
               {/* Kop Surat Header */}
               <div className="text-center border-b-4 border-black pb-3 mb-6">
-                <h2 className="text-[20px] font-bold uppercase tracking-wide m-0 text-black">YAYASAN AL KAAFFAH KEPANJEN</h2>
+                <h2 className="text-[20px] font-bold uppercase tracking-wide m-0 text-black">YAYASAN AL ISLAMU AL AINUL BAAHIROH</h2>
                 <h1 className="text-[22px] font-bold uppercase tracking-wide m-0 text-black">SMK AL KAAFFAH KEPANJEN</h1>
                 <p className="text-[13px] italic m-0 mt-1 text-black">Jl. Semeru Nomor 18a Dilem, Kepanjen, Kabupaten Malang, Jawa Timur</p>
               </div>
 
               {/* Judul Surat */}
               <div className="text-center mb-6">
-                <p className="text-[17px] font-bold underline m-0 text-black">SURAT KETERANGAN HASIL SELEKSI PPDB</p>
-                <p className="text-[14px] m-0 text-black">Nomor: P/045/PPDB-{new Date().getFullYear()}</p>
+                <p className="text-[17px] font-bold underline m-0 text-black">SURAT KETERANGAN HASIL SELEKSI SPMB</p>
+                <p className="text-[14px] m-0 text-black">Nomor: P/045/SPMB-{new Date().getFullYear()}</p>
               </div>
 
               <p className="text-justify mb-4 text-black">
-                Berdasarkan hasil seleksi administrasi, ujian akademik, dan wawancara yang telah dilaksanakan oleh Panitia Penerimaan Peserta Didik Baru (PPDB) SMK Al Kaaffah Kepanjen, dengan ini menerangkan bahwa:
+                Berdasarkan hasil seleksi administrasi, ujian akademik, dan wawancara yang telah dilaksanakan oleh Panitia Penerimaan Murid Baru (SPMB) SMK Al Kaaffah Kepanjen, dengan ini menerangkan bahwa:
               </p>
 
               {/* Tabel Identitas Siswa */}
@@ -275,7 +275,7 @@ export default function PengumumanPage() {
               <p className="text-justify my-4 text-black">
                 {dataSiswa.statusPendaftaran === 'Diterima' 
                   ? 'Selamat bagi calon peserta didik yang dinyatakan diterima. Harap segera melakukan daftar ulang sesuai jadwal yang ditentukan oleh panitia.' 
-                  : 'Terima kasih telah berpartisipasi dalam seleksi PPDB SMK Al Kaaffah. Tetap semangat dan semoga sukses di jenjang berikutnya.'}
+                  : 'Terima kasih telah berpartisipasi dalam seleksi SPMB SMK Al Kaaffah. Tetap semangat dan semoga sukses di jenjang berikutnya.'}
               </p>
 
               {/* Tanda Tangan */}

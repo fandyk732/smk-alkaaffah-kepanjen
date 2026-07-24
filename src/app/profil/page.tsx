@@ -37,24 +37,54 @@ export default function ProfilPage() {
         </div>
       </section>
 
+      {/* SECTION VISI & MISI */}
       <section className="bg-section py-16">
-        <div className="container-page grid gap-6 md:grid-cols-2">
-          <Reveal>
-            <div className="h-full rounded-2xl border bg-card p-8">
+        <div className="container-page grid gap-8 lg:grid-cols-12 lg:items-start">
+          {/* VISI (4 Kolom di Dekstop) */}
+          <Reveal className="lg:col-span-5">
+            <div className="rounded-2xl border bg-card p-8 shadow-soft">
               <Target className="h-9 w-9 text-primary" />
               <h2 className="mt-4 text-2xl font-bold">Visi</h2>
-              <p className="mt-3 text-muted-foreground">Menjadi sekolah menengah kejuruan unggulan yang menghasilkan lulusan berkompeten, berkarakter islami, dan siap bersaing di tingkat nasional maupun global.</p>
+              <p className="mt-3 text-muted-foreground leading-relaxed">
+                Mewujudkan generasi yang tangguh, berkarakter, dan berwawasan (religi, sains, teknologi).
+              </p>
             </div>
           </Reveal>
-          <Reveal delay={0.1}>
-            <div className="h-full rounded-2xl border bg-card p-8">
+
+          {/* MISI (7 Kolom di Dekstop) */}
+          <Reveal delay={0.1} className="lg:col-span-7">
+            <div className="rounded-2xl border bg-card p-8 shadow-soft">
               <Eye className="h-9 w-9 text-primary" />
               <h2 className="mt-4 text-2xl font-bold">Misi</h2>
-              <ul className="mt-3 space-y-2 text-muted-foreground">
-                <li>• Menyelenggarakan pembelajaran berbasis kompetensi industri.</li>
-                <li>• Membentuk karakter islami dan berakhlak mulia.</li>
-                <li>• Mengembangkan kemitraan dengan dunia usaha &amp; industri.</li>
-                <li>• Mendorong inovasi, kreativitas, dan jiwa wirausaha.</li>
+              <ul className="mt-4 space-y-3 text-sm text-muted-foreground leading-relaxed">
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Mengoptimalkan pengelolaan lembaga secara professional yang menyeluruh dan berkesinambungan di semua elemen sekolah.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Memperkuat pendidikan karakter, mengembangkan dan menerapkan program pendidikan karakter.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Mendorong Pengembangan Ketahanan Emosional dengan membuat program - program yang dapat melatih kedisiplinan dan ketahanan mental siswa.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Meningkatkan kegiatan Literasi (Agama, Sains, dan Teknologi) untuk seluruh warga sekolah.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Memfasilitasi Kolaborasi antara Agama, Sains, dan Teknologi.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Meningkatkan Keterampilan Teknologi dan Pemanfaatannya dengan membuat produk dan jasa yang dapat memberi manfaat bagi masyarakat banyak.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Membangun Kemitraan dengan Masyarakat, Instansi Pemerintahan, dan Industri untuk menunjang program, inovasi karya, serta SDM sekolah.</span>
+                </li>
               </ul>
             </div>
           </Reveal>

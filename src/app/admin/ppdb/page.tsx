@@ -43,7 +43,7 @@ export default function AdminPPDBPage() {
       });
       setListPendaftar(data);
     } catch (error) {
-      console.error("Gagal mengambil data PPDB:", error);
+      console.error("Gagal mengambil data SPMB:", error);
     } finally {
       setLoading(false);
     }
@@ -69,11 +69,11 @@ export default function AdminPPDBPage() {
           const hasAccess = roles.includes("panitia_PPDB") || roles.includes("admin_ppdb") || roles.includes("superadmin");
 
           if (hasAccess) {
-            setPanitiaName(data.nama || "Panitia PPDB");
+            setPanitiaName(data.nama || "Panitia SPMB");
             // 🎯 3. Ambil data PPDB otomatis setelah auth terverifikasi!
             await ambilDataPPDB();
           } else {
-            alert("Anda tidak memiliki akses ke modul PPDB!");
+            alert("Anda tidak memiliki akses ke modul SPMB!");
             router.push("/admin/dashboard");
           }
         } else {
@@ -175,9 +175,9 @@ export default function AdminPPDBPage() {
         {/* Header - Disembunyikan saat print */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-5 mb-8 print:hidden">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Dashboard Panitia PPDB</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Dashboard Panitia SPMB</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Petugas: <span className="font-semibold text-foreground">{panitiaName || "Panitia PPDB"}</span> • Total pendaftar: <span className="font-bold text-primary">{listPendaftar.length} siswa</span>
+              Petugas: <span className="font-semibold text-foreground">{panitiaName || "Panitia SPMB"}</span> • Total pendaftar: <span className="font-bold text-primary">{listPendaftar.length} siswa</span>
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -206,7 +206,7 @@ export default function AdminPPDBPage() {
         {/* Laporan Print Area (Hanya Muncul saat Cetak Semua) */}
         {!selectedIndividu && (
           <div className="hidden print:block text-center border-b-2 pb-4 mb-6">
-            <h1 className="text-2xl font-bold uppercase text-black">Laporan Pendaftaran PPDB</h1>
+            <h1 className="text-2xl font-bold uppercase text-black">Laporan Pendaftaran SPMB</h1>
             <p className="text-sm text-black">SMK Al Kaaffah Kepanjen — Petugas Cetak: {panitiaName} — Tanggal: {new Date().toLocaleDateString("id-ID")}</p>
           </div>
         )}
@@ -379,19 +379,19 @@ export default function AdminPPDBPage() {
             >
               {/* Kop Surat Header */}
               <div className="text-center border-b-4 border-black pb-3 mb-6">
-                <h2 className="text-[20px] font-bold uppercase tracking-wide m-0 text-black">YAYASAN AL KAAFFAH KEPANJEN</h2>
+                <h2 className="text-[20px] font-bold uppercase tracking-wide m-0 text-black">YAYASAN AL ISLAMU AL AINUL BAAHIROH</h2>
                 <h1 className="text-[22px] font-bold uppercase tracking-wide m-0 text-black">SMK AL KAAFFAH KEPANJEN</h1>
                 <p className="text-[13px] italic m-0 mt-1 text-black">Jl. Semeru Nomor 18a Dilem, Kepanjen, Kabupaten Malang, Jawa Timur</p>
               </div>
 
               {/* Judul Surat */}
               <div className="text-center mb-6">
-                <p className="text-[17px] font-bold underline m-0 text-black">BUKTI PENDAFTARAN PPDB</p>
+                <p className="text-[17px] font-bold underline m-0 text-black">BUKTI PENDAFTARAN SPMB</p>
                 <p className="text-[14px] m-0 text-black">Tahun Ajaran {new Date().getFullYear()}/{new Date().getFullYear() + 1}</p>
               </div>
 
               <p className="text-justify mb-4 text-black">
-                Berikut adalah bukti data pendaftaran Penerimaan Peserta Didik Baru (PPDB) SMK Al Kaaffah Kepanjen:
+                Berikut adalah bukti data pendaftaran Sistem Penerimaan Murid Baru (SPMB) SMK Al Kaaffah Kepanjen:
               </p>
 
               {/* Tabel Identitas Siswa */}
@@ -431,7 +431,7 @@ export default function AdminPPDBPage() {
               {/* Tanda Tangan */}
               <div className="mt-16 float-right text-center w-[250px] text-black">
                 <p className="m-0">Kepanjen, {new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                <p className="m-0 mb-16">Panitia PPDB,</p>
+                <p className="m-0 mb-16">Panitia SPMB,</p>
                 <p className="m-0 font-bold underline">{panitiaName || "Panitia PPDB"}</p>
               </div>
             </div>
