@@ -4,23 +4,22 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-// 1. HAPUS GraduationCap dari lucide-react
 import { Menu, X, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { navItems, school } from "@/data/site";
 import { cn } from "@/lib/utils";
-
-// 2. IMPORT LOGO SMK KUSTOM HASIL OPTIMASI LO
 import { LogoSmkIcon } from "@/components/logo-smk-icon";
 
 function useTheme() {
   const [dark, setDark] = useState(false);
+
   useEffect(() => {
     const stored = localStorage.getItem("theme");
     const isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
+
   const toggle = () => {
     setDark((d) => {
       const next = !d;
@@ -29,6 +28,7 @@ function useTheme() {
       return next;
     });
   };
+
   return { dark, toggle };
 }
 
@@ -48,26 +48,24 @@ export function Navbar() {
   useEffect(() => setOpen(false), [pathname]);
 
   return (
-    <header
+    <div
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        scrolled ? "glass-card border-b py-2" : "bg-transparent py-4"
+        "w-full transition-all duration-300",
+        scrolled ? "glass-card border-b py-2 shadow-sm" : "bg-transparent py-3"
       )}
     >
-      <nav className="container-page flex items-center justify-between" aria-label="Navigasi utama">
+      <nav className="container-page flex items-center justify-between mx-auto" aria-label="Navigasi utama">
         
         {/* ================= BRAND LOGO SEKOLAH ================= */}
-<Link href="/" className="flex items-center gap-2.5 group">
-  {/* Hapus bg-gradient-primary dan text-primary-foreground, ganti p-1.5 jadi p-0 */}
-  <span className="grid h-8 w-8 place-items-center rounded-xl transition-transform group-hover:scale-105">
-    {/* LOGO SMK KUSTOM */}
-    <LogoSmkIcon className="h-full w-full object-contain" />
-  </span>
-  <span className="flex flex-col leading-tight">
-    <span className="text-sm font-extrabold tracking-tight">{school.short}</span>
-    <span className="text-[11px] text-muted-foreground">Kepanjen</span>
-  </span>
-</Link>
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <span className="grid h-9 w-9 place-items-center rounded-xl transition-transform group-hover:scale-105">
+            <LogoSmkIcon className="h-full w-full object-contain" />
+          </span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-sm font-extrabold tracking-tight">{school.short}</span>
+            <span className="text-[11px] text-muted-foreground">Kepanjen</span>
+          </span>
+        </Link>
 
         {/* Desktop Menu */}
         <ul className="hidden items-center gap-1 lg:flex">
@@ -79,7 +77,7 @@ export function Navbar() {
                   href={item.to}
                   className={cn(
                     "relative rounded-full px-4 py-2 text-sm font-medium transition-colors hover:text-primary",
-                    active ? "text-primary" : "text-foreground/80"
+                    active ? "text-primary font-semibold" : "text-foreground/80"
                   )}
                 >
                   {item.label}
@@ -98,16 +96,23 @@ export function Navbar() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggle} aria-label="Ganti tema">
-            {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          <Button variant="ghost" size="icon" onClick={toggle} aria-label="Ganti tema" className="rounded-full">
+            {dark ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5" />}
           </Button>
-          <Button asChild className="hidden sm:inline-flex bg-gradient-primary">
+
+         {/* NAVBAR CTA - DIBIKIN KALEM & CLEAN */}
+          <Button 
+            asChild 
+            variant="outline" 
+            className="hidden sm:inline-flex rounded-xl font-semibold border-primary/20 hover:bg-primary/5 hover:text-primary transition-colors"
+          >
             <Link href="/ppdb">Daftar SPMB</Link>
           </Button>
+
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden rounded-full"
             onClick={() => setOpen((o) => !o)}
             aria-label="Buka menu"
             aria-expanded={open}
@@ -117,33 +122,41 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Dropdown */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden overflow-hidden bg-background/95 backdrop-blur-md border-b" 
+            className="lg:hidden overflow-hidden bg-background/95 backdrop-blur-md border-b"
           >
-            <ul className="container-page flex flex-col gap-1 py-4">
-              {navItems.map((item) => (
-                <li key={item.to}>
-                  <Link
-                    href={item.to}
-                    className="block rounded-lg px-4 py-3 text-sm font-medium hover:bg-secondary"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-              <Button asChild className="mt-2 w-full bg-gradient-primary sm:hidden">
-                <Link href="/ppdb">Daftar SPMB</Link>
-              </Button>
+            <ul className="container-page flex flex-col gap-1 py-4 mx-auto">
+              {navItems.map((item) => {
+                const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                return (
+                  <li key={item.to}>
+                    <Link
+                      href={item.to}
+                      className={cn(
+                        "block rounded-xl px-4 py-3 text-sm font-medium transition-colors",
+                        active ? "bg-primary/10 text-primary font-bold" : "hover:bg-secondary text-foreground/80"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+              <div className="pt-2 px-1">
+                <Button asChild className="w-full bg-gradient-primary sm:hidden rounded-xl py-5 font-bold">
+                  <Link href="/ppdb">Daftar SPMB</Link>
+                </Button>
+              </div>
             </ul>
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </div>
   );
 }

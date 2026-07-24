@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// 📝 OPTION ROLE YANG TERSEDIA (DITAMBAHKAN ADMIN GALERI & PRESTASI)
+// 📝 OPTION ROLE YANG TERSEDIA (DITAMBAHKAN ADMIN ANNOUNCEMENT)
 const AVAILABLE_ROLES = [
   { id: "superadmin", label: "Superadmin (Akses Penuh)" },
   { id: "admin_artikel", label: "Admin Artikel (Berita & Blog)" },
@@ -39,6 +39,7 @@ const AVAILABLE_ROLES = [
   { id: "admin_alumni", label: "Admin Alumni" },
   { id: "admin_galeri", label: "Admin Galeri (Foto & Dok)" },
   { id: "admin_prestasi", label: "Admin Prestasi (Kejuaraan)" },
+  { id: "admin_announcement", label: "Admin Pengumuman (Announcement Bar)" }, // 🚀 TAMBAHAN ROLE BARU
 ];
 
 interface UserData {
@@ -80,7 +81,6 @@ export default function SuperadminUsersPage() {
         
         if (userDoc.exists()) {
           const roles = userDoc.data().role;
-          // Cek apakah role berupa Array & mengandung 'superadmin' atau string 'superadmin'
           const isSuperadmin = Array.isArray(roles) 
             ? roles.includes("superadmin") 
             : roles === "superadmin";
@@ -114,7 +114,6 @@ export default function SuperadminUsersPage() {
       querySnapshot.forEach((docSnapshot) => {
         const data = docSnapshot.data();
         
-        // Handling Backward Compatibility (jika data lama masih berupa Single String)
         let formattedRoles: string[] = [];
         if (Array.isArray(data.role)) {
           formattedRoles = data.role;
@@ -173,7 +172,6 @@ export default function SuperadminUsersPage() {
     const emailNormalized = emailBaru.toLowerCase().trim();
 
     try {
-      // 🔑 STEP A: Secondary Auth (biar Superadmin tidak logout)
       const userCredential = await createUserWithEmailAndPassword(
         secondaryAuth,
         emailNormalized,
@@ -182,18 +180,16 @@ export default function SuperadminUsersPage() {
 
       await secondaryAuth.signOut();
 
-      // 📂 STEP B: Simpan Array Roles ke Firestore
       await setDoc(doc(db, "users", emailNormalized), {
         uid: userCredential.user.uid,
         nama: namaBaru.trim(),
         email: emailNormalized,
-        role: rolesBaru, // ARRAY OF ROLES
+        role: rolesBaru,
         createdAt: serverTimestamp()
       });
 
       alert(`Pengguna ${namaBaru} berhasil didaftarkan dengan ${rolesBaru.length} role!`);
       
-      // Reset Form
       setNamaBaru("");
       setEmailBaru("");
       setPasswordBaru("");
@@ -212,7 +208,7 @@ export default function SuperadminUsersPage() {
     }
   };
 
-  // 3. Ubah Role User dari Daftar List (Toggle Checkbox On-the-fly)
+  // 3. Ubah Role User dari Daftar List
   const handleToggleExistingUserRole = async (userEmail: string, currentRoles: string[], targetRole: string) => {
     let updatedRoles: string[];
 
@@ -230,7 +226,6 @@ export default function SuperadminUsersPage() {
       const userRef = doc(db, "users", userEmail);
       await updateDoc(userRef, { role: updatedRoles });
       
-      // Update local state agar tidak perlu full-re-fetch
       setUsersList((prev) =>
         prev.map((u) => (u.email === userEmail ? { ...u, role: updatedRoles } : u))
       );
@@ -367,7 +362,7 @@ export default function SuperadminUsersPage() {
                 <label className="block text-xs font-semibold text-slate-600 mb-2">
                   Hak Akses / Role (Bisa pilih lebih dari 1)
                 </label>
-                <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200/80 max-h-64 overflow-y-auto">
                   {AVAILABLE_ROLES.map((r) => {
                     const isChecked = rolesBaru.includes(r.id);
                     return (
@@ -460,7 +455,7 @@ export default function SuperadminUsersPage() {
                                 : "bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300"
                             } ${isSelf ? "cursor-not-allowed opacity-80" : "cursor-pointer"}`}
                           >
-                            <span>{r.id.replace("_", " ").toUpperCase()}</span>
+                            <span>{r.id.replace(/_/g, " ").toUpperCase()}</span>
                             {hasRole && <Check className="w-3 h-3 stroke-[3]" />}
                           </button>
                         );

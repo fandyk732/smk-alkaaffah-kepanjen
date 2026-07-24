@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-// 1. Import font langsung dari Next.js
 import { Plus_Jakarta_Sans } from "next/font/google"; 
 import "./globals.css";
+import { AnnouncementBar } from "@/components/announcement-bar"; 
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { AnimatedBackground } from "@/components/animated-background";
 import { Toaster } from "@/components/ui/sonner";
 import { school } from "@/data/site";
 
-// 2. Konfigurasi Font Plus Jakarta Sans
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"], // Sesuai weight yang lo panggil sebelumnya
-  display: "swap", // Mencegah text tak terlihat saat loading (Zero Render-Blocking)
-  variable: "--font-plus-jakarta", // Untuk integrasi Tailwind CSS
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-plus-jakarta",
 });
 
 export const metadata: Metadata = {
@@ -54,7 +53,6 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // 3. Pasang className font di html & hapus suppressHydrationWarning jika tidak terpaksa
     <html lang="id" className={`${plusJakarta.className} ${plusJakarta.variable}`}>
       <head>
         <script
@@ -64,8 +62,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <AnimatedBackground />
-        <Navbar />
-        <main className="min-h-screen pt-20">{children}</main>
+        
+        {/* 🚀 KUNCI BIAR KEDUA KOMPONEN NGIKUTIN SAAT DI-SCROLL */}
+        <header className="fixed top-0 left-0 right-0 z-50">
+          <AnnouncementBar />
+          <Navbar />
+        </header>
+
+        {/* Padding top disesuaikan biar konten halaman nggak tertutup header */}
+        <main className="min-h-screen pt-28 sm:pt-32">{children}</main>
+        
         <Footer />
         <Toaster />
       </body>

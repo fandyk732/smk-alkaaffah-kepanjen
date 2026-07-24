@@ -78,9 +78,11 @@ export default function LoginPage() {
         } else if (singleRole === "admin_alumni") {
           router.push("/admin/alumni");
         } else if (singleRole === "admin_galeri") {
-          router.push("/admin/galeri"); // 🎯 INJEKSI HALAMAN GALERI
+          router.push("/admin/galeri");
         } else if (singleRole === "admin_prestasi") {
-          router.push("/admin/prestasi"); // 🎯 INJEKSI HALAMAN PRESTASI
+          router.push("/admin/prestasi");
+        } else if (singleRole === "admin_announcement") {
+          router.push("/admin/announcement"); // 🎯 INJEKSI HALAMAN ANNOUNCEMENT
         } else {
           alert("Role tidak dikenali. Hubungi Superadmin.");
           await auth.signOut();
@@ -131,19 +133,17 @@ export default function LoginPage() {
     }
   };
 
-  // 3. FITUR LUPA PASSWORD (FETCH DAFTAR SUPERADMIN MEMAKAI QUERY ARRAY & STRING)
+  // 3. FITUR LUPA PASSWORD
   const handleBukaModalLupaPassword = async () => {
     setShowResetModal(true);
     setLoadingSuperadmin(true);
 
     try {
-      // Query 1: Cek dokumen yang rolenya mengandung "superadmin" di dalam Array
       const qArray = query(
         collection(db, "users"), 
         where("role", "array-contains", "superadmin")
       );
       
-      // Query 2: Fallback jika masih ada data lama bernilai string "superadmin"
       const qString = query(
         collection(db, "users"), 
         where("role", "==", "superadmin")
@@ -156,7 +156,6 @@ export default function LoginPage() {
 
       const adminMap = new Map<string, SuperadminInfo>();
 
-      // Masukkan hasil query array
       snapArray.forEach((docSnap) => {
         const data = docSnap.data();
         adminMap.set(docSnap.id, {
@@ -165,7 +164,6 @@ export default function LoginPage() {
         });
       });
 
-      // Masukkan hasil query string
       snapString.forEach((docSnap) => {
         const data = docSnap.data();
         adminMap.set(docSnap.id, {
@@ -248,7 +246,6 @@ export default function LoginPage() {
       {showResetModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-            {/* Tombol Close */}
             <button
               onClick={() => setShowResetModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white transition p-1"
@@ -256,7 +253,6 @@ export default function LoginPage() {
               <X className="h-5 w-5" />
             </button>
 
-            {/* Header Icon */}
             <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mb-4">
               <ShieldAlert className="h-6 w-6" />
             </div>
@@ -266,7 +262,6 @@ export default function LoginPage() {
               Untuk keamanan sistem, perbaikan atau reset password akun dilakukan secara internal. Silakan hubungi <strong className="text-slate-200">Superadmin</strong> di bawah ini untuk mereset akun Anda:
             </p>
 
-            {/* Daftar Superadmin */}
             <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 mb-6 space-y-3 max-h-48 overflow-y-auto">
               {loadingSuperadmin ? (
                 <div className="flex items-center justify-center py-4 text-slate-500 gap-2 text-xs">

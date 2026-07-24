@@ -15,7 +15,8 @@ import {
   Loader2, 
   LayoutGrid,
   Image as ImageIcon,
-  Trophy
+  Trophy,
+  Megaphone
 } from "lucide-react";
 
 export default function AdminDashboardHub() {
@@ -112,7 +113,7 @@ export default function AdminDashboardHub() {
                   Kelola Artikel & Berita
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Tulis, edit, dan publikasikan artikel atau pengumuman sekolah.
+                  Tulis, edit, dan publikasikan artikel atau berita sekolah.
                 </p>
               </div>
             </Link>
@@ -129,7 +130,7 @@ export default function AdminDashboardHub() {
               </div>
               <div>
                 <h3 className="font-bold text-lg text-slate-100 group-hover:text-emerald-400 transition">
-                  Panitia PPDB
+                  Panitia SPMB
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                   Kelola pendaftaran siswa baru, verifikasi berkas, dan seleksi.
@@ -158,7 +159,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 4. Admin Galeri (Modul Baru) */}
+          {/* 4. Admin Galeri */}
           {hasRole("admin_galeri") && (
             <Link
               href="/admin/galeri"
@@ -178,7 +179,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 5. Admin Prestasi (Modul Baru) */}
+          {/* 5. Admin Prestasi */}
           {hasRole("admin_prestasi") && (
             <Link
               href="/admin/prestasi"
@@ -198,7 +199,27 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 6. Portal Superadmin */}
+          {/* 6. Admin Announcement (Modul Baru) */}
+          {hasRole("admin_announcement") && (
+            <Link
+              href="/admin/announcement"
+              className="group bg-slate-900 border border-slate-800 hover:border-amber-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-amber-500/5 flex items-start gap-4"
+            >
+              <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl group-hover:scale-110 transition">
+                <Megaphone className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-slate-100 group-hover:text-amber-400 transition">
+                  Pengumuman Running Bar
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Atur teks running bar, banner informasi, dan link pengumuman di header web.
+                </p>
+              </div>
+            </Link>
+          )}
+
+          {/* 7. Portal Superadmin */}
           {userRoles.includes("superadmin") && (
             <Link
               href="/superadmin/users"

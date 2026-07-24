@@ -16,12 +16,12 @@ export const metadata: Metadata = {
 };
 
 const requirements = [
-  "Fotokopi Ijazah / SKL SMP / MTs", "Fotokopi Akta Kelahiran", "Fotokopi Kartu Keluarga",
-  "Pas foto 3x4 (3 lembar)", "Fotokopi Rapor Semester 1-5", "Surat Keterangan Sehat",
+  "Fotokopi Ijazah SMP/MTs/PKBM (Menyusul ketika Ijazah sudah ada)", "Fotokopi Akta Kelahiran", "Fotokopi Kartu Keluarga",
+  "Pas foto SMP/MTs/PKBM 3x4 (2 lembar)", "Surat Keterangan Sehat dari Puskesmas atau Fasilitas Kesehatan terdekat",
 ];
 const steps = [
   { icon: FileText, t: "Isi Formulir", d: "Lengkapi formulir pendaftaran online." },
-  { icon: ClipboardList, t: "Unggah Berkas", d: "Upload dokumen persyaratan." },
+  { icon: ClipboardList, t: "Persiapkan Berkas", d: "Siapkan dokumen persyaratan dan bawa pada saat seleksi." },
   { icon: UserPlus, t: "Seleksi", d: "Ikuti tes & wawancara." },
   { icon: CheckCircle2, t: "Pengumuman", d: "Daftar ulang bagi yang lolos." },
 ];

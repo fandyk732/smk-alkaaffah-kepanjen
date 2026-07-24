@@ -362,8 +362,8 @@ export default function AdminAlumniPage() {
                     className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition"
                   >
                     <option value="Teknik Kendaraan Ringan">TKR</option>
-                    <option value="Teknik Sepeda Motor">TSM</option>
-                    <option value="Teknik Elektronika Industri">TEI</option>
+                    <option value="Digital Marketing">DM</option>
+                    <option value="Teknik Audio Video">TAV</option>
                     <option value="Teknik Komputer Jaringan">TKJ</option>
                   </select>
                 </div>
@@ -469,9 +469,9 @@ export default function AdminAlumniPage() {
                 >
                   <option value="Semua">Semua Jurusan</option>
                   <option value="Teknik Kendaraan Ringan">TKR</option>
-                  <option value="Teknik Sepeda Motor">TSM</option>
-                  <option value="Teknik Elektronika Industri">TEI</option>
-                  <option value="Desain Komunikasi Visual">DKV</option>
+                  <option value="Digital Marketing">DM</option>
+                  <option value="Teknik Audio Video">TAV</option>
+                  <option value="Teknik Komputer & Jaringan">TKJ</option>
                 </select>
               </div>
 
