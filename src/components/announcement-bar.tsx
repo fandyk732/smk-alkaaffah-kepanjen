@@ -40,7 +40,7 @@ export function AnnouncementBar() {
         
         {/* Badge / Tag Info Left */}
         <span className="inline-flex items-center gap-1 bg-white/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 backdrop-blur-sm z-10">
-          <Sparkles className="h-3 w-3" /> Info SPMB
+          <Sparkles className="h-3 w-3" /> Info AlKaaffah
         </span>
 
         {/* 🎯 KUNCI FIX: HANYA 1 TEKS RUNNING UNTUK SEMUA LAYAR */}
