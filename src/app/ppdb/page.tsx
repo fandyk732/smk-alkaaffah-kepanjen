@@ -37,22 +37,22 @@ export default function PPDBPage() {
     <>
       <PageHero eyebrow="SPMB 2027/2028" title="Sistem Penerimaan Murid Baru" description="Bergabunglah dengan SMK Al Kaaffah Kepanjen dan mulai perjalanan menuju masa depan gemilang." />
 
-     {/* BANNER CEK PENGUMUMAN SELEKSI */}
-<section className="container-page py-6 max-w-2xl mx-auto">
-  <Reveal>
-    <div className="rounded-3xl border border-primary/20 bg-primary/5 p-6 text-center shadow-sm">
-      <h3 className="text-lg font-bold text-foreground">Sudah Mengikuti Seleksi Gelombang Sebelumnya?</h3>
-      <p className="text-sm text-muted-foreground mt-1">
-        Bagi calon siswa yang sudah mengikuti tahapan tes dan wawancara, silakan cek status kelulusanmu sekarang.
-      </p>
-      <Button asChild className="mt-4 rounded-xl bg-gradient-primary" size="sm">
-        <Link href="/ppdb/pengumuman">
-          Cek Hasil Kelulusan Disini <ArrowRight className="ml-1 h-4 w-4" />
-        </Link>
-      </Button>
-    </div>
-  </Reveal>
-</section>
+          {/* BANNER CEK PENGUMUMAN SELEKSI */}
+      <section className="container-page py-6 max-w-2xl mx-auto">
+        <Reveal>
+          <div className="rounded-3xl border border-primary/20 bg-primary/5 p-6 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-foreground">Sudah Mengikuti Seleksi Gelombang Sebelumnya?</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Bagi calon siswa yang sudah mengikuti tahapan tes dan wawancara, silakan cek status kelulusanmu sekarang.
+            </p>
+            <Button asChild className="mt-4 rounded-xl bg-gradient-primary" size="sm">
+              <Link href="/ppdb/pengumuman">
+                Cek Hasil Kelulusan Disini <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </Reveal>
+      </section>
      
       {/* SECTION FORM PPDB INTEGRASI FIRESTORE */}
       <section className="container-page py-8 max-w-2xl mx-auto">

@@ -1,240 +1,366 @@
 "use client";
 
-import React, { useState } from "react";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Button } from "@/components/ui/button";
-import { GraduationCap, Briefcase, Rocket, SearchCheck, CheckCircle2, Send, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { PageHero } from "@/components/page-hero";
+import { Reveal } from "@/components/motion-primitives";
+import { 
+  GraduationCap, 
+  User, 
+  Briefcase, 
+  Send, 
+  CheckCircle2, 
+  BookOpen, 
+  Phone, 
+  Sparkles,
+  Loader2
+} from "lucide-react";
+import { toast } from "sonner";
 
-export default function TracerPublicPage() {
-  const [nama, setNama] = useState("");
-  const [angkatan, setAngkatan] = useState("");
-  const [jurusan, setJurusan] = useState("Teknik Kendaraan Ringan");
-  const [status, setStatus] = useState<"Bekerja" | "Kuliah" | "Wirausaha" | "Mencari Kerja">("Bekerja");
-  const [tempat, setTempat] = useState("");
-  const [posisi, setPosisi] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [testimoni, setTestimoni] = useState("");
+// Import Firebase Firestore
+import { db } from "@/lib/firebase"; // 👈 sesuaikan path dengan file firebase kamu
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-  const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+// Pilihan Jurusan
+const majorOptions = [
+  { value: "TKJ", label: "Teknik Komputer & Jaringan (TKJ)" },
+  { value: "TAV", label: "Teknik Audio Video (TAV)" },
+  { value: "TKR", label: "Teknik Kendaraan Ringan (TKR)" },
+  { value: "DM", label: "Digital Marketing (DM)" },
+];
+
+// Status Kesibukan Alumni
+const statusOptions = [
+  { value: "kerja", label: "Bekerja (Wirausaha / Karyawan)", icon: Briefcase },
+  { value: "kuliah", label: "Melanjutkan Studi (Kuliah)", icon: GraduationCap },
+  { value: "kerja_kuliah", label: "Bekerja Sambil Kuliah", icon: BookOpen },
+  { value: "mencari_kerja", label: "Mencari Kerja / Persiapan", icon: User },
+];
+
+export default function TracerStudyPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    namaLengkap: "",
+    nisn: "",
+    tahunLulus: new Date().getFullYear().toString(),
+    jurusan: "TKJ",
+    email: "",
+    noWhatsapp: "",
+    statusAlumni: "kerja",
+    namaInstansi: "",
+    jabatanJurusan: "",
+    kesanPesan: "",
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nama || !angkatan) return alert("Harap isi Nama Lengkap dan Angkatan!");
-    if (status !== "Mencari Kerja" && !tempat) return alert("Harap isi Nama Instansi / Perusahaan / Kampus!");
+    setIsSubmitting(true);
 
-    setLoading(true);
     try {
+      // 🚀 KIRIM DATA KE FIREBASE FIRESTORE (Koleksi "alumni")
       await addDoc(collection(db, "alumni"), {
-        nama,
-        angkatan,
-        jurusan,
-        status,
-        tempat: status === "Mencari Kerja" ? "Sedang Mencari Kerja" : tempat,
-        posisi: posisi || "",
-        whatsapp: whatsapp || "",
-        testimoni: testimoni || "",
-        createdAt: new Date().toISOString(),
-        isSelfSubmit: true // Penanda bahwa data diisi sendiri oleh alumni
+        namaLengkap: formData.namaLengkap,
+        nisn: formData.nisn || "-",
+        tahunLulus: Number(formData.tahunLulus),
+        jurusan: formData.jurusan,
+        email: formData.email || "-",
+        noWhatsapp: formData.noWhatsapp,
+        statusAlumni: formData.statusAlumni,
+        namaInstansi: formData.statusAlumni !== "mencari_kerja" ? formData.namaInstansi : "-",
+        jabatanJurusan: formData.statusAlumni !== "mencari_kerja" ? formData.jabatanJurusan : "-",
+        kesanPesan: formData.kesanPesan || "-",
+        createdAt: serverTimestamp(),
       });
 
-      setSubmitted(true);
+      setIsSubmitted(true);
+      toast.success("Data alumni berhasil dikirim ke database!");
     } catch (error) {
-      console.error("Gagal mengirim data:", error);
-      alert("Terjadi kesalahan saat menyimpan data. Coba lagi nanti.");
+      console.error("Firebase Error: ", error);
+      toast.error("Gagal mengirim data ke database. Cek koneksi / izin Firebase kamu.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (submitted) {
-    return (
-      <div className="min-h-screen grid place-items-center bg-background p-4">
-        <div className="max-w-md w-full bg-card rounded-3xl p-8 border shadow-soft text-center space-y-4">
-          <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle2 className="h-10 w-10" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">Terima Kasih!</h1>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Data Tracer Study kamu berhasil terkirim. Kontribusimu sangat membantu pemetaan alumni dan kemajuan SMK Al Kaaffah Kepanjen.
-          </p>
-          <Button 
-            onClick={() => {
-              setSubmitted(false);
-              setNama("");
-              setAngkatan("");
-              setTempat("");
-              setPosisi("");
-              setWhatsapp("");
-              setTestimoni("");
-            }} 
-            className="w-full rounded-xl py-5"
-          >
-            Isi Data Lainnya
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center">
-      <div className="max-w-xl w-full space-y-8">
-        
-        {/* Header Form */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex p-3 bg-primary/10 text-primary rounded-2xl mb-2">
-            <GraduationCap className="h-8 w-8" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-            Tracer Study Alumni
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Formulir Pendataan Alumni SMK Al Kaaffah Kepanjen untuk pemetaan karir dan pengembangan jejaring BKK.
-          </p>
-        </div>
+    <>
+      <PageHero
+        eyebrow="Tracer Study & Alumni"
+        title="Formulir Pendataan Alumni"
+        description="Bantu sekolah memetakan rekam jejak alumni untuk peningkatan mutu pendidikan dan jaringan karir SMK."
+      />
 
-        {/* Card Form */}
-        <div className="bg-card border rounded-3xl p-6 sm:p-8 shadow-soft">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            
-            <div>
-              <label className="text-xs font-bold text-foreground block mb-1.5">Nama Lengkap *</label>
-              <input 
-                type="text" 
-                required
-                value={nama}
-                onChange={(e) => setNama(e.target.value)}
-                placeholder="Masukkan nama lengkap kamu..." 
-                className="w-full bg-secondary/50 border border-input text-foreground placeholder:text-muted-foreground p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition" 
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold text-foreground block mb-1.5">Tahun Lulus (Angkatan) *</label>
-                <input 
-                  type="number" 
-                  required
-                  value={angkatan}
-                  onChange={(e) => setAngkatan(e.target.value)}
-                  placeholder="Contoh: 2023" 
-                  className="w-full bg-secondary/50 border border-input text-foreground placeholder:text-muted-foreground p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition" 
-                />
+      <section className="container-page py-12">
+        <div className="mx-auto max-w-3xl">
+          {isSubmitted ? (
+            /* Card Sukses Setelah Submit */
+            <Reveal>
+              <div className="rounded-3xl border bg-card p-8 text-center shadow-soft lg:p-12">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <CheckCircle2 className="h-10 w-10" />
+                </div>
+                <h2 className="mt-6 text-2xl font-bold sm:text-3xl">Data Berhasil Terkirim!</h2>
+                <p className="mt-3 text-muted-foreground">
+                  Terima kasih, <span className="font-semibold text-foreground">{formData.namaLengkap}</span>. Data rekam jejak alumni kamu telah tersimpan dalam sistem Tracer Study sekolah.
+                </p>
+                <div className="mt-8 flex justify-center gap-4">
+                  <button
+                    onClick={() => {
+                      setIsSubmitted(false);
+                      setFormData({
+                        namaLengkap: "",
+                        nisn: "",
+                        tahunLulus: new Date().getFullYear().toString(),
+                        jurusan: "TKJ",
+                        email: "",
+                        noWhatsapp: "",
+                        statusAlumni: "kerja",
+                        namaInstansi: "",
+                        jabatanJurusan: "",
+                        kesanPesan: "",
+                      });
+                    }}
+                    className="rounded-xl border border-input bg-background px-6 py-2.5 text-sm font-semibold transition-colors hover:bg-accent"
+                  >
+                    Isi Lagi Data Lain
+                  </button>
+                </div>
               </div>
+            </Reveal>
+          ) : (
+            /* Form Input Alumni */
+            <Reveal>
+              <form onSubmit={handleSubmit} className="space-y-8 rounded-3xl border bg-card p-6 shadow-soft sm:p-10">
+                {/* Header Form */}
+                <div className="border-b pb-6">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Sparkles className="h-5 w-5" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Tracer Study</span>
+                  </div>
+                  <h2 className="mt-2 text-2xl font-bold">Identitas & Status Alumni</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Isi data diri kamu dengan benar dan akurat.</p>
+                </div>
 
-              <div>
-                <label className="text-xs font-bold text-foreground block mb-1.5">Jurusan *</label>
-                <select 
-                  value={jurusan}
-                  onChange={(e) => setJurusan(e.target.value)}
-                  className="w-full bg-secondary/50 border border-input text-foreground p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                {/* Section 1: Data Diri */}
+                <div className="space-y-4">
+                  <h3 className="flex items-center gap-2 text-base font-semibold">
+                    <User className="h-4 w-4 text-primary" /> Data Diri
+                  </h3>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <label className="mb-1.5 block text-xs font-semibold">
+                        Nama Lengkap <span className="text-destructive">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="namaLengkap"
+                        required
+                        value={formData.namaLengkap}
+                        onChange={handleChange}
+                        placeholder="Contoh: Budi Santoso"
+                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold">NISN (Opsional)</label>
+                      <input
+                        type="text"
+                        name="nisn"
+                        value={formData.nisn}
+                        onChange={handleChange}
+                        placeholder="00xxxxxxxx"
+                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold">
+                        Tahun Lulus <span className="text-destructive">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        name="tahunLulus"
+                        required
+                        min="2000"
+                        max={new Date().getFullYear()}
+                        value={formData.tahunLulus}
+                        onChange={handleChange}
+                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="mb-1.5 block text-xs font-semibold">
+                        Jurusan / Kompetensi Keahlian <span className="text-destructive">*</span>
+                      </label>
+                      <select
+                        name="jurusan"
+                        value={formData.jurusan}
+                        onChange={handleChange}
+                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      >
+                        {majorOptions.map((m) => (
+                          <option key={m.value} value={m.value}>
+                            {m.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Kontak */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="flex items-center gap-2 text-base font-semibold">
+                    <Phone className="h-4 w-4 text-primary" /> Informasi Kontak
+                  </h3>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold">
+                        No. WhatsApp / HP <span className="text-destructive">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        name="noWhatsapp"
+                        required
+                        value={formData.noWhatsapp}
+                        onChange={handleChange}
+                        placeholder="08xxxxxxxxxx"
+                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold">Email (Opsional)</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="alumni@email.com"
+                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Status Karir / Studi */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="flex items-center gap-2 text-base font-semibold">
+                    <Briefcase className="h-4 w-4 text-primary" /> Status Kesibukan Saat Ini
+                  </h3>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {statusOptions.map((st) => {
+                      const Icon = st.icon;
+                      const isSelected = formData.statusAlumni === st.value;
+                      return (
+                        <label
+                          key={st.value}
+                          className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all ${
+                            isSelected
+                              ? "border-primary bg-primary/5 text-primary shadow-sm"
+                              : "hover:border-muted-foreground/30"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="statusAlumni"
+                            value={st.value}
+                            checked={isSelected}
+                            onChange={handleChange}
+                            className="sr-only"
+                          />
+                          <Icon className="h-5 w-5 shrink-0" />
+                          <span className="text-xs font-medium text-foreground">{st.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {/* Input Tambahan Jika Bekerja/Kuliah */}
+                  {formData.statusAlumni !== "mencari_kerja" && (
+                    <div className="grid gap-4 pt-2 sm:grid-cols-2 animate-in fade-in slide-in-from-top-2">
+                      <div>
+                        <label className="mb-1.5 block text-xs font-semibold">
+                          {formData.statusAlumni.includes("kuliah") ? "Nama Perguruan Tinggi / Universitas" : "Nama Perusahaan / Tempat Kerja"}
+                        </label>
+                        <input
+                          type="text"
+                          name="namaInstansi"
+                          value={formData.namaInstansi}
+                          onChange={handleChange}
+                          placeholder={formData.statusAlumni.includes("kuliah") ? "Contoh: Universitas Brawijaya" : "Contoh: PT. Telekomunikasi Indonesia"}
+                          className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1.5 block text-xs font-semibold">
+                          {formData.statusAlumni.includes("kuliah") ? "Program Studi / Jurusan" : "Jabatan / Posisi Kerja"}
+                        </label>
+                        <input
+                          type="text"
+                          name="jabatanJurusan"
+                          value={formData.jabatanJurusan}
+                          onChange={handleChange}
+                          placeholder={formData.statusAlumni.includes("kuliah") ? "Contoh: Teknik Informatika" : "Contoh: Network Engineer"}
+                          className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Section 4: Kesan & Pesan */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="flex items-center gap-2 text-base font-semibold">
+                    <BookOpen className="h-4 w-4 text-primary" /> Kesan & Pesan untuk Sekolah
+                  </h3>
+
+                  <div>
+                    <textarea
+                      name="kesanPesan"
+                      rows={4}
+                      value={formData.kesanPesan}
+                      onChange={handleChange}
+                      placeholder="Bagikan saran, masukan, atau pesan motivasi untuk adik-adik kelas di sekolah..."
+                      className="w-full rounded-xl border bg-background p-4 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg active:scale-[0.99] disabled:opacity-50"
                 >
-                  <option value="Teknik Kendaraan Ringan" className="bg-card text-foreground">TKR (Kendaraan Ringan)</option>
-                  <option value="Digital Marketing" className="bg-card text-foreground">DM (Digital Marketing)</option>
-                  <option value="Teknik Audio Video" className="bg-card text-foreground">TAV (Audio Video)</option>
-                  <option value="Teknik Komputer Jaringan" className="bg-card text-foreground">TKJ (Komputer Jaringan)</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-foreground block mb-1.5">Status Kegiatan Saat Ini *</label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { id: "Bekerja", label: "Bekerja", icon: Briefcase },
-                  { id: "Kuliah", label: "Kuliah", icon: GraduationCap },
-                  { id: "Wirausaha", label: "Wirausaha", icon: Rocket },
-                  { id: "Mencari Kerja", label: "Mencari Kerja", icon: SearchCheck },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const isSelected = status === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setStatus(item.id as any)}
-                      className={`flex items-center gap-2 p-3 rounded-xl border text-xs font-bold transition text-left ${
-                        isSelected 
-                          ? "border-primary bg-primary/10 text-primary" 
-                          : "border-input bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {status !== "Mencari Kerja" && (
-              <div>
-                <label className="text-xs font-bold text-foreground block mb-1.5">
-                  {status === "Bekerja" ? "Nama Perusahaan / Workplace *" : status === "Kuliah" ? "Nama Perguruan Tinggi / Kampus *" : "Nama Usaha / Bisnis *"}
-                </label>
-                <input 
-                  type="text" 
-                  required
-                  value={tempat}
-                  onChange={(e) => setTempat(e.target.value)}
-                  placeholder={status === "Bekerja" ? "PT. Honda Prospect Motor" : status === "Kuliah" ? "Universitas Brawijaya" : "Bengkel Motor Jaya"} 
-                  className="w-full bg-secondary/50 border border-input text-foreground placeholder:text-muted-foreground p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition" 
-                />
-              </div>
-            )}
-
-            {status === "Bekerja" && (
-              <div>
-                <label className="text-xs font-bold text-foreground block mb-1.5">Jabatan / Posisi Kerja</label>
-                <input 
-                  type="text" 
-                  value={posisi}
-                  onChange={(e) => setPosisi(e.target.value)}
-                  placeholder="Mekanik / Quality Control / Staff Admin" 
-                  className="w-full bg-secondary/50 border border-input text-foreground placeholder:text-muted-foreground p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition" 
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="text-xs font-bold text-foreground block mb-1.5">No. WhatsApp Aktif (Opsional)</label>
-              <input 
-                type="text" 
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="081234567890" 
-                className="w-full bg-secondary/50 border border-input text-foreground placeholder:text-muted-foreground p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition" 
-              />
-              <p className="text-[11px] text-muted-foreground mt-1">Guna penyaluran info lowongan kerja BKK (jika membutuhkan).</p>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-foreground block mb-1.5">Testimoni / Pesan untuk Adik Kelas (Opsional)</label>
-              <textarea 
-                value={testimoni}
-                onChange={(e) => setTestimoni(e.target.value)}
-                placeholder="Bagikan pengalaman atau motivasi kamu selama/setelah lulus dari SMK Al Kaaffah..." 
-                className="w-full bg-secondary/50 border border-input text-foreground placeholder:text-muted-foreground p-3 rounded-xl text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition" 
-              />
-            </div>
-
-            <Button type="submit" disabled={loading} className="w-full py-6 rounded-xl font-bold text-sm gap-2">
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4" /> Kirim Data Tracer Study
-                </>
-              )}
-            </Button>
-          </form>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Menyimpan ke Database...
+                    </>
+                  ) : (
+                    <>
+                      Kirim Data Alumni <Send className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            </Reveal>
+          )}
         </div>
-
-      </div>
-    </div>
+      </section>
+    </>
   );
 }
