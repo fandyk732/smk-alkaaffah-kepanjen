@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, getDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { 
@@ -30,7 +30,7 @@ interface Alumni {
   nama: string;
   angkatan: string;
   jurusan: string;
-  status: "Bekerja" | "Kuliah" | "Wirausaha" | "Mencari Kerja";
+  status: "Bekerja" | "Kuliah" | "Wirausaha" | "Mencari Kerja" | string;
   tempat: string;
   posisi?: string;
   whatsapp?: string;
@@ -52,7 +52,7 @@ export default function AdminAlumniPage() {
   // Form States
   const [nama, setNama] = useState("");
   const [angkatan, setAngkatan] = useState("");
-  const [jurusan, setJurusan] = useState("Teknik Kendaraan Ringan");
+  const [jurusan, setJurusan] = useState("TKJ");
   const [status, setStatus] = useState<"Bekerja" | "Kuliah" | "Wirausaha" | "Mencari Kerja">("Bekerja");
   const [tempat, setTempat] = useState("");
   const [posisi, setPosisi] = useState("");
@@ -73,7 +73,7 @@ export default function AdminAlumniPage() {
         if (userDoc.exists()) {
           const data = userDoc.data();
 
-          // Konversi role ke Array (Mendukung data string lama & array baru)
+          // Konversi role ke Array
           const roles: string[] = Array.isArray(data.role) ? data.role : [data.role];
 
           // Cek akses admin_alumni atau superadmin
@@ -100,25 +100,50 @@ export default function AdminAlumniPage() {
     return () => unsubscribe();
   }, [router]);
 
-  // 2. Ambil Data dari Firestore
+  // 2. 🔄 Ambil Data Live dari Firestore (Koleksi "alumni")
   const ambilDataAlumni = async () => {
     setLoadingData(true);
     try {
-      const q = query(collection(db, "alumni"), orderBy("angkatan", "desc"));
+      // Mengurutkan berdasarkan tanggal dibuat paling baru
+      const q = query(collection(db, "alumni"), orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
       const list: Alumni[] = [];
-      querySnapshot.forEach((doc) => {
-        list.push({ id: doc.id, ...doc.data() } as Alumni);
+
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        // Normalisasi status dari Tracer Study ke Admin Status Label
+        const normalizeStatus = () => {
+          const rawStatus = data.status || data.statusAlumni || "";
+          if (rawStatus === "kerja" || rawStatus === "Bekerja") return "Bekerja";
+          if (rawStatus === "kuliah" || rawStatus === "Kuliah") return "Kuliah";
+          if (rawStatus === "wirausaha" || rawStatus === "Wirausaha") return "Wirausaha";
+          if (rawStatus === "kerja_kuliah") return "Bekerja";
+          return "Mencari Kerja";
+        };
+
+        list.push({
+          id: docSnap.id,
+          nama: data.nama || data.namaLengkap || "Tanpa Nama",
+          angkatan: (data.angkatan || data.tahunLulus || "-").toString(),
+          jurusan: data.jurusan || "-",
+          status: normalizeStatus(),
+          tempat: data.tempat || data.namaInstansi || "-",
+          posisi: data.posisi || data.jabatanJurusan || "",
+          whatsapp: data.whatsapp || data.noWhatsapp || "",
+          testimoni: data.testimoni || data.kesanPesan || "",
+        });
       });
+
       setAlumniList(list);
     } catch (error) {
-      console.error("Gagal mengambil data:", error);
+      console.error("Gagal mengambil data alumni:", error);
     } finally {
       setLoadingData(false);
     }
   };
 
-  // 3. Handler Tambah Data Alumni
+  // 3. Handler Tambah Data Alumni Melalui Form Admin
   const handleTambahAlumni = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nama || !angkatan) return alert("Mohon isi Nama Lengkap dan Angkatan!");
@@ -127,15 +152,22 @@ export default function AdminAlumniPage() {
     setIsSubmitting(true);
     try {
       await addDoc(collection(db, "alumni"), {
+        namaLengkap: nama,
         nama,
+        tahunLulus: Number(angkatan),
         angkatan,
         jurusan,
+        statusAlumni: status.toLowerCase().replace(" ", "_"),
         status,
+        namaInstansi: status === "Mencari Kerja" ? "-" : tempat,
         tempat: status === "Mencari Kerja" ? "Sedang Mencari Kerja" : tempat,
+        jabatanJurusan: posisi || "-",
         posisi: posisi || "",
+        noWhatsapp: whatsapp || "",
         whatsapp: whatsapp || "",
+        kesanPesan: testimoni || "",
         testimoni: testimoni || "",
-        createdAt: new Date().toISOString()
+        createdAt: serverTimestamp(),
       });
 
       // Reset Form
@@ -145,7 +177,7 @@ export default function AdminAlumniPage() {
       setPosisi("");
       setWhatsapp("");
       setTestimoni("");
-      
+
       // Refresh list data
       await ambilDataAlumni();
       alert("Data alumni berhasil disimpan!");
@@ -175,18 +207,18 @@ export default function AdminAlumniPage() {
     if (filteredAlumni.length === 0) return alert("Tidak ada data alumni untuk di-export.");
 
     const headers = ["Nama Lengkap", "Angkatan", "Jurusan", "Status", "Tempat/Instansi", "Posisi/Jabatan", "WhatsApp", "Testimoni"];
-    const rows = filteredAlumni.map(a => [
+    const rows = filteredAlumni.map((a) => [
       `"${a.nama.replace(/"/g, '""')}"`,
       `"${a.angkatan}"`,
       `"${a.jurusan}"`,
       `"${a.status}"`,
       `"${a.tempat.replace(/"/g, '""')}"`,
       `"${(a.posisi || "-").replace(/"/g, '""')}"`,
-      ` font-mono:"${a.whatsapp || "-"}"`,
-      `"${(a.testimoni || "-").replace(/"/g, '""')}"`
+      `"${a.whatsapp || "-"}"`,
+      `"${(a.testimoni || "-").replace(/"/g, '""')}"`,
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -199,22 +231,23 @@ export default function AdminAlumniPage() {
   // 📊 Kalkulasi Statistik
   const stats = useMemo(() => {
     const total = alumniList.length;
-    const bekerja = alumniList.filter(a => a.status === "Bekerja").length;
-    const kuliah = alumniList.filter(a => a.status === "Kuliah").length;
-    const wirausaha = alumniList.filter(a => a.status === "Wirausaha").length;
-    const seeking = alumniList.filter(a => a.status === "Mencari Kerja").length;
+    const bekerja = alumniList.filter((a) => a.status === "Bekerja").length;
+    const kuliah = alumniList.filter((a) => a.status === "Kuliah").length;
+    const wirausaha = alumniList.filter((a) => a.status === "Wirausaha").length;
+    const seeking = alumniList.filter((a) => a.status === "Mencari Kerja").length;
 
     return { total, bekerja, kuliah, wirausaha, seeking };
   }, [alumniList]);
 
   // 🔍 Filtered List Data
   const filteredAlumni = useMemo(() => {
-    return alumniList.filter(item => {
-      const matchSearch = item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.tempat.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.angkatan.includes(searchQuery);
+    return alumniList.filter((item) => {
+      const matchSearch =
+        item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.tempat.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.angkatan.includes(searchQuery);
 
-      const matchJurusan = filterJurusan === "Semua" || item.jurusan === filterJurusan;
+      const matchJurusan = filterJurusan === "Semua" || item.jurusan.toLowerCase().includes(filterJurusan.toLowerCase());
       const matchStatus = filterStatus === "Semua" || item.status === filterStatus;
 
       return matchSearch && matchJurusan && matchStatus;
@@ -256,7 +289,7 @@ export default function AdminAlumniPage() {
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 rounded-xl border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">
               <FileSpreadsheet className="h-4 w-4" /> Export CSV
@@ -270,7 +303,7 @@ export default function AdminAlumniPage() {
           </div>
         </div>
 
-        {/* 📊 STATISTIK RINGKAS (TRACER STUDY WIDGETS) */}
+        {/* 📊 STATISTIK RINGKAS */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           <div className="bg-card border p-4 rounded-2xl shadow-sm flex items-center gap-3">
             <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
@@ -361,10 +394,10 @@ export default function AdminAlumniPage() {
                     onChange={(e) => setJurusan(e.target.value)}
                     className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition"
                   >
-                    <option value="Teknik Kendaraan Ringan">TKR</option>
-                    <option value="Digital Marketing">DM</option>
-                    <option value="Teknik Audio Video">TAV</option>
-                    <option value="Teknik Komputer Jaringan">TKJ</option>
+                    <option value="TKJ">TKJ</option>
+                    <option value="TAV">TAV</option>
+                    <option value="TKR">TKR</option>
+                    <option value="DM">Digital Marketing</option>
                   </select>
                 </div>
               </div>
@@ -445,7 +478,6 @@ export default function AdminAlumniPage() {
                 Direktori Alumni ({filteredAlumni.length})
               </h2>
 
-              {/* Input Cari */}
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <input 
@@ -468,10 +500,10 @@ export default function AdminAlumniPage() {
                   className="w-full pl-8 pr-3 py-1.5 rounded-xl border bg-background text-xs outline-none focus:border-primary transition appearance-none"
                 >
                   <option value="Semua">Semua Jurusan</option>
-                  <option value="Teknik Kendaraan Ringan">TKR</option>
-                  <option value="Digital Marketing">DM</option>
-                  <option value="Teknik Audio Video">TAV</option>
-                  <option value="Teknik Komputer & Jaringan">TKJ</option>
+                  <option value="TKJ">TKJ</option>
+                  <option value="TAV">TAV</option>
+                  <option value="TKR">TKR</option>
+                  <option value="DM">Digital Marketing</option>
                 </select>
               </div>
 
@@ -519,7 +551,7 @@ export default function AdminAlumniPage() {
                           <div className="font-bold text-foreground">{item.nama}</div>
                           <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
                             <span>Angkatan {item.angkatan}</span>
-                            {item.whatsapp && (
+                            {item.whatsapp && item.whatsapp !== "-" && (
                               <a 
                                 href={`https://wa.me/${item.whatsapp.replace(/\D/g, '')}`} 
                                 target="_blank" 
@@ -546,7 +578,7 @@ export default function AdminAlumniPage() {
                             {item.status}
                           </div>
                           <div className="text-xs font-medium text-muted-foreground max-w-[180px] truncate">{item.tempat}</div>
-                          {item.posisi && <div className="text-[11px] italic text-muted-foreground">{item.posisi}</div>}
+                          {item.posisi && item.posisi !== "-" && <div className="text-[11px] italic text-muted-foreground">{item.posisi}</div>}
                         </td>
                         <td className="p-3 text-center">
                           <Button 
