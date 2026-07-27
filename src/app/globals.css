@@ -288,6 +288,15 @@ article,
   margin-bottom: 0.85rem !important;
 }
 
+/* PENGUNCI PAKSA (FORCE) UNTUK ELEMEN DI DALAM PROSE & BERITA */
+.prose *, 
+.berita-content *, 
+.ql-editor * {
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  hyphens: manual !important;
+}
+
 /* =========================================================
    🚀 PENGUNCI SPESIFIK UNTUK VERCEL PRODUCTION BUILD
    ========================================================= */
@@ -327,4 +336,13 @@ article,
 
 .animate-marquee:hover {
   animation-play-state: paused; /* Berhenti saat disentuh/ditekan jari di HP */
+}
+
+/* Matikan pemotongan kata otomatis (hyphenation) untuk Bahasa Indonesia */
+article, .prose, .berita-content, .ql-editor {
+  -webkit-hyphens: none !important;
+  -ms-hyphens: none !important;
+  hyphens: none !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
 }

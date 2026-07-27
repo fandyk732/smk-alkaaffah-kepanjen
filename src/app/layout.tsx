@@ -6,6 +6,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { AnimatedBackground } from "@/components/animated-background";
 import { Toaster } from "@/components/ui/sonner";
+import { BackToTop } from "@/components/back-to-top"; // 👈 1. IMPORT DI SINI
 import { school } from "@/data/site";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -74,6 +75,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         <Footer />
         <Toaster />
+
+        {/* 🎯 2. PANGGIL BACK TO TOP DI SINI */}
+        <BackToTop />
       </body>
     </html>
   );

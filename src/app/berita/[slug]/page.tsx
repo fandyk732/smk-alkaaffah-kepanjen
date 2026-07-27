@@ -22,15 +22,21 @@ interface Berita {
   slug: string;
 }
 
-// 🎯 HELPER 1: Unescape Entitas HTML yang Ter-escape dari Firestore/Quill Editor
+// 🎯 HELPER 1: Unescape Entitas HTML + Sanitasi Spasi Tersembunyi (\u00a0 & &nbsp;)
 const decodeHtml = (htmlString: string) => {
   if (!htmlString) return "";
-  return htmlString
+  
+  let decoded = htmlString
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, "&");
+
+  // 🎯 FIX KUNCI: Bersihkan entitas &nbsp; DAN karakter Unicode Non-Breaking Space (\u00a0)
+  return decoded
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\u00a0/g, " ");
 };
 
 // 🎯 HELPER 2: Strip HTML Bersih Total (Untuk Meta SEO & Excerpt)
@@ -39,7 +45,6 @@ const stripHtml = (htmlString: string) => {
   const decoded = decodeHtml(htmlString);
   return decoded
     .replace(/<[^>]*>?/gm, " ")
-    .replace(/&nbsp;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
 };
@@ -149,7 +154,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
       </div>
 
       {/* Judul Utama */}
-      <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl wrap-break-word">
+      <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl break-words [word-break:normal] [overflow-wrap:anywhere]">
         {article.judul}
       </h1>
 
@@ -164,12 +169,15 @@ export default async function ArticlePage({ params }: { params: Params }) {
 
       {/* KONTEN ARTIKEL UTAMA */}
       <div className="mt-8 max-w-none text-foreground leading-relaxed w-full overflow-hidden">
-        {/* 🎯 DI SINI KUNCI BIKIN KONTEN ARTIKEL RAPI DAN FORMATNYA JALAN */}
         <div 
-          dangerouslySetInnerHTML={{ __html: decodeHtml(article.konten) }} 
+          dangerouslySetInnerHTML={{ 
+            __html: decodeHtml(article.konten) 
+          }} 
           className="
             prose prose-slate dark:prose-invert max-w-none
-            wrap-break-word
+            berita-content
+            break-words [word-break:normal] [overflow-wrap:anywhere] [hyphens:none]
+            [&_*]:[word-break:normal] [&_*]:[overflow-wrap:anywhere]
             prose-p:text-base sm:prose-p:text-lg prose-p:leading-relaxed
             prose-a:text-primary prose-a:no-underline hover:prose-a:underline
             prose-img:rounded-xl prose-img:w-full prose-img:object-cover
@@ -200,7 +208,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
                     />
                   </div>
                   <div className="p-4 flex flex-col justify-between grow">
-                    <h3 className="text-sm font-semibold leading-snug group-hover:text-primary line-clamp-2 wrap-break-word">
+                    <h3 className="text-sm font-semibold leading-snug group-hover:text-primary line-clamp-2 break-words [word-break:normal] [overflow-wrap:anywhere]">
                       {n.judul}
                     </h3>
                   </div>

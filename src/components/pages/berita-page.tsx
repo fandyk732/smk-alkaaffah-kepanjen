@@ -42,9 +42,10 @@ const stripHtml = (htmlString: string) => {
   // 2. Bersihkan semua tag HTML (<p>, <strong>, <em>, dll)
   let cleanText = decoded.replace(/<[^>]*>?/gm, " ");
 
-  // 3. Bersihkan sisa spasi khusus (&nbsp; dll) & spasi ganda
+  // 3. Bersihkan sisa spasi khusus (&nbsp; / \u00a0) & spasi ganda
   cleanText = cleanText
     .replace(/&nbsp;/gi, " ")
+    .replace(/\u00a0/g, " ") // 🎯 FIX Tambahan: Bersihkan karakter Unicode Non-Breaking Space
     .replace(/\s+/g, " ")
     .trim();
 
@@ -149,7 +150,7 @@ export function BeritaPage() {
                   href={`/berita/${n.slug}`} 
                   className="group block h-full overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-elegant flex flex-col"
                 >
-                  {/* 🎯 FIX GAMBAR MOBILE: Dikunci dengan aspect-video & object-cover */}
+                  {/* Gambar Card */}
                   <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
                     <img 
                       src={n.gambar} 
@@ -168,12 +169,14 @@ export function BeritaPage() {
                         <span>{n.kategori}</span>
                         <span className="text-muted-foreground font-normal">{n.tanggal}</span>
                       </div>
-                      <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2 wrap-break-word">
+                      
+                      {/* 🎯 FIX 1: JUDUL DENGAN BREAK-WORDS DAN WORD-BREAK NORMAL */}
+                      <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2 break-words [word-break:normal] [overflow-wrap:anywhere]">
                         {n.judul}
                       </h3>
                       
-                      {/* 🎯 FIX TEKS PREVIEW BERSIH TOTAL */}
-                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground wrap-break-word">
+                      {/* 🎯 FIX 2: PREVIEW DESKRIPSI DENGAN CLEAN STRIP HTML */}
+                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground break-words [word-break:normal] [overflow-wrap:anywhere]">
                         {stripHtml(n.konten)}
                       </p>
                     </div>
