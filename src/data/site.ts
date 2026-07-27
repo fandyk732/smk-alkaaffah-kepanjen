@@ -38,32 +38,32 @@ export const programs = [
   {
     title: "Kelas Bahasa Jepang",
     code: "JB",
-    desc: "Kelas khusus bahasa Jepang untuk siswa dan alumni.",
+    desc: "Gerbang Menuju Karier Internasional.",
     icon: "BookOpen",
   },
   {
     title: "Teknik Komputer & Jaringan",
     code: "TKJ",
-    desc: "Membangun, mengelola, dan mengamankan infrastruktur jaringan komputer modern.",
+    desc: "Membangun Infrastruktur Digital Masa Depan.",
     icon: "Network",
   },
   {
     title: "Teknik Audio Video",
     code: "TAV",
-    desc: "Memrancang Bangun Komponen Eletkronika, Instalasi Listik Industri, Instalasi PLTS, dan IoT.",
-    icon: "",
+    desc: "Teknologi Elektronika untuk Industri Modern",
+    icon: "Video",
   },
   {
     title: "Teknik Kendaraan Ringan",
     code: "TKR",
-    desc: "Perawatan dan perbaikan kendaraan bermotor serta sistem elektriknya.",
-    icon: "",
+    desc: "Menjadi Teknisi Otomotif Profesional Berstandar Industri",
+    icon: "Wrench",
   },
   {
     title: "Digital Marketing",
     code: "DM",
-    desc: "Mempelajari strategi pemasaran digital dan pengelolaan media sosial.",
-    icon: "",
+    desc: "Belajar Bisnis Digital dan Bangun Brand Masa Depan",
+    icon: "TrendingUp",
   },
 ];
 

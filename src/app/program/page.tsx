@@ -16,58 +16,63 @@ const iconMap = { Network, Code2, Clapperboard, Calculator } as const;
 // Data untuk masing-masing program keahlian
   //TKJ
 const tkjCurriculum = [
-  "Dasar Komputer & Jaringan", "Administrasi Sistem Jaringan", "Teknologi Jaringan Berbasis Luas (WAN)",
-  "Keamanan Jaringan", "Komputasi Awan (Cloud)", "Internet of Things (IoT)",
+  "Dasar Komputer & Jaringan", "Administrasi Sistem Jaringan", "Routing & Switching", "Keamanan Jaringan (network security)", "Internet of Things (IoT)",
+  "Keamanan Jaringan", 
 ];
 const competencies = [
-  "Merancang & membangun jaringan LAN/WAN", "Konfigurasi router & switch",
-  "Administrasi server Linux & Windows", "Manajemen keamanan jaringan", "Troubleshooting infrastruktur IT",
+  "Mampu merancang & membangun jaringan LAN/WAN", "Mampu Mengkonfigurasi router & switch",
+  "Mampu mengelola server Linux maupun Windows", "Mampu menerapkan keamanan Jaringan Komputer", "Mampu melakukan Troubleshooting infrastruktur Jaringan", "Mampu mengimplementasikan layanan Cloud dan Virtualisasi dasar",
 ];
-const certifications = ["Cisco CCNA", "MikroTik MTCNA", "BNSP Teknik Jaringan", "Junior Network Administrator"];
+const certifications = ["Cisco CCNA", "MikroTik MTCNA", "BNSP Junior Network Administrator", "Sertifikasi Administrasi Server"];
+const prospekKarier = [ "Network Engineer", "System Administrator", "IT Support", "Cyber Security Analyst", "Cloud Engineer", "IoT Developer", "IT Consultant", "Freelance Network Specialist"];
 
   //TKR
 const kurikulumtkr = [
-  "Perawatan Mesin", "Ganti Oli", "Balancing Roda",
-  "Servis Kendaraan Listrik", "Modifikasi motor", "Internet of Things (IoT)",
+  "Dasar Mesin Otomotif", "Tune Up Mesin", "Sistem Kelistrikan Kendaraan", "Chassis dan Suspensi", "Sistem Injeksi", "Engine Management System", "Diagnostik Kendaraan",
+  "Servis Kendaraan Listrik", "Modifikasi motor", 
 ];
 const kompetensitkr = [
-  "Mbuh ga eruh", "Konfigurasi router & switch",
-  "Administrasi server Linux & Windows", "Manajemen keamanan jaringan", "Troubleshooting infrastruktur IT",
+  "Mampu melakukan servis berkala kendaraan", "Mampu melakukan diagnosis kerusakan kendaraan",
+  "Mampu melakukan tune up mesin", "Mampu memperbaiki sistem kelistrikan kendaraan", "Mampu menggunakan scanner otomotif modern", "Mampu menerapkan prosedur keselamatan kerja di Bengkel", 
 ];
-const sertifikasitkr = ["MPM Honda", "Suzuki Motor", "BNSP Teknik otomotif", "LSP Yamaha"];
+const sertifikasitkr = ["BNSP Teknik Otomotif", "Yamaha Technical Skill", "Honda Technical Skill", "Sertitikasi Teknisi Kendaraan Ringan"];
+const prospekKarierTKR = ["Teknisi Bengkel Resmi (Astra, Honda, Yamaha, Suzuki)", "Teknisi Bengkel Umum", "Teknisi Kendaraan Listrik", "Teknisi Modifikasi Motor", "Freelance Teknisi Otomotif"];
 
   //TAV
 const kurikulumtav = [
-  "Perawatan AC dan Mesin Cuci", "Instalasi AC", "PLTS",
-  "Cetak Grafir", "Robotik", "Internet of Things (IoT)",
+  "Dasar Elektronika", "Sistem Audio Video", "Instalasi Perangkat Elektronik",
+  "Perawatan Elektronik", "Robotik Dasar", "PLTS (Pembangkit Listrik Tenaga Surya)", "Internet of Things (IoT)",
 ];
 const kompetensitav = [
-  "Mbuh ga eruh", "123",
-  "Administrasi server Linux & Windows", "Manajemen keamanan jaringan", "Troubleshooting infrastruktur IT",
+  "Mampu melakukan instalasi sistem audio dan video", "Mampu merawat dan memperbaiki perangkat elektornika",
+  "Mampu membaca diagram dan rangkaian elektronika", "Mampu mengembangkan proyek berbasis IoT", "Mampu melakukan troubleshooting perangkat elektronik",
 ];
-const sertifikasitav = ["MPM Honda", "Suzuki Motor", "BNSP Teknik otomotif", "LSP Yamaha"];
+const sertifikasitav = ["BNSP Teknik Elektronika", "Sertifikasi Instalasi Audio Video", "Sertifikasi Teknik Elektronika Dasar", ];
+const prospekKarierTAV = ["Teknisi Elektronika", "Teknisi Audio Video", "Teknisi IoT", "Freelance Teknisi Elektronika"];
 
   //DIGITAL MARKETING
   const kurikulumdm = [
-  "Affiliate Marketing", "Content Marketing", "prompt engineering",
-  "web scraping", "podcasting", "Internet of Things (IoT)",
+  "Content Marketing", "Social Media Marketing", "Search Engine Optimization (SEO)",
+  "Marketplace Management", "Afiliate Marketing", "Prompt Engineering", "Copywriting", "Branding", "Web Devlopment Dasar", "Podcast & Video Content"
 ];
 const kompetensidm = [
-  "Mbuh ga eruh", "Konfigurasi router & switch",
-  "Administrasi server Linux & Windows", "Manajemen keamanan jaringan", "Troubleshooting infrastruktur IT",
+  "Mampu menyusun strategi Pemasaran Digital", "Mampu mengelola media sosial secara profesional",
+  "Mampu membuat konten visual dan copywriting yang menarik", "Mampu mengoptimalkan website menggunakan SEO", "Mampu menjalankan kampanye iklan digital", "Mampu memanfaatkan AI sebagai alat produktivitas pemasaran"
 ];
-const sertifikasidm = ["MPM Honda", "Suzuki Motor", "BNSP Teknik otomotif", "LSP Yamaha"];
-
-  //KELAS BAHASA JEPANG
+const sertifikasidm = ["Google Digital Marketing", "Google Analytics", "Google Ads", "Meta Digital Marketing", "BNSP Digital Marketing"];
+const prospekKarierDM = ["Digital Marketing Specialist", "Social Media Manager", "Content Creator", "SEO Specialist", "Affiliate Marketing Manager", "Brand Strategist", "Freelance Digital Marketer"];
+  
+//KELAS BAHASA JEPANG
 const kurikulumbj = [
-  "Basic Raku Raku", "Mina no Nihonggo", "Balancing Roda",
-  "Servis Kendaraan Listrik", "Modifikasi motor", "Internet of Things (IoT)",
+  "Nihongo Raku Raku (Dasar)", "Mina no Nihongo", "Kaiwa (Percakapan) ",
+  "Kanji Dasar", "Persiapan JFT/JLPT", "Budaya & Etika Kerja Jepang",
 ];
 const kompetensibj = [
-  "Mbuh ga eruh", "Konfigurasi router & switch",
-  "Administrasi server Linux & Windows", "Manajemen keamanan jaringan", "Troubleshooting infrastruktur IT",
+  "Mampu berkomunikasi dalam bahasa Jepang tingkat dasar hingga menengah", "Memahami budaya dan etika kerja Masyarakat Jepang", "Mampu menghadapi wawancara (Mensetsu) perusahaan Jepang",
+  "Siap mengikuti sertifikasi kemampuan bahasa Jepang (JLPT/JFT)", "Memiliki bekal untuk program magang maupun kerja di Jepang",
 ];
-const sertifikasibj = ["MPM Honda", "Suzuki Motor", "BNSP Teknik otomotif", "LSP Yamaha"];
+const sertifikasibj = ["Japanese Language Proficiency Test (JLPT) dan Japan Foundation Test (JFT)", "Sertifikat Kompetensi Bahasa Jepang Internal", "Sertifikat Pelatihan Budaya Jepang",];
+const prospekKarierBJ = ["Penerjemah Bahasa Jepang", "Tour Guide Jepang", "Bekerja di Banyak Perusahaan di Negara Jepang", "Freelance Penerjemah & Tutor Bahasa Jepang"];
 
 export default function ProgramPage() {
   return (
@@ -92,12 +97,13 @@ export default function ProgramPage() {
         </div>
       </section>
 
-      <section className="bg-section py-16" id="tkj">
+          {/* section Bahasa jepang */}
+      <section className="bg-section py-16" id="bj">
               <div className="container-page">
                 <div className="overflow-hidden rounded-3xl bg-gradient-primary p-8 text-primary-foreground lg:p-12">
-                  <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Kompetensi Keahlian</span>
+                  <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Program Unggulan</span>
                   <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Kelas Bahasa Jepang</h2>
-                  <p className="mt-4 max-w-2xl opacity-90">Program khusus untuk memperkuat kemampuan berbahasa Jepang siswa dan alumni.</p>
+                  <p className="mt-4 max-w-2xl opacity-90">Kuasai bahasa Jepang sejak SMK dan buka peluang magang, kuliah, hingga bekerja di perusahaan Jepang.</p>
                 </div>
 
                 <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -126,7 +132,7 @@ export default function ProgramPage() {
                     <div className="h-full rounded-2xl border bg-card p-7">
                       <Activity className="h-8 w-8 text-primary" />
                       <h3 className="mt-3 text-xl font-bold">Kegiatan Pembelajaran</h3>
-                      <p className="mt-3 text-sm text-muted-foreground">Pembelajaran 70% praktik di laboratorium modern, proyek nyata, kunjungan industri, magang (PKL), serta pembinaan kompetisi LKS dan sertifikasi profesi.</p>
+                      <p className="mt-3 text-sm text-muted-foreground">Pembelajaran dikemas secara interaktif melalui praktik percakapan (Kaiwa), simulasi wawancara kerja (Mensetsu), pengenalan budaya Jepang, latihan mendengar (Listening), hingga pembinaan intensif sebagai persiapan mengikuti sertifikasi dan seleksi kerja.</p>
                     </div>
                   </Reveal>
                   <Reveal delay={0.1}>
@@ -138,16 +144,26 @@ export default function ProgramPage() {
                       </div>
                     </div>
                   </Reveal>
+                  <Reveal delay={0.1}>
+                    <div className="h-full rounded-2xl border bg-card p-7">
+                      <Award className="h-8 w-8 text-primary" />
+                      <h3 className="mt-3 text-xl font-bold">Prospek Karier</h3>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {prospekKarierBJ.map((c) => <span key={c} className="rounded-full bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground">{c}</span>)}
+                      </div>
+                    </div>
+                  </Reveal>
                 </div>
               </div>
             </section>
 
+{/* section TKJ */}
 <section className="bg-section py-16" id="tkj">
         <div className="container-page">
           <div className="overflow-hidden rounded-3xl bg-gradient-primary p-8 text-primary-foreground lg:p-12">
             <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Kompetensi Keahlian</span>
             <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Teknik Komputer &amp; Jaringan (TKJ)</h2>
-            <p className="mt-4 max-w-2xl opacity-90">Program keahlian unggulan yang membekali siswa dengan kemampuan merancang, membangun, dan mengelola infrastruktur jaringan komputer berskala industri.</p>
+            <p className="mt-4 max-w-2xl opacity-90">Belajar jaringan komputer, server, cloud, dan cybersecurity melalui praktik langsung bersama teknologi yang digunakan industri.</p>
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -176,7 +192,7 @@ export default function ProgramPage() {
               <div className="h-full rounded-2xl border bg-card p-7">
                 <Activity className="h-8 w-8 text-primary" />
                 <h3 className="mt-3 text-xl font-bold">Kegiatan Pembelajaran</h3>
-                <p className="mt-3 text-sm text-muted-foreground">Pembelajaran 70% praktik di laboratorium modern, proyek nyata, kunjungan industri, magang (PKL), serta pembinaan kompetisi LKS dan sertifikasi profesi.</p>
+                <p className="mt-3 text-sm text-muted-foreground">Siswa belajar melalui praktik laboratorium jaringan, simulasi proyek industri, konfigurasi perangkat Cisco dan MikroTik, pembangunan server, kompetisi LKS, kunjungan industri, serta Praktik Kerja Lapangan (PKL) di perusahaan mitra.</p>
               </div>
             </Reveal>
             <Reveal delay={0.1}>
@@ -188,16 +204,26 @@ export default function ProgramPage() {
                 </div>
               </div>
             </Reveal>
+              <Reveal delay={0.1}>
+              <div className="h-full rounded-2xl border bg-card p-7">
+                <Award className="h-8 w-8 text-primary" />
+                <h3 className="mt-3 text-xl font-bold">Prospek Karier</h3>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {prospekKarier.map((c) => <span key={c} className="rounded-full bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground">{c}</span>)}
+                </div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      <section className="bg-section py-16" id="tkj">
+      {/* section TAV */}
+      <section className="bg-section py-16" id="tav">
         <div className="container-page">
           <div className="overflow-hidden rounded-3xl bg-gradient-primary p-8 text-primary-foreground lg:p-12">
             <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Kompetensi Keahlian</span>
             <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Teknik Audio Video (TAV)</h2>
-            <p className="mt-4 max-w-2xl opacity-90">Program keahlian unggulan yang membekali siswa dengan kemampuan merancang, membangun, dan mengelola infrastruktur jaringan komputer berskala industri.</p>
+            <p className="mt-4 max-w-2xl opacity-90">Kuasai instalasi, perawatan, dan pengembangan sistem elektronika modern melalui pembelajaran berbasis praktik.</p>
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -226,7 +252,7 @@ export default function ProgramPage() {
               <div className="h-full rounded-2xl border bg-card p-7">
                 <Activity className="h-8 w-8 text-primary" />
                 <h3 className="mt-3 text-xl font-bold">Kegiatan Pembelajaran</h3>
-                <p className="mt-3 text-sm text-muted-foreground">Pembelajaran 70% praktik di laboratorium modern, proyek nyata, kunjungan industri, magang (PKL), serta pembinaan kompetisi LKS dan sertifikasi profesi.</p>
+                <p className="mt-3 text-sm text-muted-foreground">Siswa melaksanakan praktik perakitan rangkaian elektronika, instalasi audio video, proyek IoT, perawatan perangkat elektronik, kunjungan industri, serta Praktik Kerja Lapangan (PKL) bersama mitra industri.</p>
               </div>
             </Reveal>
             <Reveal delay={0.1}>
@@ -238,16 +264,26 @@ export default function ProgramPage() {
                 </div>
               </div>
             </Reveal>
+            <Reveal delay={0.1}>
+              <div className="h-full rounded-2xl border bg-card p-7">
+                <Award className="h-8 w-8 text-primary" />
+                <h3 className="mt-3 text-xl font-bold">Prospek Karier</h3>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {prospekKarierTAV.map((c) => <span key={c} className="rounded-full bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground">{c}</span>)}
+                </div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      <section className="bg-section py-16" id="tkj">
+      {/* section TKR */}
+      <section className="bg-section py-16" id="tkr">
         <div className="container-page">
           <div className="overflow-hidden rounded-3xl bg-gradient-primary p-8 text-primary-foreground lg:p-12">
             <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Kompetensi Keahlian</span>
             <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Teknik Kendaraan Ringan (TKR)</h2>
-            <p className="mt-4 max-w-2xl opacity-90">Program keahlian unggulan yang membekali siswa dengan kemampuan merancang, membangun, dan mengelola infrastruktur jaringan komputer berskala industri.</p>
+            <p className="mt-4 max-w-2xl opacity-90">Kuasai teknologi kendaraan modern melalui praktik intensif dan pembelajaran berbasis standar industri.</p>
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -276,7 +312,7 @@ export default function ProgramPage() {
               <div className="h-full rounded-2xl border bg-card p-7">
                 <Activity className="h-8 w-8 text-primary" />
                 <h3 className="mt-3 text-xl font-bold">Kegiatan Pembelajaran</h3>
-                <p className="mt-3 text-sm text-muted-foreground">Pembelajaran 70% praktik di laboratorium modern, proyek nyata, kunjungan industri, magang (PKL), serta pembinaan kompetisi LKS dan sertifikasi profesi.</p>
+                <p className="mt-3 text-sm text-muted-foreground">Pembelajaran dilakukan melalui praktik bengkel, tune up kendaraan, overhaul mesin, penggunaan scanner modern, proyek perbaikan kendaraan, kunjungan industri, serta Praktik Kerja Lapangan (PKL) di bengkel dan perusahaan otomotif.</p>
               </div>
             </Reveal>
             <Reveal delay={0.1}>
@@ -288,16 +324,26 @@ export default function ProgramPage() {
                 </div>
               </div>
             </Reveal>
+            <Reveal delay={0.1}>
+              <div className="h-full rounded-2xl border bg-card p-7">
+                <Award className="h-8 w-8 text-primary" />
+                <h3 className="mt-3 text-xl font-bold">Prospek Karier</h3>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {prospekKarierTKR.map((c) => <span key={c} className="rounded-full bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground">{c}</span>)}
+                </div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-       <section className="bg-section py-16" id="tkj">
+       {/* section Digital Marketing */}
+       <section className="bg-section py-16" id="dm">
         <div className="container-page">
           <div className="overflow-hidden rounded-3xl bg-gradient-primary p-8 text-primary-foreground lg:p-12">
             <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Kompetensi Keahlian</span>
             <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Digital Marketing (DM)</h2>
-            <p className="mt-4 max-w-2xl opacity-90">Program keahlian unggulan yang membekali siswa dengan kemampuan merancang, membangun, dan mengelola infrastruktur jaringan komputer berskala industri.</p>
+            <p className="mt-4 max-w-2xl opacity-90">Pelajari strategi pemasaran digital, AI, media sosial, dan bisnis online untuk menjadi talenta yang dibutuhkan industri.</p>
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -326,7 +372,7 @@ export default function ProgramPage() {
               <div className="h-full rounded-2xl border bg-card p-7">
                 <Activity className="h-8 w-8 text-primary" />
                 <h3 className="mt-3 text-xl font-bold">Kegiatan Pembelajaran</h3>
-                <p className="mt-3 text-sm text-muted-foreground">Pembelajaran 70% praktik di laboratorium modern, proyek nyata, kunjungan industri, magang (PKL), serta pembinaan kompetisi LKS dan sertifikasi profesi.</p>
+                <p className="mt-3 text-sm text-muted-foreground">Pembelajaran dilakukan melalui project-based learning berupa pengelolaan media sosial, pembuatan website bisnis, produksi konten foto dan video, praktik optimasi SEO, simulasi kampanye digital, hingga kerja sama dengan pelaku UMKM dan industri.</p>
               </div>
             </Reveal>
             <Reveal delay={0.1}>
@@ -335,6 +381,15 @@ export default function ProgramPage() {
                 <h3 className="mt-3 text-xl font-bold">Sertifikasi</h3>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {sertifikasidm.map((c) => <span key={c} className="rounded-full bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground">{c}</span>)}
+                </div>
+              </div>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <div className="h-full rounded-2xl border bg-card p-7">
+                <Award className="h-8 w-8 text-primary" />
+                <h3 className="mt-3 text-xl font-bold">Prospek Karier</h3>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {prospekKarierDM.map((c) => <span key={c} className="rounded-full bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground">{c}</span>)}
                 </div>
               </div>
             </Reveal>

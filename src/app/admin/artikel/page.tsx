@@ -19,7 +19,7 @@ import {
 import { Edit2, Trash2, Plus, Save, X, Loader2, LogOut, LayoutGrid } from "lucide-react";
 import dynamic from "next/dynamic";
 
-// 🎯 DYNAMIC IMPORT REACT-QUILL (Bebas Import CSS Lokal biar Gak Module Not Found)
+// Dynamic import Quill
 const ReactQuill = dynamic(() => import("react-quill-new"), { 
   ssr: false,
   loading: () => (
@@ -236,9 +236,6 @@ export default function AdminArtikelPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pt-28 pb-20 px-4 sm:px-6 lg:px-8 [color-scheme:light]">
-      {/* 🎯 LOAD STYLESHEET QUILL SECARA DIRECT VIA HTML (ANTI MODULE NOT FOUND) */}
-      <link rel="stylesheet" href="https://unpkg.com/react-quill-new@2.0.0/dist/quill.snow.css" />
-
       <div className="max-w-4xl w-full mx-auto space-y-12 overflow-hidden">
         
         {/* ================= FORM INPUT / EDIT ================= */}
@@ -265,7 +262,7 @@ export default function AdminArtikelPage() {
                 onClick={handleKembaliKeDashboard}
                 className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-slate-200"
               >
-                <LayoutGrid className="h-3.5 w-3.5" /> Dashboard Hub
+                <LayoutGrid className="h-3.5 w-3.5" /> Kembali ke Dashboard
               </button>
 
               <button 
@@ -334,8 +331,8 @@ export default function AdminArtikelPage() {
               </label>
               <div className="bg-white text-slate-900 rounded-lg border border-slate-200 overflow-hidden 
                 [&_.ql-editor]:min-h-[220px] 
-                [&_.ql-editor]:max-w-full 
-                [&_.ql-editor]:break-words">
+                [&_.ql-editor]:max-h-[500px]
+                [&_.ql-editor]:overflow-y-auto">
                 <ReactQuill 
                   theme="snow"
                   value={konten}

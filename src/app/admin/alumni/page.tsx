@@ -262,7 +262,7 @@ export default function AdminAlumniPage() {
               <FileSpreadsheet className="h-4 w-4" /> Export CSV
             </Button>
             <Button variant="outline" size="sm" onClick={handleKembaliKeDashboard} className="gap-1.5 rounded-xl border-slate-300">
-              <LayoutGrid className="h-4 w-4" /> Dashboard Hub
+              <LayoutGrid className="h-4 w-4" /> Kembali ke Dashboard
             </Button>
             <Button variant="destructive" size="sm" onClick={handleLogout} className="gap-1.5 rounded-xl">
               <LogOut className="h-4 w-4" /> Keluar

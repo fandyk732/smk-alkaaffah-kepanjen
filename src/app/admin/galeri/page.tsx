@@ -173,7 +173,7 @@ export default function AdminGaleriPage() {
               onClick={() => router.push("/admin/dashboard")} 
               className="gap-1.5 rounded-xl border-slate-300"
             >
-              <LayoutGrid className="h-4 w-4" /> Dashboard Hub
+              <LayoutGrid className="h-4 w-4" /> Kembali ke Dashboard
             </Button>
             <Button 
               variant="destructive" 

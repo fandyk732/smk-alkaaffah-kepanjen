@@ -193,7 +193,7 @@ export default function AdminPPDBPage() {
             
             {/* 🎯 TOMBOL NAVIGASI HUB DASHBOARD (Pindah Modul Tanpa Logout) */}
             <Button onClick={handleKembaliKeDashboard} variant="outline" size="sm" className="gap-1.5 rounded-xl border-slate-300">
-              <LayoutGrid className="h-4 w-4" /> Dashboard Hub
+              <LayoutGrid className="h-4 w-4" /> Kembali ke Dashboard
             </Button>
 
             {/* 🎯 TOMBOL LOGOUT TOTAL */}

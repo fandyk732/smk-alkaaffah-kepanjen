@@ -127,7 +127,7 @@ const handleSave = async (e: React.FormEvent) => {
             className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition shrink-0 self-start md:self-auto shadow-sm"
           >
             <LayoutGrid className="h-4 w-4 text-blue-400" />
-            Dashboard Hub
+            Kembali ke Dashboard
           </Link>
         </div>
 
