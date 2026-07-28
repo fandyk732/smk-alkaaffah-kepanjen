@@ -16,7 +16,8 @@ import {
   LayoutGrid,
   Image as ImageIcon,
   Trophy,
-  Megaphone
+  Megaphone,
+  Briefcase // 🚀 1. TAMBAHKAN IMPORT ICON BRIEFCASE
 } from "lucide-react";
 
 export default function AdminDashboardHub() {
@@ -159,7 +160,27 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 4. Admin Galeri */}
+          {/* 🚀 4. Admin BKK (Modul Bursa Kerja Khusus) */}
+          {hasRole("admin_bkk") && (
+            <Link
+              href="/admin/bkk"
+              className="group bg-slate-900 border border-slate-800 hover:border-indigo-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-indigo-500/5 flex items-start gap-4"
+            >
+              <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl group-hover:scale-110 transition">
+                <Briefcase className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-slate-100 group-hover:text-indigo-400 transition">
+                  Bursa Kerja Khusus (BKK)
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Post lowongan pekerjaan baru dan kelola daftar pelamar kerja.
+                </p>
+              </div>
+            </Link>
+          )}
+
+          {/* 5. Admin Galeri */}
           {hasRole("admin_galeri") && (
             <Link
               href="/admin/galeri"
@@ -179,7 +200,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 5. Admin Prestasi */}
+          {/* 6. Admin Prestasi */}
           {hasRole("admin_prestasi") && (
             <Link
               href="/admin/prestasi"
@@ -199,7 +220,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 6. Admin Announcement (Modul Baru) */}
+          {/* 7. Admin Announcement */}
           {hasRole("admin_announcement") && (
             <Link
               href="/admin/announcement"
@@ -219,7 +240,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 7. Portal Superadmin */}
+          {/* 8. Portal Superadmin */}
           {userRoles.includes("superadmin") && (
             <Link
               href="/superadmin/users"

@@ -125,6 +125,18 @@ export default function AlumniPage() {
           </Link>
         </div>
 
+        {/* 🚀 BANNER / BUTTON CTA KE BKK */}
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/bkk"
+            className="group relative inline-flex items-center gap-3 rounded-2xl bg-gradient-primary px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Sparkles className="h-5 w-5 animate-pulse text-amber-300" />
+            <span>Sedang cari Kerja? cek lowongan di BKK</span>
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+
         {/* SEARCH & FILTER BAR */}
         <div className="mt-10 flex flex-col gap-4 items-center justify-between border bg-card/80 backdrop-blur-sm p-4 rounded-2xl shadow-soft md:flex-row">
           <div className="relative w-full md:w-72">

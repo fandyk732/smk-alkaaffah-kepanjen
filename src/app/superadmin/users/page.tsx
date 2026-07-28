@@ -31,15 +31,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// 📝 OPTION ROLE YANG TERSEDIA (DITAMBAHKAN ADMIN ANNOUNCEMENT)
+// 📝 OPTION ROLE YANG TERSEDIA
 const AVAILABLE_ROLES = [
   { id: "superadmin", label: "Superadmin (Akses Penuh)" },
   { id: "admin_artikel", label: "Admin Artikel (Berita & Blog)" },
   { id: "panitia_PPDB", label: "Panitia SPMB" },
-  { id: "admin_alumni", label: "Admin Alumni" },
+  { id: "admin_alumni", label: "Admin Alumni & Tracer Study" },
+  { id: "admin_bkk", label: "Admin BKK (Bursa Kerja Khusus)" }, // 🚀 TAMBAHAN ROLE ADMIN BKK
   { id: "admin_galeri", label: "Admin Galeri (Foto & Dok)" },
   { id: "admin_prestasi", label: "Admin Prestasi (Kejuaraan)" },
-  { id: "admin_announcement", label: "Admin Pengumuman (Announcement Bar)" }, // 🚀 TAMBAHAN ROLE BARU
+  { id: "admin_announcement", label: "Admin Pengumuman (Announcement Bar)" },
 ];
 
 interface UserData {
