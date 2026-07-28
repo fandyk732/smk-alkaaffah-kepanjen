@@ -73,11 +73,46 @@ interface Application {
   fileCv?: string;
   resumeUrl?: string;
   driveCvLink?: string;
+  driveLink?: string;
   link?: string;
   
   createdAt?: any;
 }
 
+// 🛡️ Helper untuk menyaring & memvalidasi URL CV secara aman
+const getSafeCvUrl = (url?: string) => {
+  if (!url || typeof url !== "string") return null;
+
+  try {
+    const parsedUrl = new URL(url.trim());
+
+    // 1. Wajib protokol HTTP/HTTPS (Mencegah javascript: XSS attack)
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      return null;
+    }
+
+    // 2. Domain Whitelist (Daftar platform penyimpanan CV yang aman)
+    const allowedDomains = [
+      "drive.google.com",
+      "docs.google.com",
+      "dropbox.com",
+      "onedrive.live.com",
+      "firebasestorage.googleapis.com",
+      "vercel-storage.com"
+    ];
+
+    const isAllowed = allowedDomains.some((domain) =>
+      parsedUrl.hostname.endsWith(domain)
+    );
+
+    // Filter domain agar hanya link dokumen terpercaya yang bisa dibuka admin
+    if (!isAllowed) return null;
+
+    return parsedUrl.href;
+  } catch (e) {
+    return null;
+  }
+};
 
 export default function AdminBkkPage() {
   const router = useRouter();
@@ -163,7 +198,7 @@ export default function AdminBkkPage() {
     }
   };
 
-  // 2. 🚀 AMBIL DATA PELAMAR & AUTO MATCH FIELD
+  // 2. Ambil Data Pelamar
   const handleOpenApplications = async (vacancy: Vacancy) => {
     setSelectedVacancyForApps(vacancy);
     setIsAppsModalOpen(true);
@@ -177,10 +212,6 @@ export default function AdminBkkPage() {
         const colSnap = await getDocs(collection(db, colName));
         colSnap.forEach((d) => {
           const data = d.data();
-
-          // 🚀 TAMBAHKAN LINE INI UNTUK LAKUKAN INSPEKSI:
-        console.log("🔥 ISI DOKUMEN PELAMAR DI FIRESTORE:", data);
-
           if (data.vacancyId === vacancy.id || data.jobId === vacancy.id) {
             fetchedList.push({ id: d.id, ...data } as Application);
           }
@@ -388,7 +419,7 @@ export default function AdminBkkPage() {
 
       </div>
 
-      {/* ================= 🚀 MODAL DAFTAR PELAMAR TERBARU ================= */}
+      {/* MODAL DAFTAR PELAMAR */}
       {isAppsModalOpen && selectedVacancyForApps && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
@@ -442,17 +473,20 @@ export default function AdminBkkPage() {
                       const rawPhone = app.whatsapp || app.phone || app.noHp || "";
                       const formattedWa = formatWaNumber(rawPhone);
 
-                      // 3. Ekstraksi Link CV
-                     const linkFileCv =
+                      // 3. Ekstraksi & Filter Keamanan Link CV
+                      const rawCvUrl =
                         app.linkCv ||
-                        app.cvLink ||      // 👈 Tambahkan ini jika di ApplyModal pakai 'cvLink'
+                        app.cvLink ||
                         app.cvUrl ||
                         app.cv ||
                         app.fileCv ||
                         app.resumeUrl ||
-                        app.driveCvLink ||   // 👈 Tambahkan ini jika di ApplyModal pakai 'driveLink'
-                        app.link ||        // 👈 Tambahkan ini jika di ApplyModal cuma pakai 'link'
+                        app.driveCvLink ||
+                        app.driveLink ||
+                        app.link ||
                         "";
+
+                      const safeCvUrl = getSafeCvUrl(rawCvUrl);
 
                       return (
                         <div
@@ -490,9 +524,9 @@ export default function AdminBkkPage() {
                             </div>
                           </div>
 
-                          {/* 🚀 ACTION BUTTONS: HUBUNGI WA & LIHAT CV */}
+                          {/* ACTION BUTTONS */}
                           <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 md:pt-0">
-                            {/* 1. Tombol Hubungi WhatsApp */}
+                            {/* WhatsApp Button */}
                             {formattedWa ? (
                               <a
                                 href={`https://wa.me/${formattedWa}?text=${encodeURIComponent(
@@ -506,10 +540,10 @@ export default function AdminBkkPage() {
                               </a>
                             ) : null}
 
-                            {/* 2. Tombol Buka CV */}
-                            {linkFileCv ? (
+                            {/* CV Button */}
+                            {safeCvUrl ? (
                               <a
-                                href={linkFileCv}
+                                href={safeCvUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
@@ -518,7 +552,7 @@ export default function AdminBkkPage() {
                               </a>
                             ) : (
                               <span className="text-xs text-slate-500 italic bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
-                                CV tidak ada
+                                {rawCvUrl ? "Link CV Tidak Sesuai" : "CV tidak ada"}
                               </span>
                             )}
                           </div>
