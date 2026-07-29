@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { 
-  GraduationCap, 
   Briefcase, 
   GraduationCap as CollegeIcon, 
   Rocket, 
@@ -29,6 +28,89 @@ interface Alumni {
   fotoUrl?: string;
 }
 
+// 🚀 SUB-KOMPONEN ALUMNI CARD (Dengan Fitur Safe Truncate / Read More)
+function AlumniCard({ 
+  alumni, 
+  i, 
+  getStatusIcon 
+}: { 
+  alumni: Alumni; 
+  i: number; 
+  getStatusIcon: (status: string) => React.ReactNode; 
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Deteksi jika testimoni lebih dari 140 karakter (panjang)
+  const isLongTestimoni = alumni.testimoni && alumni.testimoni.length > 140;
+
+  return (
+    <Reveal delay={i * 0.05}>
+      <div className="h-full border bg-card/90 backdrop-blur-sm rounded-2xl p-6 shadow-soft flex flex-col justify-between group hover:shadow-elegant transition-all">
+        
+        {/* BAGIAN ATAS: PROFIL ALUMNI */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-primary text-white text-lg font-bold overflow-hidden shrink-0">
+              {alumni.fotoUrl ? (
+                <img src={alumni.fotoUrl} alt={alumni.nama} className="h-full w-full object-cover" />
+              ) : (
+                alumni.nama.charAt(0).toUpperCase()
+              )}
+            </div>
+            <div>
+              <h3 className="font-bold text-foreground leading-snug">{alumni.nama}</h3>
+              <p className="text-xs text-muted-foreground">
+                Angkatan {alumni.angkatan} • {alumni.jurusan}
+              </p>
+            </div>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 bg-secondary/60 rounded-lg px-2.5 py-1 text-xs font-medium w-full">
+            {getStatusIcon(alumni.status)}
+            <span className="truncate">
+              {alumni.status}: <strong className="text-foreground">{alumni.tempat}</strong>
+            </span>
+          </div>
+
+          {alumni.posisi && alumni.posisi !== "-" && (
+            <p className="text-xs text-muted-foreground pl-1">
+              Sebagai: <span className="font-medium text-foreground">{alumni.posisi}</span>
+            </p>
+          )}
+        </div>
+
+        {/* 🚀 BAGIAN BWAH: KOTAK QUOTES / TESTIMONI (SAFE EXPANDABLE) */}
+        {alumni.testimoni && alumni.testimoni !== "-" && (
+          <blockquote className="mt-5 relative bg-secondary/40 rounded-2xl p-4 border border-dashed border-primary/20 flex flex-col justify-between">
+            <Quote className="h-5 w-5 text-primary/30 absolute right-3 top-3 select-none pointer-events-none" />
+            
+            <p
+              className={`text-xs italic text-muted-foreground leading-relaxed pr-6 transition-all ${
+                !isExpanded ? "line-clamp-3" : ""
+              }`}
+            >
+              "{alumni.testimoni}"
+            </p>
+
+            {/* Tombol Baca Selengkapnya / Sembunyikan */}
+            {isLongTestimoni && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="mt-2 text-[11px] font-bold text-primary hover:underline text-left self-start"
+              >
+                {isExpanded ? "← Sembunyikan" : "Baca Selengkapnya..."}
+              </button>
+            )}
+          </blockquote>
+        )}
+
+      </div>
+    </Reveal>
+  );
+}
+
+// 🌐 KOMPONEN UTAMA HALAMAN ALUMNI
 export default function AlumniPage() {
   const [alumniList, setAlumniList] = useState<Alumni[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +120,6 @@ export default function AlumniPage() {
   useEffect(() => {
     const ambilAlumni = async () => {
       try {
-        // Mendapatkan data terbaru dari Firestore collection "alumni"
         const q = query(collection(db, "alumni"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         const list: Alumni[] = [];
@@ -46,7 +127,6 @@ export default function AlumniPage() {
         querySnapshot.forEach((doc) => {
           const data = doc.data();
 
-          // 🎯 Format mapper agar kompatibel dengan data lama & data baru dari /tracer-study
           const mappedStatus = () => {
             const rawStatus = data.status || data.statusAlumni || "";
             if (rawStatus === "kerja" || rawStatus === "Bekerja") return "Bekerja";
@@ -79,7 +159,6 @@ export default function AlumniPage() {
     ambilAlumni();
   }, []);
 
-  // Handler Filter & Search Logic
   const filteredAlumni = alumniList.filter((alumni) => {
     const matchesSearch =
       alumni.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -113,8 +192,8 @@ export default function AlumniPage() {
           align="center"
         />
 
-        {/* 🚀 BANNER / BUTTON CTA KE TRACER STUDY */}
-        <div className="mt-8 flex justify-center">
+        {/* BANNER / BUTTON CTA KE TRACER STUDY & BKK */}
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/tracer-study"
             className="group relative inline-flex items-center gap-3 rounded-2xl bg-gradient-primary px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
@@ -123,16 +202,13 @@ export default function AlumniPage() {
             <span>Kamu Alumni? Isi Data Kamu di Sini</span>
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
-        </div>
 
-        {/* 🚀 BANNER / BUTTON CTA KE BKK */}
-        <div className="mt-8 flex justify-center">
           <Link
             href="/bkk"
-            className="group relative inline-flex items-center gap-3 rounded-2xl bg-gradient-primary px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+            className="group relative inline-flex items-center gap-3 rounded-2xl bg-secondary hover:bg-secondary/80 border border-border px-6 py-3.5 text-sm font-bold text-foreground shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            <Sparkles className="h-5 w-5 animate-pulse text-amber-300" />
-            <span>Sedang cari Kerja? cek lowongan di BKK</span>
+            <Briefcase className="h-5 w-5 text-primary" />
+            <span>Cek Lowongan Kerja BKK</span>
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
@@ -184,49 +260,15 @@ export default function AlumniPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          /* 🎯 Tambahkan `items-start` di grid container agar card tidak ikut ketarik molor jika sebelahnya di-expand */
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-start">
             {filteredAlumni.map((alumni, i) => (
-              <Reveal key={alumni.id} delay={i * 0.05}>
-                <div className="h-full border bg-card/90 backdrop-blur-sm rounded-2xl p-6 shadow-soft flex flex-col justify-between group hover:shadow-elegant transition-all">
-                  <div>
-                    <div className="flex items-center gap-4">
-                      <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-primary text-white text-lg font-bold overflow-hidden shrink-0">
-                        {alumni.fotoUrl ? (
-                          <img src={alumni.fotoUrl} alt={alumni.nama} className="h-full w-full object-cover" />
-                        ) : (
-                          alumni.nama.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-foreground leading-snug">{alumni.nama}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          Angkatan {alumni.angkatan} • {alumni.jurusan}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 inline-flex items-center gap-1.5 bg-secondary/60 rounded-lg px-2.5 py-1 text-xs font-medium">
-                      {getStatusIcon(alumni.status)}
-                      <span>
-                        {alumni.status}: <strong className="text-foreground">{alumni.tempat}</strong>
-                      </span>
-                    </div>
-
-                    {alumni.posisi && alumni.posisi !== "-" && (
-                      <p className="text-xs text-muted-foreground mt-1.5 pl-1">
-                        Sebagai: <span className="font-medium text-foreground">{alumni.posisi}</span>
-                      </p>
-                    )}
-
-                    {alumni.testimoni && alumni.testimoni !== "-" && (
-                      <div className="mt-4 relative bg-secondary/30 rounded-xl p-3 border border-dashed">
-                        <Quote className="h-4 w-4 text-primary/20 absolute right-2 top-2" />
-                        <p className="text-xs italic text-muted-foreground line-clamp-3">"{alumni.testimoni}"</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Reveal>
+              <AlumniCard
+                key={alumni.id}
+                alumni={alumni}
+                i={i}
+                getStatusIcon={getStatusIcon}
+              />
             ))}
           </div>
         )}
