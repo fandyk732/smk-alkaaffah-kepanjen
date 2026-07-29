@@ -5,7 +5,13 @@ import { db } from "@/lib/firebase"; // Sesuaikan path config Firebase lo
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Send, Loader2 } from "lucide-react";
-import { programs } from "@/data/site"; // Mengambil list jurusan
+
+// 🚀 DAFTAR JURUSAN MANUAL (Bisa lo tambah / ubah / hapus bebas di sini)
+const JURUSAN_MANUAL = [
+  { code: "TKJ", title: "Teknik Komputer & Jaringan" },
+  { code: "TAV", title: "Teknik Audio Video" },
+  { code: "TKR", title: "Teknik Kendaraan Ringan" },
+];
 
 export function FormPPDB() {
   const [formData, setFormData] = useState({
@@ -57,7 +63,7 @@ export function FormPPDB() {
         <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
         <h3 className="mt-4 text-xl font-bold text-emerald-900 dark:text-emerald-400">Pendaftaran Berhasil!</h3>
         <p className="mt-2 text-sm text-emerald-700/80 dark:text-emerald-500">
-          Data pendaftaran kamu telah tersimpan. Panitia PPDB SMK Al Kaaffah akan segera menghubungi WhatsApp kamu.
+          Data pendaftaran kamu telah tersimpan. Panitia SPMB SMK Al Kaaffah akan segera menghubungi WhatsApp kamu.
         </p>
         <Button onClick={() => setSukses(false)} variant="outline" className="mt-6">
           Kirim Pendaftaran Lain
@@ -95,8 +101,11 @@ export function FormPPDB() {
         <label className="text-sm font-semibold">Pilihan Jurusan</label>
         <select name="pilihanJurusan" required value={formData.pilihanJurusan} onChange={handleChange} className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition">
           <option value="">-- Pilih Jurusan --</option>
-          {programs.map((p) => (
-            <option key={p.code} value={p.title}>{p.title} ({p.code})</option>
+          {/* 🚀 Menggunakan JURUSAN_MANUAL */}
+          {JURUSAN_MANUAL.map((p) => (
+            <option key={p.code} value={p.title}>
+              {p.title} ({p.code})
+            </option>
           ))}
         </select>
       </div>

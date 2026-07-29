@@ -99,9 +99,9 @@ export const news = [
 
 export const achievements = [
   { title: "Juara 1 LBB Kecamatan Kepanjen", field: "LBB", year: "2025" },
-  { title: "Medali Emas KSN", field: "Informatika", year: "2024" },
-  { title: "Juara 2 Hackathon Nasional", field: "RPL", year: "2024" },
-  { title: "Best Booth Expo Industri", field: "Multimedia", year: "2023" },
+  { title: "Juara 3 Lomba Modifikasi Sepeda Motor", field: "TKR", year: "2025" },
+  { title: "Juara 2 Robotik tingkat Kabupaten Malang", field: "TAV", year: "2024" },
+  { title: "Best Booth Expo Industri", field: "Lintas Jurusan", year: "2023" },
 ];
 
 export const testimonials = [
@@ -113,15 +113,15 @@ export const testimonials = [
   },
   {
     name: "Rico Marcelino",
-    role: "Alumni TKR — Operator Traktor Merauke Sugar Group",
+    role: "Alumni TKR — Operator Traktor di PT Merauke Sugar Group",
     quote:
       "Terimakasih Guru-guru SMK Al Kaaffah, saya sekarang sudah bekerja di Industri Impian saya.",
   },
   {
     name: "Doni Amargo",
-    role: "Alumni MM — Content Creator",
+    role: "Alumni TKJ — Content Creator",
     quote:
-      "Fasilitas studio dan bimbingan industri benar-benar membuka jalan karier kreatif saya.",
+      "Fasilitas sekolah dan bimbingan industri benar-benar membuka jalan karier kreatif saya.",
   },
 ];
 
