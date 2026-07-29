@@ -28,7 +28,6 @@ interface Alumni {
   fotoUrl?: string;
 }
 
-// 🚀 SUB-KOMPONEN ALUMNI CARD (Dengan Fitur Safe Truncate / Read More)
 function AlumniCard({ 
   alumni, 
   i, 
@@ -36,68 +35,70 @@ function AlumniCard({
 }: { 
   alumni: Alumni; 
   i: number; 
-  getStatusIcon: (status: string) => React.ReactNode; 
+  getStatusIcon: (status: string) => React.ReactNode 
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Deteksi jika testimoni lebih dari 140 karakter (panjang)
-  const isLongTestimoni = alumni.testimoni && alumni.testimoni.length > 140;
+  const isLongTestimoni = alumni.testimoni && alumni.testimoni.length > 130;
 
   return (
     <Reveal delay={i * 0.05}>
-      <div className="h-full border bg-card/90 backdrop-blur-sm rounded-2xl p-6 shadow-soft flex flex-col justify-between group hover:shadow-elegant transition-all">
+      {/* 🚀 responsive padding: p-4 di HP, p-6 di Layar Besar */}
+      <div className="w-full h-full border bg-card/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-soft flex flex-col justify-between group hover:shadow-elegant transition-all overflow-hidden">
         
         {/* BAGIAN ATAS: PROFIL ALUMNI */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-primary text-white text-lg font-bold overflow-hidden shrink-0">
+        <div className="space-y-3.5 w-full min-w-0">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="grid h-10 w-10 sm:h-12 sm:w-12 place-items-center rounded-full bg-gradient-primary text-white text-base sm:text-lg font-bold overflow-hidden shrink-0">
               {alumni.fotoUrl ? (
                 <img src={alumni.fotoUrl} alt={alumni.nama} className="h-full w-full object-cover" />
               ) : (
                 alumni.nama.charAt(0).toUpperCase()
               )}
             </div>
-            <div>
-              <h3 className="font-bold text-foreground leading-snug">{alumni.nama}</h3>
-              <p className="text-xs text-muted-foreground">
+            {/* 🚀 min-w-0 cegah nama panjang bikin melebar */}
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-foreground text-sm sm:text-base leading-snug break-words">
+                {alumni.nama}
+              </h3>
+              <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
                 Angkatan {alumni.angkatan} • {alumni.jurusan}
               </p>
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 bg-secondary/60 rounded-lg px-2.5 py-1 text-xs font-medium w-full">
-            {getStatusIcon(alumni.status)}
-            <span className="truncate">
+          {/* 🚀 Badge Status yang flexible di HP */}
+          <div className="flex items-center gap-1.5 bg-secondary/60 rounded-xl px-2.5 py-1.5 text-xs font-medium w-full min-w-0">
+            <div className="shrink-0">{getStatusIcon(alumni.status)}</div>
+            <p className="truncate text-[11px] sm:text-xs text-muted-foreground">
               {alumni.status}: <strong className="text-foreground">{alumni.tempat}</strong>
-            </span>
+            </p>
           </div>
 
           {alumni.posisi && alumni.posisi !== "-" && (
-            <p className="text-xs text-muted-foreground pl-1">
+            <p className="text-[11px] sm:text-xs text-muted-foreground pl-1 truncate">
               Sebagai: <span className="font-medium text-foreground">{alumni.posisi}</span>
             </p>
           )}
         </div>
 
-        {/* 🚀 BAGIAN BWAH: KOTAK QUOTES / TESTIMONI (SAFE EXPANDABLE) */}
+        {/* BAGIAN BANYAK QUOTES / TESTIMONI */}
         {alumni.testimoni && alumni.testimoni !== "-" && (
-          <blockquote className="mt-5 relative bg-secondary/40 rounded-2xl p-4 border border-dashed border-primary/20 flex flex-col justify-between">
-            <Quote className="h-5 w-5 text-primary/30 absolute right-3 top-3 select-none pointer-events-none" />
+          <blockquote className="mt-4 relative bg-secondary/40 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-dashed border-primary/20 flex flex-col justify-between w-full min-w-0">
+            <Quote className="h-4 w-4 sm:h-5 sm:w-5 text-primary/30 absolute right-2.5 top-2.5 select-none pointer-events-none" />
             
             <p
-              className={`text-xs italic text-muted-foreground leading-relaxed pr-6 transition-all ${
+              className={`text-[11px] sm:text-xs italic text-muted-foreground leading-relaxed pr-5 break-words transition-all ${
                 !isExpanded ? "line-clamp-3" : ""
               }`}
             >
               "{alumni.testimoni}"
             </p>
 
-            {/* Tombol Baca Selengkapnya / Sembunyikan */}
             {isLongTestimoni && (
               <button
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="mt-2 text-[11px] font-bold text-primary hover:underline text-left self-start"
+                className="mt-2 text-[10px] sm:text-[11px] font-bold text-primary hover:underline text-left self-start"
               >
                 {isExpanded ? "← Sembunyikan" : "Baca Selengkapnya..."}
               </button>
@@ -244,7 +245,7 @@ export default function AlumniPage() {
       </section>
 
       {/* CARDS LIST SECTION */}
-      <section className="container-page pb-16">
+      <section className="container-page px-4 sm:px-6 pb-16 w-full overflow-hidden">
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -260,8 +261,8 @@ export default function AlumniPage() {
             </Link>
           </div>
         ) : (
-          /* 🎯 Tambahkan `items-start` di grid container agar card tidak ikut ketarik molor jika sebelahnya di-expand */
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-start">
+          /* 🎯 Grid responsive: 1 kolom di HP (gap-4), 2 kolom di tablet, 3 kolom di desktop (gap-6) */
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-start w-full">
             {filteredAlumni.map((alumni, i) => (
               <AlumniCard
                 key={alumni.id}
