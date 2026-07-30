@@ -100,12 +100,7 @@ export function Navbar() {
             {dark ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5" />}
           </Button>
 
-         {/* NAVBAR CTA - DIBIKIN KALEM & CLEAN */}
-          <Button 
-            asChild 
-            variant="outline" 
-            className="hidden sm:inline-flex rounded-xl font-semibold border-primary/20 hover:bg-primary/5 hover:text-primary transition-colors"
-          >
+          <Button asChild className="hidden sm:inline-flex bg-gradient-primary rounded-xl font-semibold shadow-sm">
             <Link href="/ppdb">Daftar SPMB</Link>
           </Button>
 

@@ -6,6 +6,10 @@ import { Reveal } from "@/components/motion-primitives";
 import { Button } from "@/components/ui/button";
 import { school } from "@/data/site";
 
+// Import Komponen Client-Side
+import ShareButtons from "@/components/ShareButtons";
+import CommentSection from "@/components/CommentSection";
+
 // Import Firestore SDK sisi server
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
@@ -159,22 +163,22 @@ export default async function ArticlePage({ params }: { params: Params }) {
       </h1>
 
       {/* Gambar Utama */}
-          <div className="relative mt-8 w-full max-h-[500px] overflow-hidden rounded-2xl border shadow-soft bg-muted flex items-center justify-center">
-      {/* 1. Background Blur (Mengisi ruang kosong kiri-kanan) */}
-      <img 
-        src={article.gambar} 
-        alt="" 
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover blur-xl opacity-40 scale-110 pointer-events-none" 
-      />
+      <div className="relative mt-8 w-full max-h-[500px] overflow-hidden rounded-2xl border shadow-soft bg-muted flex items-center justify-center">
+        {/* 1. Background Blur */}
+        <img 
+          src={article.gambar} 
+          alt="" 
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover blur-xl opacity-40 scale-110 pointer-events-none" 
+        />
 
-      {/* 2. Gambar Asli di Tengah (Utuh tanpa terpotong) */}
-      <img 
-        src={article.gambar} 
-        alt={article.judul} 
-        className="relative z-10 max-h-[500px] w-auto object-contain mx-auto rounded-lg shadow-md" 
-      />
-    </div>
+        {/* 2. Gambar Asli di Tengah */}
+        <img 
+          src={article.gambar} 
+          alt={article.judul} 
+          className="relative z-10 max-h-[500px] w-auto object-contain mx-auto rounded-lg shadow-md" 
+        />
+      </div>
 
       {/* KONTEN ARTIKEL UTAMA */}
       <div className="mt-8 max-w-none text-foreground leading-relaxed w-full overflow-hidden">
@@ -194,6 +198,13 @@ export default async function ArticlePage({ params }: { params: Params }) {
           "
         />
       </div>
+
+      {/* 🚀 FITUR FITUR BARU */}
+      {/* 1. Tombol Bagikan ke WhatsApp & Salin Link */}
+      <ShareButtons title={article.judul} />
+
+      {/* 2. Kolom Komentar Realtime */}
+      <CommentSection articleIdentifier={article.slug} />
 
       <hr className="my-12" />
 
