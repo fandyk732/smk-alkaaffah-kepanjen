@@ -37,6 +37,35 @@ export default function PPDBPage() {
     <>
       <PageHero eyebrow="SPMB 2027/2028" title="Sistem Penerimaan Murid Baru" description="Bergabunglah dengan SMK Al Kaaffah Kepanjen dan mulai perjalanan menuju masa depan gemilang." />
 
+      {/* SECTION FORM PPDB INTEGRASI FIRESTORE */}
+      <section className="container-page py-8 max-w-2xl mx-auto">
+        <Reveal>
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-foreground">Formulir Pendaftaran Online</h2>
+            <p className="text-sm text-muted-foreground mt-1">Kuota terbatas — silahkan amankan kursi pendaftaranmu sekarang.</p>
+          </div>
+          <FormPPDB />
+        </Reveal>
+      </section>
+
+{/* BANNER TES SELEKSI */}
+      <section className="container-page py-6 max-w-2xl mx-auto">
+        <Reveal>
+          <div className="rounded-3xl border border-primary/20 bg-primary/5 p-6 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-foreground">Belum Melakukan Tes Seleksi?</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Bagi calon siswa yang belum mengikuti tes seleksi dan rekomendasi jurusan, kamu bisa kerjakan tes di sini.
+            </p>
+            <Button asChild className="mt-4 rounded-xl bg-gradient-primary" size="sm">
+              <Link href="/ppdb/tes">
+                Mulai Tes Disini <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </Reveal>
+      </section>
+
+         
           {/* BANNER CEK PENGUMUMAN SELEKSI */}
       <section className="container-page py-6 max-w-2xl mx-auto">
         <Reveal>
@@ -53,18 +82,8 @@ export default function PPDBPage() {
           </div>
         </Reveal>
       </section>
-     
-      {/* SECTION FORM PPDB INTEGRASI FIRESTORE */}
-      <section className="container-page py-8 max-w-2xl mx-auto">
-        <Reveal>
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-foreground">Formulir Pendaftaran Online</h2>
-            <p className="text-sm text-muted-foreground mt-1">Kuota terbatas — silahkan amankan kursi pendaftaranmu sekarang.</p>
-          </div>
-          <FormPPDB />
-        </Reveal>
-      </section>
 
+     
       {/* PERSYARATAN & ALUR */}
       <section className="container-page py-12">
         <div className="grid gap-10 lg:grid-cols-2">
