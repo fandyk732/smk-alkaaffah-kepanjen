@@ -106,8 +106,8 @@ export const achievements = [
 
 export const testimonials = [
   {
-    name: "Ocha",
-    role: "Alumni TKJ — Mahasiswa Teknik Komputer UB",
+    name: "Yuanoca",
+    role: "Alumni TKJ — Mahasiswa Filkom UB",
     quote:
       "Pendampingan yang intens dari Bapak Ibu Guru membantu saya berhasil lolos SPMB UB jalur beasiswa.",
   },
