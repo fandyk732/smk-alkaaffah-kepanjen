@@ -14,7 +14,6 @@ import {
   stats, programs, achievements, testimonials, partners, school,
 } from "@/data/site";
 import heroImg from "@/assets/hero.jpg";
-
 // Import Firestore
 import { db } from "@/lib/firebase"; 
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";

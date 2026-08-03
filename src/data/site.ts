@@ -69,31 +69,7 @@ export const programs = [
 
 export const news = [
   {
-    slug: "wisuda-angkatan-2026",
-    title: "Wisuda Angkatan 2026 Berlangsung Khidmat dan Meriah",
-    excerpt: "Sebanyak 15 siswa resmi dinyatakan lulus dan siap memasuki dunia industri.",
-    category: "Kegiatan",
-    date: "2026-05-28",
-    image:
-      "https://6a56f44fcec0a76b21484386.imgix.net/2dba840e-7c2e-46c2-ae89-f6e2f6620bcf(1).jpg",
-  },
-  {
-    slug: "juara-lks-jaringan",
-    title: "Tim TKJ Raih Juara 1 LKS Tingkat Provinsi Jawa Timur",
-    excerpt: "Prestasi membanggakan di bidang IT Network System Administration.",
-    category: "Prestasi",
-    date: "2025-04-12",
-    image:
-      "https://6a56f44fcec0a76b21484386.imgix.net/WhatsApp%20Image%202024-11-13%20at%2009.50.42.jpg",
-  },
-  {
-    slug: "kerja-sama-industri",
-    title: "Penandatanganan MoU dengan 12 Perusahaan Teknologi",
-    excerpt: "Memperluas kesempatan magang dan rekrutmen langsung bagi lulusan.",
-    category: "Kerja Sama",
-    date: "2025-03-03",
-    image:
-      "https://6a56f44fcec0a76b21484386.imgix.net/WhatsApp%20Image%202026-07-07%20at%2010.12.12.jpg",
+   
   },
 ];
 
@@ -128,10 +104,10 @@ export const testimonials = [
 export const partners = ["Telkom", "Bengkel Sitondi", "Tiara Auto Service", "Whitecret.id", "BKKBN Kab.Malang", "RS Wava Husada", "Polinema", "Fajar Internasional"];
 
 export const galleryItems = [
-  { title: "Laboratorium Jaringan", category: "Fasilitas", image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=900&q=80" },
+ 
   { title: "Bengkel Listrik", category: "Kegiatan", image: "https://6a56f44fcec0a76b21484386.imgix.net/IMG-20240301-WA0004.jpg" },
-  { title: "Bengkel Otomotif", category: "Kegiatan", image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=900&q=80" },
-  { title: "Kelas Bahasa Jepang", category: "Fasilitas", image: "https://images.unsplash.com/photo-1492724441997-5dc865305da7?auto=format&fit=crop&w=900&q=80" },
+  
+  
   { title: "Masjid Sekolah", category: "Prestasi", image: "https://6a56f44fcec0a76b21484386.imgix.net/Screenshot%202024-10-09%2008.18.04.png" },
-  { title: "Perpustakaan", category: "Fasilitas", image: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=80" },
+  
 ];
