@@ -1,14 +1,22 @@
 import type { MetadataRoute } from "next";
-import { news } from "@/data/site";
 
 const BASE_URL = "https://smkalkaaffah.sch.id";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const paths = ["/", "/profil", "/program", "/berita", "/galeri", "/PPDB", "/kontak",
-    ...news.map((n) => `/berita/${n.slug}`)];
+  const paths = [
+    "/",
+    "/profil",
+    "/program",
+    "/berita",
+    "/galeri",
+    "/ppdb",
+    "/kontak",
+  ];
+
   return paths.map((p) => ({
     url: `${BASE_URL}${p}`,
-    changeFrequency: "weekly",
-    priority: p === "/" ? 1 : 0.7,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: p === "/" ? 1.0 : 0.7,
   }));
 }
