@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SOAL_PENJURUSAN, DATA_JURUSAN, JurusanKey } from "@/data/dataPenjurusan";
 import { CheckCircle2, RotateCcw, ArrowRight, ArrowLeft, Award, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function TesPenjurusan() {
+interface TesPenjurusanProps {
+  onComplete?: (rekomendasi: string, skorDetail: Record<string, number>) => void;
+}
+
+export default function TesPenjurusan({ onComplete }: TesPenjurusanProps) {
   const [indeksSoal, setIndeksSoal] = useState(0);
   const [jawabanUser, setJawabanUser] = useState<Record<number, JurusanKey>>({});
   const [selesai, setSelesai] = useState(false);
@@ -21,20 +25,7 @@ export default function TesPenjurusan() {
     }));
   };
 
-  const handleLanjut = () => {
-    if (indeksSoal < totalSoal - 1) {
-      setIndeksSoal((prev) => prev + 1);
-    } else {
-      setSelesai(true);
-    }
-  };
-
-  const handleKembali = () => {
-    if (indeksSoal > 0) {
-      setIndeksSoal((prev) => prev - 1);
-    }
-  };
-
+  // 1. Murni hanya untuk menghitung nilai (TANPA trigger side-effect / onComplete)
   const hitungHasil = () => {
     const skor: Record<JurusanKey, number> = { TKJ: 0, TKR: 0, TAV: 0, DM: 0 };
 
@@ -55,13 +46,34 @@ export default function TesPenjurusan() {
     return { skor, jurusanRekomendasi };
   };
 
+  const { skor, jurusanRekomendasi } = hitungHasil();
+
+  // 2. Trigger onComplete HANYA ketika status 'selesai' berubah menjadi true
+  useEffect(() => {
+    if (selesai && onComplete) {
+      onComplete(jurusanRekomendasi, skor);
+    }
+  }, [selesai]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleLanjut = () => {
+    if (indeksSoal < totalSoal - 1) {
+      setIndeksSoal((prev) => prev + 1);
+    } else {
+      setSelesai(true); // Selesai tes -> useEffect di atas bakal jalan
+    }
+  };
+
+  const handleKembali = () => {
+    if (indeksSoal > 0) {
+      setIndeksSoal((prev) => prev - 1);
+    }
+  };
+
   const handleReset = () => {
     setIndeksSoal(0);
     setJawabanUser({});
     setSelesai(false);
   };
-
-  const { skor, jurusanRekomendasi } = hitungHasil();
 
   return (
     <div className="w-full max-w-2xl mx-auto bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xl">

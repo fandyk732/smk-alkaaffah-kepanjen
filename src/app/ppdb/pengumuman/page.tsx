@@ -216,12 +216,14 @@ export default function PengumumanPage() {
               style={{ fontFamily: "'Times New Roman', Times, serif" }}
             >
               {/* Kop Surat Header */}
-              <div className="text-center border-b-4 border-black pb-3 mb-6">
-                <h2 className="text-[20px] font-bold uppercase tracking-wide m-0 text-black">YAYASAN AL ISLAMU AL AINUL BAAHIROH</h2>
-                <h1 className="text-[22px] font-bold uppercase tracking-wide m-0 text-black">SMK AL KAAFFAH KEPANJEN</h1>
-                <p className="text-[13px] italic m-0 mt-1 text-black">Jl. Semeru Nomor 18a Dilem, Kepanjen, Kabupaten Malang, Jawa Timur</p>
+              <div className="w-full mb-6 text-center">
+                <img 
+                  src="/images/kop-sekolah.png" 
+                  alt="Kop Surat SMK Al Kaaffah" 
+                  className="w-full h-auto object-contain block mx-auto" 
+                />
               </div>
-
+              
               {/* Judul Surat */}
               <div className="text-center mb-6">
                 <p className="text-[17px] font-bold underline m-0 text-black">SURAT KETERANGAN HASIL SELEKSI SPMB</p>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, doc, updateDoc, getDoc } from "firebase/firestore";
-import { Search, Filter, Loader2, RefreshCw, Printer, FileSpreadsheet, LogOut, LayoutGrid } from "lucide-react";
+import { Search, Filter, Loader2, RefreshCw, Printer, FileSpreadsheet, LogOut, LayoutGrid, Calendar, Eye, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Pendaftar {
@@ -17,7 +17,48 @@ interface Pendaftar {
   pilihanJurusan: string;
   statusPendaftaran: "Menunggu Verifikasi" | "Diterima" | "Ditolak";
   createdAt: any;
+  // 🎯 UPDATE INTERFACE: PROPERTI HASIL TES
+  tes?: {
+    butaWarna?: {
+      skor: number;
+      totalSoal: number;
+      status: string;
+      selesaiPada?: any;
+    };
+    jurusan?: {
+      rekomendasi: string;
+      skor: Record<string, number>;
+      selesaiPada?: any;
+    };
+  };
 }
+
+// --- FUNGSI HELPER FORMAT TIMESTAMP FIRESTORE KE INDONESIA ---
+const formatTanggalIndo = (timestamp: any) => {
+  if (!timestamp) return "-";
+
+  let date: Date;
+
+  // Jika berupa Timestamp Firestore (punya method toDate)
+  if (timestamp?.toDate && typeof timestamp.toDate === "function") {
+    date = timestamp.toDate();
+  } else if (timestamp?.seconds) {
+    date = new Date(timestamp.seconds * 1000);
+  } else {
+    date = new Date(timestamp);
+  }
+
+  // Cek apakah date valid
+  if (isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
 
 export default function AdminPPDBPage() {
   const router = useRouter();
@@ -28,7 +69,7 @@ export default function AdminPPDBPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterJurusan, setFilterJurusan] = useState("");
 
-  // 🎯 State untuk menyimpan data siswa yang sedang dicetak bukti individunya
+  // --- State untuk menyimpan data siswa yang sedang dicetak bukti individunya ---
   const [selectedIndividu, setSelectedIndividu] = useState<Pendaftar | null>(null);
 
   // --- AMBIL DATA PPDB FROM FIRESTORE ---
@@ -49,7 +90,7 @@ export default function AdminPPDBPage() {
     }
   }, []);
 
-  // --- 🛡️ PROTEKSI HALAMAN & AUTOMATIC FETCH ---
+  // --- PROTEKSI HALAMAN & AUTOMATIC FETCH ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -62,15 +103,15 @@ export default function AdminPPDBPage() {
         if (userDoc.exists()) {
           const data = userDoc.data();
 
-          // 🎯 1. Konversi role ke Array (Mendukung data lama & baru)
+          // --- 1. Konversi role ke Array (Mendukung data lama & baru) ---
           const roles: string[] = Array.isArray(data.role) ? data.role : [data.role];
 
-          // 🎯 2. Cek apakah punya akses panitia_PPDB, admin_ppdb, atau superadmin
+          // --- 2. Cek apakah punya akses panitia_PPDB, admin_ppdb, atau superadmin
           const hasAccess = roles.includes("panitia_PPDB") || roles.includes("admin_ppdb") || roles.includes("superadmin");
 
           if (hasAccess) {
             setPanitiaName(data.nama || "Panitia SPMB");
-            // 🎯 3. Ambil data PPDB otomatis setelah auth terverifikasi!
+            // --- 3. Ambil data PPDB otomatis setelah auth terverifikasi!
             await ambilDataPPDB();
           } else {
             alert("Anda tidak memiliki akses ke modul SPMB!");
@@ -115,17 +156,31 @@ export default function AdminPPDBPage() {
     }
   };
 
-  // --- FUNGSI DOWNLOAD EXCEL (CSV) ---
+  // --- FUNGSI DOWNLOAD EXCEL (CSV) + HASIL TES ---
   const downloadExcel = () => {
     if (pendaftarDifilter.length === 0) return alert("Tidak ada data untuk diexport");
 
-    const headers = ["Nama Lengkap", "NISN", "Asal Sekolah", "WhatsApp", "Pilihan Jurusan", "Status Pendaftaran"];
+    const headers = [
+      "Waktu Daftar", 
+      "Nama Lengkap", 
+      "NISN", 
+      "Asal Sekolah", 
+      "WhatsApp", 
+      "Pilihan Jurusan", 
+      "Tes Buta Warna", 
+      "Rekomendasi Tes Jurusan", 
+      "Status Pendaftaran"
+    ];
+    
     const rows = pendaftarDifilter.map(p => [
+      `"${formatTanggalIndo(p.createdAt)}"`,
       `"${p.namaLengkap.replace(/"/g, '""')}"`,
       ` font-mono:"${p.nisn}"`,
       `"${p.asalSekolah.replace(/"/g, '""')}"`,
       `"${p.whatsapp}"`,
       `"${p.pilihanJurusan}"`,
+      `"${p.tes?.butaWarna ? `${p.tes.butaWarna.status} (${p.tes.butaWarna.skor}/${p.tes.butaWarna.totalSoal})` : "Belum Tes"}"`,
+      `"${p.tes?.jurusan?.rekomendasi || "Belum Tes"}"`,
       `"${p.statusPendaftaran}"`
     ]);
 
@@ -149,7 +204,7 @@ export default function AdminPPDBPage() {
     }, 100);
   };
 
-  // 🎯 FUNGSI PRINT INDIVIDU NATIVE (100% AMAN DI BROWSER HP / MOBILE / PC)
+  // --- FUNGSI PRINT INDIVIDU NATIVE ---
   const printIndividu = (pendaftar: Pendaftar) => {
     setSelectedIndividu(pendaftar);
     setTimeout(() => {
@@ -191,12 +246,12 @@ export default function AdminPPDBPage() {
               <RefreshCw className="mr-2 h-4 w-4" /> Refresh
             </Button>
             
-            {/* 🎯 TOMBOL NAVIGASI HUB DASHBOARD (Pindah Modul Tanpa Logout) */}
+            {/* TOMBOL NAVIGASI HUB DASHBOARD (Pindah Modul Tanpa Logout) */}
             <Button onClick={handleKembaliKeDashboard} variant="outline" size="sm" className="gap-1.5 rounded-xl border-slate-300">
               <LayoutGrid className="h-4 w-4" /> Kembali ke Dashboard
             </Button>
 
-            {/* 🎯 TOMBOL LOGOUT TOTAL */}
+            {/* TOMBOL LOGOUT TOTAL */}
             <Button onClick={handleLogout} variant="destructive" size="sm" className="gap-1.5 rounded-xl">
               <LogOut className="h-4 w-4" /> Keluar
             </Button>
@@ -250,87 +305,139 @@ export default function AdminPPDBPage() {
           </div>
         ) : (
           <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm print:border-none print:shadow-none">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-slate-100 dark:bg-slate-900 text-xs uppercase font-semibold text-muted-foreground border-b print:bg-transparent print:text-black">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-100 dark:bg-slate-900 uppercase font-semibold text-muted-foreground border-b print:bg-transparent print:text-black">
                 <tr>
-                  <th className="px-6 py-4">Nama Lengkap / NISN</th>
-                  <th className="px-6 py-4">Asal Sekolah</th>
-                  <th className="px-6 py-4">Pilihan Jurusan</th>
-                  <th className="px-6 py-4">Kontak WA</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-center print:hidden">Aksi & Berkas</th>
+                  <th className="px-3 py-3.5">Waktu Daftar</th>
+                  <th className="px-3 py-3.5">Nama / NISN</th>
+                  <th className="px-3 py-3.5">Asal Sekolah</th>
+                  <th className="px-3 py-3.5">Pilihan Jurusan</th>
+                  <th className="px-3 py-3.5">Kontak WA</th>
+                  <th className="px-3 py-3.5">Tes Buta Warna</th>
+                  <th className="px-3 py-3.5">Rekomendasi Tes</th>
+                  <th className="px-3 py-3.5">Status</th>
+                  {/* Sticky right agar tombol aksi selalu kelihatan di layar */}
+                  <th className="px-3 py-3.5 text-center print:hidden sticky right-0 bg-slate-100 dark:bg-slate-900 shadow-l">Aksi & Berkas</th>
                 </tr>
               </thead>
               <tbody className="divide-y print:divide-y-2">
-                {pendaftarDifilter.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition print:hover:bg-transparent">
-                    <td className="px-6 py-4">
-                      <p className="font-bold print:text-black">{p.namaLengkap}</p>
-                      <p className="text-xs text-muted-foreground font-mono print:text-black">NISN: {p.nisn}</p>
-                    </td>
-                    <td className="px-6 py-4 font-medium print:text-black">{p.asalSekolah}</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-800 dark:text-slate-100 border print:border-none print:bg-transparent print:p-0 print:text-black">
-                        {p.pilihanJurusan}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <a
-                        href={`https://wa.me/${p.whatsapp ? p.whatsapp.replace(/^0/, "62") : ""}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary hover:underline font-medium print:text-black print:no-underline"
-                      >
-                        {p.whatsapp}
-                      </a>
-                    </td>
-                    <td className="px-6 py-4">
-                      {p.statusPendaftaran === "Diterima" && (
-                        <span className="inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-950/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 print:text-black print:border-none">
-                          Diterima
+                {pendaftarDifilter.map((p) => {
+                  const tesBW = p.tes?.butaWarna;
+                  const tesJur = p.tes?.jurusan;
+
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition print:hover:bg-transparent">
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium print:text-black">
+                          <Calendar className="h-3 w-3 shrink-0 print:hidden text-slate-400" />
+                          <span>{formatTanggalIndo(p.createdAt)}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className="font-bold text-xs print:text-black">{p.namaLengkap}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono print:text-black">NISN: {p.nisn}</p>
+                      </td>
+                      <td className="px-3 py-3 font-medium text-xs print:text-black">{p.asalSekolah}</td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-semibold text-slate-800 dark:text-slate-100 border print:border-none print:bg-transparent print:p-0 print:text-black">
+                          {p.pilihanJurusan}
                         </span>
-                      )}
-                      {p.statusPendaftaran === "Ditolak" && (
-                        <span className="inline-flex items-center rounded-full bg-red-100 dark:bg-red-950/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900 print:text-black print:border-none">
-                          Ditolak
-                        </span>
-                      )}
-                      {(!p.statusPendaftaran || p.statusPendaftaran === "Menunggu Verifikasi") && (
-                        <span className="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-950/30 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-500 border border-amber-200 dark:border-amber-900 print:text-black print:border-none">
-                          Pending
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 flex flex-wrap items-center justify-center gap-1.5 print:hidden">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => ubahStatus(p.id, "Diterima")}
-                        disabled={p.statusPendaftaran === "Diterima"}
-                        className="text-emerald-600 hover:text-white hover:bg-emerald-600 border-emerald-200 dark:border-emerald-900 h-8 text-xs"
-                      >
-                        Terima
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => ubahStatus(p.id, "Ditolak")}
-                        disabled={p.statusPendaftaran === "Ditolak"}
-                        className="text-destructive hover:text-white hover:bg-destructive h-8 text-xs"
-                      >
-                        Tolak
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => printIndividu(p)}
-                        className="h-8 text-xs"
-                      >
-                        <Printer className="h-3 w-3 mr-1" /> Bukti
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <a
+                          href={`https://wa.me/${p.whatsapp ? p.whatsapp.replace(/^0/, "62") : ""}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary hover:underline font-medium text-xs print:text-black print:no-underline"
+                        >
+                          {p.whatsapp}
+                        </a>
+                      </td>
+
+                      {/* DATA TES BUTA WARNA */}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {tesBW ? (
+                          <div className="flex items-center gap-1">
+                            <Eye className="h-3 w-3 text-cyan-600 print:hidden" />
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${
+                              tesBW.status === "Normal" 
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400" 
+                                : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400"
+                            }`}>
+                              {tesBW.status} ({tesBW.skor}/{tesBW.totalSoal})
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground italic">Belum Tes</span>
+                        )}
+                      </td>
+
+                      {/* DATA TES REKOMENDASI JURUSAN */}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {tesJur ? (
+                          <div className="flex items-center gap-1">
+                            <Compass className="h-3 w-3 text-indigo-600 print:hidden" />
+                            <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 px-2 py-0.5 rounded">
+                              {tesJur.rekomendasi}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground italic">Belum Tes</span>
+                        )}
+                      </td>
+
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {p.statusPendaftaran === "Diterima" && (
+                          <span className="inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-950/30 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 print:text-black print:border-none">
+                            Diterima
+                          </span>
+                        )}
+                        {p.statusPendaftaran === "Ditolak" && (
+                          <span className="inline-flex items-center rounded-full bg-red-100 dark:bg-red-950/30 px-2 py-0.5 text-[11px] font-semibold text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900 print:text-black print:border-none">
+                            Ditolak
+                          </span>
+                        )}
+                        {(!p.statusPendaftaran || p.statusPendaftaran === "Menunggu Verifikasi") && (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-950/30 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-500 border border-amber-200 dark:border-amber-900 print:text-black print:border-none">
+                            Pending
+                          </span>
+                        )}
+                      </td>
+
+                      {/* KOLOM AKSI (Dibuat Sticky Right & Selalu Terlihat) */}
+                      <td className="px-3 py-3 print:hidden whitespace-nowrap sticky right-0 bg-card shadow-l">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => ubahStatus(p.id, "Diterima")}
+                            disabled={p.statusPendaftaran === "Diterima"}
+                            className="text-emerald-600 hover:text-white hover:bg-emerald-600 border-emerald-200 dark:border-emerald-900 h-7 px-2 text-[11px]"
+                          >
+                            Terima
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => ubahStatus(p.id, "Ditolak")}
+                            disabled={p.statusPendaftaran === "Ditolak"}
+                            className="text-destructive hover:text-white hover:bg-destructive h-7 px-2 text-[11px]"
+                          >
+                            Tolak
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => printIndividu(p)}
+                            className="h-7 px-2 text-[11px]"
+                          >
+                            <Printer className="h-3 w-3 mr-1" /> Bukti
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -338,7 +445,7 @@ export default function AdminPPDBPage() {
       </div>
 
       {/* =========================================================================
-          📄 TEMPLATE SURAT BUKTI INDIVIDU (KHUSUS DIPRINT OLEH BROWSER MOBILE & PC)
+          TEMPLATE SURAT BUKTI INDIVIDU (KHUSUS DIPRINT OLEH BROWSER MOBILE & PC)
           ========================================================================= */}
       {selectedIndividu && (
         <>
@@ -378,27 +485,33 @@ export default function AdminPPDBPage() {
               style={{ fontFamily: "'Times New Roman', Times, serif" }}
             >
               {/* Kop Surat Header */}
-              <div className="text-center border-b-4 border-black pb-3 mb-6">
-                <h2 className="text-[20px] font-bold uppercase tracking-wide m-0 text-black">YAYASAN AL ISLAMU AL AINUL BAAHIROH</h2>
-                <h1 className="text-[22px] font-bold uppercase tracking-wide m-0 text-black">SMK AL KAAFFAH KEPANJEN</h1>
-                <p className="text-[13px] italic m-0 mt-1 text-black">Jl. Semeru Nomor 18a Dilem, Kepanjen, Kabupaten Malang, Jawa Timur</p>
+              <div className="w-full mb-6 text-center">
+                <img 
+                  src="/images/kop-sekolah.png" 
+                  alt="Kop Surat SMK Al Kaaffah" 
+                  className="w-full h-auto object-contain block mx-auto" 
+                />
               </div>
 
               {/* Judul Surat */}
               <div className="text-center mb-6">
-                <p className="text-[17px] font-bold underline m-0 text-black">BUKTI PENDAFTARAN SPMB</p>
+                <p className="text-[17px] font-bold underline m-0 text-black">BUKTI PENDAFTARAN & HASIL TES SPMB</p>
                 <p className="text-[14px] m-0 text-black">Tahun Ajaran {new Date().getFullYear()}/{new Date().getFullYear() + 1}</p>
               </div>
 
               <p className="text-justify mb-4 text-black">
-                Berikut adalah bukti data pendaftaran Sistem Penerimaan Murid Baru (SPMB) SMK Al Kaaffah Kepanjen:
+                Berikut adalah bukti data pendaftaran beserta hasil tes Sistem Penerimaan Murid Baru (SPMB) SMK Al Kaaffah Kepanjen:
               </p>
 
-              {/* Tabel Identitas Siswa */}
+              {/* Tabel Identitas Siswa & Hasil Tes */}
               <table className="w-[90%] mx-auto my-6 border-collapse text-[15px] text-black">
                 <tbody>
                   <tr className="border-b border-gray-300">
-                    <td className="py-2.5 w-[35%] font-bold">Nama Lengkap</td>
+                    <td className="py-2.5 w-[38%] font-bold">Waktu Pendaftaran</td>
+                    <td className="py-2.5">: {formatTanggalIndo(selectedIndividu.createdAt)}</td>
+                  </tr>
+                  <tr className="border-b border-gray-300">
+                    <td className="py-2.5 font-bold">Nama Lengkap</td>
                     <td className="py-2.5">: {selectedIndividu.namaLengkap}</td>
                   </tr>
                   <tr className="border-b border-gray-300">
@@ -416,6 +529,15 @@ export default function AdminPPDBPage() {
                   <tr className="border-b border-gray-300">
                     <td className="py-2.5 font-bold">No. WhatsApp</td>
                     <td className="py-2.5">: {selectedIndividu.whatsapp}</td>
+                  </tr>
+                  {/* DATA HASIL TES PADA SURAT BUKTI */}
+                  <tr className="border-b border-gray-300">
+                    <td className="py-2.5 font-bold">Hasil Tes Buta Warna</td>
+                    <td className="py-2.5">: {selectedIndividu.tes?.butaWarna ? `${selectedIndividu.tes.butaWarna.status} (Skor: ${selectedIndividu.tes.butaWarna.skor}/${selectedIndividu.tes.butaWarna.totalSoal})` : "Belum Mengikuti Tes"}</td>
+                  </tr>
+                  <tr className="border-b border-gray-300">
+                    <td className="py-2.5 font-bold">Rekomendasi Jurusan Tes</td>
+                    <td className="py-2.5">: <strong>{selectedIndividu.tes?.jurusan?.rekomendasi || "Belum Mengikuti Tes"}</strong></td>
                   </tr>
                   <tr className="border-b border-gray-300">
                     <td className="py-2.5 font-bold">Status Pendaftaran</td>
