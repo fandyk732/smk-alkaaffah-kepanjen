@@ -6,11 +6,29 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Send, Loader2 } from "lucide-react";
 
-// 🚀 DAFTAR JURUSAN MANUAL (Bisa lo tambah / ubah / hapus bebas di sini)
+// 🚀 DAFTAR JURUSAN MANUAL (Bisa lo tambah / ubah / hapus bebas)
 const JURUSAN_MANUAL = [
   { code: "TKJ", title: "Teknik Komputer & Jaringan" },
   { code: "TAV", title: "Teknik Audio Video" },
   { code: "TKR", title: "Teknik Kendaraan Ringan" },
+];
+
+// 🚀 DAFTAR EKSKUL MANUAL (Bisa lo tambah / ubah / hapus bebas di sini)
+const EKSKUL_MANUAL = [
+  "Pramuka",
+  "Paskibra",
+  "Futsal / Sepakbola",
+  "Bola Voli",
+  "Seni Hadrah / Banjari",
+  "Pencak Silat",
+  "English Club",
+];
+
+// 🚀 DAFTAR PROGRAM UNGGULAN MANUAL (Bisa lo tambah / ubah / hapus bebas di sini)
+const PROGRAM_UNGGULAN_MANUAL = [
+  "Kelas Bahasa Jepang",
+  "Kelas Digital Marketing",
+  "Tahfidz Al-Qur'an",
 ];
 
 export function FormPPDB() {
@@ -20,6 +38,8 @@ export function FormPPDB() {
     asalSekolah: "",
     whatsapp: "",
     pilihanJurusan: "",
+    ekstrakurikuler: "", // Field baru
+    programUnggulan: "", // Field baru
   });
 
   const [loading, setLoading] = useState(false);
@@ -44,11 +64,23 @@ export function FormPPDB() {
     try {
       await addDoc(collection(db, "ppdb"), {
         ...formData,
+        // Jika tidak memilih, set default "Belum Memilih" biar rapi di database
+        ekstrakurikuler: formData.ekstrakurikuler || "Belum Memilih",
+        programUnggulan: formData.programUnggulan || "Belum Memilih",
         statusPendaftaran: "Menunggu Verifikasi",
         createdAt: serverTimestamp(),
       });
+      
       setSukses(true);
-      setFormData({ namaLengkap: "", nisn: "", asalSekolah: "", whatsapp: "", pilihanJurusan: "" });
+      setFormData({
+        namaLengkap: "",
+        nisn: "",
+        asalSekolah: "",
+        whatsapp: "",
+        pilihanJurusan: "",
+        ekstrakurikuler: "",
+        programUnggulan: "",
+      });
     } catch (err) {
       console.error(err);
       setError("Terjadi kesalahan sistem. Silakan coba lagi.");
@@ -79,10 +111,14 @@ export function FormPPDB() {
           {error}
         </div>
       )}
+
+      {/* Nama Lengkap */}
       <div className="space-y-1.5">
         <label className="text-sm font-semibold">Nama Lengkap</label>
         <input type="text" name="namaLengkap" required value={formData.namaLengkap} onChange={handleChange} placeholder="Sesuai Ijazah" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
       </div>
+
+      {/* NISN & Asal Sekolah */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label className="text-sm font-semibold">NISN</label>
@@ -93,15 +129,18 @@ export function FormPPDB() {
           <input type="text" name="asalSekolah" required value={formData.asalSekolah} onChange={handleChange} placeholder="SMP / MTs asal" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
         </div>
       </div>
+
+      {/* WhatsApp */}
       <div className="space-y-1.5">
         <label className="text-sm font-semibold">No. WhatsApp</label>
         <input type="tel" name="whatsapp" required value={formData.whatsapp} onChange={handleChange} placeholder="Contoh: 081234567xxx" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
       </div>
+
+      {/* Pilihan Jurusan */}
       <div className="space-y-1.5">
         <label className="text-sm font-semibold">Pilihan Jurusan</label>
         <select name="pilihanJurusan" required value={formData.pilihanJurusan} onChange={handleChange} className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition">
-          <option value="">-- Pilih Jurusan --</option>
-          {/* 🚀 Menggunakan JURUSAN_MANUAL */}
+          <option value="">-- Pilih Jurusan Utama --</option>
           {JURUSAN_MANUAL.map((p) => (
             <option key={p.code} value={p.title}>
               {p.title} ({p.code})
@@ -109,6 +148,40 @@ export function FormPPDB() {
           ))}
         </select>
       </div>
+
+      {/* 🚀 PILIHAN PROGRAM UNGGULAN (OPSIONAL) */}
+      <div className="space-y-1.5">
+        <div className="flex justify-between items-center">
+          <label className="text-sm font-semibold">Pilihan Program Unggulan</label>
+          <span className="text-xs text-muted-foreground font-normal">(Opsional)</span>
+        </div>
+        <select name="programUnggulan" value={formData.programUnggulan} onChange={handleChange} className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition">
+          <option value="">-- Belum Memilih / Nanti Saja --</option>
+          {PROGRAM_UNGGULAN_MANUAL.map((prog, idx) => (
+            <option key={idx} value={prog}>
+              {prog}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* 🚀 PILIHAN EKSTRAKURIKULER (OPSIONAL) */}
+      <div className="space-y-1.5">
+        <div className="flex justify-between items-center">
+          <label className="text-sm font-semibold">Pilihan Ekstrakurikuler Minat</label>
+          <span className="text-xs text-muted-foreground font-normal">(Opsional)</span>
+        </div>
+        <select name="ekstrakurikuler" value={formData.ekstrakurikuler} onChange={handleChange} className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition">
+          <option value="">-- Belum Memilih / Nanti Saja --</option>
+          {EKSKUL_MANUAL.map((eks, idx) => (
+            <option key={idx} value={eks}>
+              {eks}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Tombol Submit */}
       <Button type="submit" disabled={loading} className="w-full bg-gradient-primary rounded-xl py-6 font-semibold">
         {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memproses...</> : <><Send className="mr-2 h-4 w-4" /> Kirim Formulir Pendaftaran</>}
       </Button>

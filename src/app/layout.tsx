@@ -54,7 +54,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${plusJakarta.className} ${plusJakarta.variable}`}>
+    <html lang="id" data-scroll-behavior="smooth" className={`${plusJakarta.className} ${plusJakarta.variable}`}>
       <head>
         <script
           type="application/ld+json"

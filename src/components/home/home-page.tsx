@@ -105,11 +105,11 @@ export function HomePage() {
               <Link href="/ppdb">Daftar SPMB<ArrowRight className="ml-1 h-4 w-4" /></Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="/program">Lihat Kompetensi Keahlian</Link>
+              <Link href="/program">Kenali Program Kami</Link>
             </Button>
           </motion.div>
           <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted-foreground">
-            {["Terakreditasi A", "Kurikulum Industri", "Sertifikasi Kompetensi"].map((t) => (
+            {["Terakreditasi B", "Kurikulum Industri", "Sertifikasi Kompetensi"].map((t) => (
               <span key={t} className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary" /> {t}
               </span>
@@ -276,7 +276,7 @@ export function HomePage() {
 
       {/* 6. PROGRAMS SECTION */}
       <section className="container-page py-16">
-        <SectionHeading eyebrow="Program Keahlian" title="Pilih Kompetensi Keahlian dan Program Unggulan Kami sesuai Passion-mu" description="Empat kompetensi Plus Program Unggulan keahlian yang dirancang mengikuti standar dunia industri." />
+        <SectionHeading eyebrow="Program Keahlian" title="Pilih Kompetensi Keahlian dan Program Unggulan Kami sesuai Passion-mu" description="Tiga kompetensi Plus Dua Program Unggulan keahlian yang dirancang mengikuti standar dunia industri." />
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {programs.map((p, i) => {
             const Icon = iconMap[p.icon as keyof typeof iconMap];

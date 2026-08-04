@@ -77,7 +77,7 @@ const prospekKarierBJ = ["Penerjemah Bahasa Jepang", "Tour Guide Jepang", "Beker
 export default function ProgramPage() {
   return (
     <>
-      <PageHero eyebrow="Program Keahlian" title="Kompetensi keahlian masa depan" description="Empat program keahlian plus program unggulan yang dirancang mengikuti standar dan kebutuhan dunia industri." />
+      <PageHero eyebrow="Program Keahlian" title="Kompetensi keahlian masa depan" description="Tiga Program Keahlian plus Dua Program Unggulan yang dirancang mengikuti standar dan kebutuhan dunia industri." />
 
       {/* Grid Card Program dengan Autoscroll */}
       <section className="container-page py-12">
@@ -383,7 +383,7 @@ export default function ProgramPage() {
       <section className="bg-section py-16 scroll-mt-24" id="dm">
         <div className="container-page">
           <div className="overflow-hidden rounded-3xl bg-gradient-primary p-8 text-primary-foreground lg:p-12">
-            <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Kompetensi Keahlian</span>
+            <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Program Unggulan</span>
             <h2 className="mt-4 text-3xl font-extrabold sm:text-4xl">Digital Marketing (DM)</h2>
             <p className="mt-4 max-w-2xl opacity-90">Pelajari strategi pemasaran digital, AI, media sosial, dan bisnis online untuk menjadi talenta yang dibutuhkan industri.</p>
           </div>

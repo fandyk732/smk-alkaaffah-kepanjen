@@ -78,7 +78,7 @@ export default function TesPpdbPage() {
               Tes Minat & Jurusan
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              Kuesioner pemetaan minat & bakat untuk mencari kecocokan antara kamu dengan jurusan TKJ, TKR, TAV, atau Digital Marketing.
+              Kuesioner pemetaan minat & bakat untuk mencari kecocokan antara kamu dengan Kompetensi Keahlian Komputer, Otomotif, atau Listrik.
             </p>
           </div>
 

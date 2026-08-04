@@ -60,19 +60,42 @@ export const programs = [
     icon: "Wrench",
   },
   {
-    title: "Digital Marketing",
+    title: "Kelas Digital Marketing",
     code: "DM",
     desc: "Belajar Bisnis Digital dan Bangun Brand Masa Depan",
     icon: "TrendingUp",
   },
 ];
-
 export const news = [
   {
+    slug: "wisuda-angkatan-2026",
+    title: "Wisuda Angkatan 2026 Berlangsung Khidmat dan Meriah",
+    excerpt: "Sebanyak 15 siswa resmi dinyatakan lulus dan siap memasuki dunia industri.",
+    category: "Kegiatan",
+    date: "2026-05-28",
+    image:
+      "https://6a56f44fcec0a76b21484386.imgix.net/2dba840e-7c2e-46c2-ae89-f6e2f6620bcf(1).jpg",
+  },
+  {
+    slug: "juara-lks-jaringan",
+    title: "Tim TKJ Raih Juara 1 LKS Tingkat Provinsi Jawa Timur",
+    excerpt: "Prestasi membanggakan di bidang IT Network System Administration.",
+    category: "Prestasi",
+    date: "2025-04-12",
+    image:
+      "https://6a56f44fcec0a76b21484386.imgix.net/WhatsApp%20Image%202024-11-13%20at%2009.50.42.jpg",
+  },
+  {
+    slug: "kerja-sama-industri",
+    title: "Penandatanganan MoU dengan 12 Perusahaan Teknologi",
+    excerpt: "Memperluas kesempatan magang dan rekrutmen langsung bagi lulusan.",
+    category: "Kerja Sama",
+    date: "2025-03-03",
+    image:
+      "https://6a56f44fcec0a76b21484386.imgix.net/WhatsApp%20Image%202026-07-07%20at%2010.12.12.jpg",
    
   },
 ];
-
 export const achievements = [
   { title: "Juara 1 LBB Kecamatan Kepanjen", field: "LBB", year: "2025" },
   { title: "Juara 3 Lomba Modifikasi Sepeda Motor", field: "TKR", year: "2025" },
