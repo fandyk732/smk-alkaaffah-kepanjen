@@ -132,7 +132,7 @@ export function FormPPDB() {
 
       {/* WhatsApp */}
       <div className="space-y-1.5">
-        <label className="text-sm font-semibold">No. WhatsApp</label>
+        <label className="text-sm font-semibold">No. WhatsApp Aktif Kamu / Ortu Kamu</label>
         <input type="tel" name="whatsapp" required value={formData.whatsapp} onChange={handleChange} placeholder="Contoh: 081234567xxx" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
       </div>
 
