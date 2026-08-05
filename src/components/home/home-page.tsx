@@ -17,6 +17,7 @@ import heroImg from "@/assets/hero.jpg";
 // Import Firestore
 import { db } from "@/lib/firebase"; 
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import BannerSPMB from "../banerspmb";
 
 const iconMap = { Network, Code2, Clapperboard, Calculator } as const;
 
@@ -152,6 +153,8 @@ export function HomePage() {
           </motion.div>
         </motion.div>
       </section>
+
+      <BannerSPMB />
 
       {/* 2. NEWS SECTION */}
       <section className="container-page py-16 border-t border-muted/30">
