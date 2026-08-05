@@ -60,7 +60,7 @@ export default function AdminAlumniPage() {
   const [testimoni, setTestimoni] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. 🛡️ Proteksi Halaman & Verifikasi Hak Akses
+  // 1. Proteksi Halaman & Verifikasi Hak Akses
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -100,7 +100,7 @@ export default function AdminAlumniPage() {
     return () => unsubscribe();
   }, [router]);
 
-  // 2. 🔄 Ambil Data Live dari Firestore (Koleksi "alumni")
+  // 2. Ambil Data Live dari Firestore (Koleksi "alumni")
   const ambilDataAlumni = async () => {
     setLoadingData(true);
     try {
@@ -202,33 +202,56 @@ export default function AdminAlumniPage() {
     }
   };
 
-  // 5. Export CSV
+  // 5. Export CSV (Full All Data + Helper Sanitasi)
   const handleExportCSV = () => {
-    if (filteredAlumni.length === 0) return alert("Tidak ada data alumni untuk di-export.");
+    //  Ganti ke alumniList agar SEMUA data ter-export tanpa terpengaruh filter UI
+    if (alumniList.length === 0) return alert("Tidak ada data alumni untuk di-export.");
 
-    const headers = ["Nama Lengkap", "Angkatan", "Jurusan", "Status", "Tempat/Instansi", "Posisi/Jabatan", "WhatsApp", "Testimoni"];
-    const rows = filteredAlumni.map((a) => [
-      `"${a.nama.replace(/"/g, '""')}"`,
-      `"${a.angkatan}"`,
-      `"${a.jurusan}"`,
-      `"${a.status}"`,
-      `"${a.tempat.replace(/"/g, '""')}"`,
-      `"${(a.posisi || "-").replace(/"/g, '""')}"`,
-      `"${a.whatsapp || "-"}"`,
-      `"${(a.testimoni || "-").replace(/"/g, '""')}"`,
+    // Helper untuk membersihkan string dari enter (\n) dan tanda petik ganda (") agar CSV tidak patah
+    const clean = (text?: string) => {
+      if (!text) return "-";
+      return text.toString().replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""');
+    };
+
+    const headers = [
+      "Nama Lengkap", 
+      "Angkatan", 
+      "Jurusan", 
+      "Status", 
+      "Tempat/Instansi", 
+      "Posisi/Jabatan", 
+      "WhatsApp", 
+      "Testimoni"
+    ];
+
+    // Gunakan alumniList di sini!
+    const rows = alumniList.map((a) => [
+      `"${clean(a.nama)}"`,
+      `"${clean(a.angkatan)}"`,
+      `"${clean(a.jurusan)}"`,
+      `"${clean(a.status)}"`,
+      `"${clean(a.tempat)}"`,
+      `"${clean(a.posisi)}"`,
+      `"${clean(a.whatsapp)}"`,
+      `"${clean(a.testimoni)}"`
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Tracer_Study_Alumni_${new Date().toLocaleDateString("id-ID")}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const csvString = "\uFEFF" + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
 
-  // 📊 Kalkulasi Statistik
+  // 🚀 Blob-based download — nggak ada limit panjang string kayak data: URI
+  const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Tracer_Study_Alumni_Full_${new Date().toLocaleDateString("id-ID")}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url); // bersihin memory setelah selesai
+};
+
+  // Kalkulasi Statistik
   const stats = useMemo(() => {
     const total = alumniList.length;
     const bekerja = alumniList.filter((a) => a.status === "Bekerja").length;
@@ -239,7 +262,7 @@ export default function AdminAlumniPage() {
     return { total, bekerja, kuliah, wirausaha, seeking };
   }, [alumniList]);
 
-  // 🔍 Filtered List Data
+  // Filtered List Data
   const filteredAlumni = useMemo(() => {
     return alumniList.filter((item) => {
       const matchSearch =
