@@ -61,6 +61,31 @@ interface Pendaftar {
   };
 }
 
+// --- CONSTANT LIST DROPDOWN ---
+const DAFTAR_JURUSAN = [
+  "Teknik Komputer & Jaringan",
+  "Teknik Audio Video",
+  "Teknik Kendaraan Ringan",
+];
+
+const DAFTAR_PROGRAM_UNGGULAN = [
+  "Tahfidz Al-Qur'an",
+  "Kelas Bahasa Jepang",
+  "Kelas Digital Marketing",
+];
+
+const DAFTAR_EKSKUL = [
+  "Pramuka",
+  "Paskibra",
+  "PMR / KSR",
+  "Futsal / Sepak Bola",
+  "Voli",
+  "Bulu Tangkis",
+  "Seni Musik Banjari",
+  "Jurnalistik & Fotografi",
+  "E-Sport"
+];
+
 // --- FUNGSI HELPER FORMAT TIMESTAMP FIRESTORE KE INDONESIA ---
 const formatTanggalIndo = (timestamp: any) => {
   if (!timestamp) return "-";
@@ -101,7 +126,11 @@ export default function AdminPPDBPage() {
   const [editingPendaftar, setEditingPendaftar] = useState<Pendaftar | null>(null);
   const [editNama, setEditNama] = useState("");
   const [editNisn, setEditNisn] = useState("");
+  const [editWhatsapp, setEditWhatsapp] = useState("");
   const [editAsalSekolah, setEditAsalSekolah] = useState("");
+  const [editJurusan, setEditJurusan] = useState("");
+  const [editProgramUnggulan, setEditProgramUnggulan] = useState("");
+  const [editEkskul, setEditEkskul] = useState("");
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   const [deletingPendaftar, setDeletingPendaftar] = useState<Pendaftar | null>(null);
@@ -188,14 +217,18 @@ export default function AdminPPDBPage() {
     setEditingPendaftar(pendaftar);
     setEditNama(pendaftar.namaLengkap || "");
     setEditNisn(pendaftar.nisn || "");
+    setEditWhatsapp(pendaftar.whatsapp || "");
     setEditAsalSekolah(pendaftar.asalSekolah || "");
+    setEditJurusan(pendaftar.pilihanJurusan || "");
+    setEditProgramUnggulan(pendaftar.programUnggulan || "");
+    setEditEkskul(pendaftar.ekstrakurikuler || "");
   };
 
   // --- FUNGSI SIMPAN HASIL EDIT ---
   const handleSaveEdit = async () => {
     if (!editingPendaftar) return;
-    if (!editNama.trim() || !editNisn.trim() || !editAsalSekolah.trim()) {
-      alert("Nama, NISN, dan Asal Sekolah tidak boleh kosong!");
+    if (!editNama.trim() || !editNisn.trim() || !editAsalSekolah.trim() || !editWhatsapp.trim() || !editJurusan.trim()) {
+      alert("Nama, NISN, WhatsApp, Asal Sekolah, dan Pilihan Jurusan tidak boleh kosong!");
       return;
     }
 
@@ -205,7 +238,11 @@ export default function AdminPPDBPage() {
       await updateDoc(docRef, {
         namaLengkap: editNama.trim(),
         nisn: editNisn.trim(),
+        whatsapp: editWhatsapp.trim(),
         asalSekolah: editAsalSekolah.trim(),
+        pilihanJurusan: editJurusan.trim(),
+        programUnggulan: editProgramUnggulan.trim(),
+        ekstrakurikuler: editEkskul.trim(),
       });
 
       setListPendaftar((prev) =>
@@ -215,7 +252,11 @@ export default function AdminPPDBPage() {
                 ...item,
                 namaLengkap: editNama.trim(),
                 nisn: editNisn.trim(),
+                whatsapp: editWhatsapp.trim(),
                 asalSekolah: editAsalSekolah.trim(),
+                pilihanJurusan: editJurusan.trim(),
+                programUnggulan: editProgramUnggulan.trim(),
+                ekstrakurikuler: editEkskul.trim(),
               }
             : item
         )
@@ -266,13 +307,12 @@ export default function AdminPPDBPage() {
       "Status Pendaftaran"
     ];
     
-    // Fungsi sanitasi sederhana biar aman dari tanda petik ganda
     const clean = (text: any) => `"${String(text || "").replace(/"/g, '""')}"`;
 
     const rows = pendaftarDifilter.map(p => [
       clean(formatTanggalIndo(p.createdAt)),
       clean(p.namaLengkap),
-      clean(`'${p.nisn}`), // Tambah petik tunggal di depan NISN agar Excel membacanya sebagai Teks (Nol depan/angka panjang tak terpotong)
+      clean(`'${p.nisn}`),
       clean(p.asalSekolah),
       clean(`'${p.whatsapp}`),
       clean(p.pilihanJurusan),
@@ -283,11 +323,9 @@ export default function AdminPPDBPage() {
       clean(p.statusPendaftaran || "Menunggu Verifikasi")
     ]);
 
-    // Gabungkan baris header & data
     const csvArray = [headers.map(clean).join(","), ...rows.map(row => row.join(","))];
     const csvString = csvArray.join("\r\n");
 
-    // \uFEFF adalah UTF-8 BOM agar Excel Windows langsung membaca baris & karakter dengan sempurna
     const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
     
     const url = URL.createObjectURL(blob);
@@ -710,7 +748,7 @@ export default function AdminPPDBPage() {
                               variant="outline"
                               onClick={() => handleOpenEdit(p)}
                               className="h-7 px-2 text-[11px] text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950"
-                              title="Edit Nama, NISN & Sekolah"
+                              title="Edit Data Pendaftar"
                             >
                               <Pencil className="h-3 w-3" />
                             </Button>
@@ -748,11 +786,11 @@ export default function AdminPPDBPage() {
       </div>
 
       {/* =========================================================================
-          MODAL EDIT DATA PENDAFTAR
+          MODAL EDIT DATA PENDAFTAR (LENGKAP SEMUA FIELD & DROPDOWN)
           ========================================================================= */}
       {editingPendaftar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm print:hidden">
-          <div className="bg-card w-full max-w-md rounded-2xl border shadow-xl overflow-hidden p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-card w-full max-w-lg rounded-2xl border shadow-xl overflow-hidden p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center border-b pb-3">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Pencil className="h-5 w-5 text-blue-600" /> Edit Data Pendaftar
@@ -765,7 +803,8 @@ export default function AdminPPDBPage() {
               </button>
             </div>
 
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3 text-sm max-h-[70vh] overflow-y-auto pr-1">
+              {/* NAMA LENGKAP */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1">
                   Nama Lengkap
@@ -779,19 +818,35 @@ export default function AdminPPDBPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                  NISN
-                </label>
-                <input
-                  type="text"
-                  value={editNisn}
-                  onChange={(e) => setEditNisn(e.target.value)}
-                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm font-mono outline-none focus:border-primary transition"
-                  placeholder="Masukkan NISN"
-                />
+              {/* NISN & WHATSAPP */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                    NISN
+                  </label>
+                  <input
+                    type="text"
+                    value={editNisn}
+                    onChange={(e) => setEditNisn(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-sm font-mono outline-none focus:border-primary transition"
+                    placeholder="Masukkan NISN"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                    No. WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={editWhatsapp}
+                    onChange={(e) => setEditWhatsapp(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary transition"
+                    placeholder="08123456789"
+                  />
+                </div>
               </div>
 
+              {/* ASAL SEKOLAH */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1">
                   Asal Sekolah
@@ -803,6 +858,58 @@ export default function AdminPPDBPage() {
                   className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary transition"
                   placeholder="Masukkan Asal Sekolah"
                 />
+              </div>
+
+              {/* PILIHAN JURUSAN (DROPDOWN) */}
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                  Pilihan Jurusan Utama
+                </label>
+                <select
+                  value={editJurusan}
+                  onChange={(e) => setEditJurusan(e.target.value)}
+                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary transition"
+                >
+                  <option value="">-- Pilih Jurusan --</option>
+                  {DAFTAR_JURUSAN.map((j) => (
+                    <option key={j} value={j}>{j}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* PROGRAM UNGGULAN & EKSTRAKURIKULER (DROPDOWN) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                    Program Unggulan
+                  </label>
+                  <select
+                    value={editProgramUnggulan}
+                    onChange={(e) => setEditProgramUnggulan(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary transition"
+                  >
+                    <option value="Belum Memilih">-- Pilih Program --</option>
+                    {DAFTAR_PROGRAM_UNGGULAN.map((prog) => (
+                      <option key={prog} value={prog}>{prog}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                    Ekstrakurikuler
+                  </label>
+                  <select
+                    value={editEkskul}
+                    onChange={(e) => setEditEkskul(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary transition"
+                  >
+                    <option value="Belum Memilih">-- Pilih Ekskul --</option>
+                    {DAFTAR_EKSKUL.map((eks) => (
+                      <option key={eks} value={eks}>{eks}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -965,7 +1072,6 @@ export default function AdminPPDBPage() {
                     <td className="py-2.5 font-bold">Pilihan Jurusan Utama</td>
                     <td className="py-2.5">: <strong>{selectedIndividu.pilihanJurusan}</strong></td>
                   </tr>
-                  {/* EKSKUL & PROGRAM UNGGULAN PADA SURAT BUKTI */}
                   <tr className="border-b border-gray-300">
                     <td className="py-2.5 font-bold">Minat Program Unggulan</td>
                     <td className="py-2.5">: {selectedIndividu.programUnggulan || "Belum Memilih"}</td>
