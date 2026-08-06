@@ -1,0 +1,133 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------
+    // HELPER FUNCTIONS
+    // -------------------------------------------------------------
+
+    // Cek apakah user sedang login
+    function isAuthenticated() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    // Ambil data dokumen user dari koleksi users
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.token.email)).data;
+    }
+
+    // Cek keberadaan dokumen user
+    function userDocExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.token.email));
+    }
+
+    // Cek role user (Aman untuk Anonim/Publik & Admin)
+    function hasRole(roleName) {
+      return isAuthenticated() && userDocExists() && (
+        (getUserData().role is list && roleName in getUserData().role) ||
+        (getUserData().role is string && getUserData().role == roleName)
+      );
+    }
+
+    // Cek apakah user adalah Superadmin
+    function isSuperadmin() {
+      return hasRole('superadmin');
+    }
+
+    // Cek apakah user adalah panitia PPDB (nama role ada 2 variasi casing di data lama)
+    function isPanitiaPpdb() {
+      return hasRole('panitia_ppdb') || hasRole('panitia_PPDB');
+    }
+
+    // -------------------------------------------------------------
+    // ATURAN KOLEKSI
+    // -------------------------------------------------------------
+
+    // 1. USERS
+    match /users/{userEmail} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperadmin();
+    }
+
+    // 2. SETTINGS & ANNOUNCEMENT
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isSuperadmin() || hasRole('admin_announcement');
+
+      match /{subCollection}/{subDocId} {
+        allow read: if true;
+        allow write: if isSuperadmin() || hasRole('admin_announcement');
+      }
+    }
+
+    // 3. VACANCIES (LOWKER BKK)
+    match /vacancies/{vacancyId} {
+      allow read: if true;
+      allow write: if isSuperadmin() || hasRole('admin_bkk');
+    }
+
+    // 4. APPLICATIONS (PELAMAR BKK)
+    match /applications/{appId} {
+      allow create: if !exists(/databases/$(database)/documents/applications/$(appId));
+      allow read, update, delete: if isSuperadmin() || hasRole('admin_bkk');
+    }
+    match /job_applications/{appId} {
+      allow create: if !exists(/databases/$(database)/documents/job_applications/$(appId));
+      allow read, update, delete: if isSuperadmin() || hasRole('admin_bkk');
+    }
+
+    // 5. PPDB
+    match /ppdb/{docId} {
+      // 🔒 docId sekarang = NISN (lihat setDoc di form-ppdb.tsx), jadi ini beneran
+      // nyegah 1 NISN daftar 2x — bukan cuma nyegah overwrite ID random yang nggak pernah kejadian.
+      allow create: if !exists(/databases/$(database)/documents/ppdb/$(docId));
+
+      // 🔒 READ DIKUNCI. Publik TIDAK BISA baca collection ini langsung dari client.
+      // Fitur "cek status via NISN" WAJIB lewat Cloud Function `cekStatusPpdb`
+      // (pakai Admin SDK, jalan di server, rules ini nggak berlaku buat dia).
+      allow read: if isSuperadmin() || isPanitiaPpdb();
+
+      // Admin/panitia bebas ubah. Publik cuma boleh update field 'tes' —
+      // masih ada residual risk (bisa ubah 'tes' punya NISN lain, bukan cuma
+      // punya sendiri), tapi status/nama/dll sudah nggak bisa disentuh publik.
+      allow update: if isSuperadmin()
+                    || isPanitiaPpdb()
+                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tes']);
+
+      allow delete: if isSuperadmin() || isPanitiaPpdb();
+    }
+
+    // 6. ALUMNI
+    match /alumni/{docId} {
+      allow read: if true;
+      allow create: if !exists(/databases/$(database)/documents/alumni/$(docId));
+      allow update, delete: if isSuperadmin() || hasRole('admin_alumni');
+    }
+
+    // 7. BERITA
+    match /berita/{docId} {
+      allow read: if true;
+      allow write: if isSuperadmin() || hasRole('admin_artikel');
+    }
+
+    // 8. GALERI
+    match /galeri/{docId} {
+      allow read: if true;
+      allow write: if isSuperadmin() || hasRole('admin_galeri');
+    }
+
+    // 9. KOMENTAR
+    match /comments/{commentId} {
+      allow read, create: if true;
+      allow update: if false;
+      allow delete: if isSuperadmin() || hasRole('admin_artikel');
+    }
+
+    // Catatan: collection "_rateLimits" (dipakai internal oleh Cloud Function
+    // cekStatusPpdb) SENGAJA nggak punya match block sama sekali di sini.
+    // Firestore rules itu default-deny, jadi client nggak akan pernah bisa
+    // baca/tulis ke situ langsung — cuma Admin SDK di Cloud Function yang bisa,
+    // karena Admin SDK memang bypass rules ini sepenuhnya.
+  }
+}

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, limit } from "firebase/firestore";
+import { functions } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import { Search, CheckCircle2, XCircle, Clock, Loader2, Award, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -33,23 +33,19 @@ export default function PengumumanPage() {
     setDataSiswa(null);
 
     try {
-      // Cari di Firestore yang NISN-nya cocok
-      const q = query(
-        collection(db, "ppdb"),
-        where("nisn", "==", nisnInput.trim()),
-        limit(1)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        querySnapshot.forEach((doc) => {
-          setDataSiswa(doc.data() as Siswa);
-        });
+      // Lewat Cloud Function, BUKAN query Firestore langsung dari client.
+      // Ini yang jaga supaya field sensitif (misal whatsapp) di dokumen ppdb
+      // nggak pernah ikut kekirim ke browser siapapun yang buka halaman ini.
+      const cekStatusPpdb = httpsCallable(functions, "cekStatusPpdb");
+      const result = await cekStatusPpdb({ nisn: nisnInput.trim() });
+      setDataSiswa(result.data as Siswa);
+    } catch (error: any) {
+      // Cloud Function balikin error code "not-found" kalau NISN nggak ada —
+      // itu bukan error sistem, jadi dataSiswa dibiarin null aja (state "Data Tidak Ditemukan").
+      if (error?.code !== "functions/not-found") {
+        console.error("Gagal mengecek nomor NISN:", error);
+        alert("Terjadi kesalahan sistem, silakan coba lagi beberapa saat.");
       }
-    } catch (error) {
-      console.error("Gagal mengecek nomor NISN:", error);
-      alert("Terjadi kesalahan sistem, silakan coba lagi beberapa saat.");
     } finally {
       setLoading(false);
     }

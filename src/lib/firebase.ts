@@ -2,6 +2,8 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 // 1. IMPORT getAuth DARI FIREBASE AUTH
 import { getAuth } from "firebase/auth";
+// 1b. IMPORT getFunctions UNTUK MANGGIL CLOUD FUNCTIONS (misal cekStatusPpdb)
+import { getFunctions } from "firebase/functions";
 
 // Masukkan SDK Firebase Configuration lo di sini
 const firebaseConfig = {
@@ -25,6 +27,8 @@ const secondaryApp = getApps().find((a) => a.name === "Secondary")
 const db = getFirestore(app);
 const auth = getAuth(app);
 const secondaryAuth = getAuth(secondaryApp); // <-- Secondary Auth untuk Superadmin tambah user
+// Region default Cloud Functions us-central1; sesuaikan kalau lo deploy di region lain
+const functions = getFunctions(app);
 
 // 3. EXPORT SEMUA AGAR BISA DIPAKAI DI TEMPAT LAIN
-export { db, auth, secondaryAuth };
+export { db, auth, secondaryAuth, functions };

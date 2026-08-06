@@ -68,9 +68,7 @@ export default function BannerSPMB() {
 
             </div>
           </div>
-
         </div>
-
       </div>
     </section>
   );

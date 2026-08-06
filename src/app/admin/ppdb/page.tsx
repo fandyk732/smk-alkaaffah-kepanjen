@@ -4,8 +4,35 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, doc, updateDoc, getDoc } from "firebase/firestore";
-import { Search, Filter, Loader2, RefreshCw, Printer, FileSpreadsheet, LogOut, LayoutGrid, Calendar, Eye, Compass, Award, Sparkles } from "lucide-react";
+import { 
+  collection, 
+  getDocs, 
+  query, 
+  orderBy, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  getDoc 
+} from "firebase/firestore";
+import { 
+  Search, 
+  Filter, 
+  Loader2, 
+  RefreshCw, 
+  Printer, 
+  FileSpreadsheet, 
+  LogOut, 
+  LayoutGrid, 
+  Calendar, 
+  Eye, 
+  Compass, 
+  Award, 
+  Sparkles, 
+  Pencil, 
+  Trash2, 
+  X, 
+  Save 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Pendaftar {
@@ -15,8 +42,8 @@ interface Pendaftar {
   asalSekolah: string;
   whatsapp: string;
   pilihanJurusan: string;
-  ekstrakurikuler?: string; // ➕ Field Baru
-  programUnggulan?: string; // ➕ Field Baru
+  ekstrakurikuler?: string;
+  programUnggulan?: string;
   statusPendaftaran: "Menunggu Verifikasi" | "Diterima" | "Ditolak";
   createdAt: any;
   tes?: {
@@ -69,6 +96,16 @@ export default function AdminPPDBPage() {
   const [filterJurusan, setFilterJurusan] = useState("");
 
   const [selectedIndividu, setSelectedIndividu] = useState<Pendaftar | null>(null);
+
+  // --- STATE KONTROL MODAL EDIT & HAPUS ---
+  const [editingPendaftar, setEditingPendaftar] = useState<Pendaftar | null>(null);
+  const [editNama, setEditNama] = useState("");
+  const [editNisn, setEditNisn] = useState("");
+  const [editAsalSekolah, setEditAsalSekolah] = useState("");
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  const [deletingPendaftar, setDeletingPendaftar] = useState<Pendaftar | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // --- AMBIL DATA PPDB FROM FIRESTORE ---
   const ambilDataPPDB = useCallback(async () => {
@@ -146,6 +183,71 @@ export default function AdminPPDBPage() {
     }
   };
 
+  // --- FUNGSI BUKA MODAL EDIT ---
+  const handleOpenEdit = (pendaftar: Pendaftar) => {
+    setEditingPendaftar(pendaftar);
+    setEditNama(pendaftar.namaLengkap || "");
+    setEditNisn(pendaftar.nisn || "");
+    setEditAsalSekolah(pendaftar.asalSekolah || "");
+  };
+
+  // --- FUNGSI SIMPAN HASIL EDIT ---
+  const handleSaveEdit = async () => {
+    if (!editingPendaftar) return;
+    if (!editNama.trim() || !editNisn.trim() || !editAsalSekolah.trim()) {
+      alert("Nama, NISN, dan Asal Sekolah tidak boleh kosong!");
+      return;
+    }
+
+    setIsSubmittingEdit(true);
+    try {
+      const docRef = doc(db, "ppdb", editingPendaftar.id);
+      await updateDoc(docRef, {
+        namaLengkap: editNama.trim(),
+        nisn: editNisn.trim(),
+        asalSekolah: editAsalSekolah.trim(),
+      });
+
+      setListPendaftar((prev) =>
+        prev.map((item) =>
+          item.id === editingPendaftar.id
+            ? {
+                ...item,
+                namaLengkap: editNama.trim(),
+                nisn: editNisn.trim(),
+                asalSekolah: editAsalSekolah.trim(),
+              }
+            : item
+        )
+      );
+
+      setEditingPendaftar(null);
+    } catch (error) {
+      console.error("Gagal mengupdate data pendaftar:", error);
+      alert("Gagal memperbarui data pendaftar.");
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
+  // --- FUNGSI HAPUS DATA PENDAFTAR ---
+  const handleDelete = async () => {
+    if (!deletingPendaftar) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, "ppdb", deletingPendaftar.id));
+
+      setListPendaftar((prev) => prev.filter((item) => item.id !== deletingPendaftar.id));
+      setDeletingPendaftar(null);
+    } catch (error) {
+      console.error("Gagal menghapus data pendaftar:", error);
+      alert("Gagal menghapus data pendaftar.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // --- FUNGSI DOWNLOAD EXCEL (CSV) + EKSKUL & PROGRAM UNGGULAN ---
   const downloadExcel = () => {
     if (pendaftarDifilter.length === 0) return alert("Tidak ada data untuk diexport");
@@ -167,7 +269,7 @@ export default function AdminPPDBPage() {
     const rows = pendaftarDifilter.map(p => [
       `"${formatTanggalIndo(p.createdAt)}"`,
       `"${p.namaLengkap.replace(/"/g, '""')}"`,
-      ` font-mono:"${p.nisn}"`,
+      `"${p.nisn}"`,
       `"${p.asalSekolah.replace(/"/g, '""')}"`,
       `"${p.whatsapp}"`,
       `"${p.pilihanJurusan}"`,
@@ -179,7 +281,7 @@ export default function AdminPPDBPage() {
     ]);
 
     const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      + [headers.join(","), ...rows.map(e => e.join(",")).join("\n")];
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -310,24 +412,26 @@ export default function AdminPPDBPage() {
                         <h3 className="font-bold text-sm">{p.namaLengkap}</h3>
                         <p className="text-xs text-muted-foreground font-mono">NISN: {p.nisn}</p>
                       </div>
-                      {p.statusPendaftaran === "Diterima" && (
-                        <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200">
-                          Diterima
-                        </span>
-                      )}
-                      {p.statusPendaftaran === "Ditolak" && (
-                        <span className="rounded-full bg-red-100 dark:bg-red-950/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400 border border-red-200">
-                          Ditolak
-                        </span>
-                      )}
-                      {(!p.statusPendaftaran || p.statusPendaftaran === "Menunggu Verifikasi") && (
-                        <span className="rounded-full bg-amber-100 dark:bg-amber-950/30 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-500 border border-amber-200">
-                          Pending
-                        </span>
-                      )}
+                      <div className="flex flex-col items-end gap-1">
+                        {p.statusPendaftaran === "Diterima" && (
+                          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200">
+                            Diterima
+                          </span>
+                        )}
+                        {p.statusPendaftaran === "Ditolak" && (
+                          <span className="rounded-full bg-red-100 dark:bg-red-950/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400 border border-red-200">
+                            Ditolak
+                          </span>
+                        )}
+                        {(!p.statusPendaftaran || p.statusPendaftaran === "Menunggu Verifikasi") && (
+                          <span className="rounded-full bg-amber-100 dark:bg-amber-950/30 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-500 border border-amber-200">
+                            Pending
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Detail Informasi Utam */}
+                    {/* Detail Informasi Utama */}
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <span className="text-muted-foreground block text-[10px]">WAKTU DAFTAR</span>
@@ -349,7 +453,7 @@ export default function AdminPPDBPage() {
                       </div>
                     </div>
 
-                    {/* ➕ PROGRAM UNGGULAN & EKSKUL (MOBILE) */}
+                    {/* PROGRAM UNGGULAN & EKSKUL (MOBILE) */}
                     <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border space-y-1.5 text-xs">
                       <div className="flex items-center gap-1.5">
                         <Sparkles className="h-3.5 w-3.5 text-purple-600 shrink-0" />
@@ -388,33 +492,54 @@ export default function AdminPPDBPage() {
                     </div>
 
                     {/* Tombol Aksi di HP */}
-                    <div className="pt-2 flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => ubahStatus(p.id, "Diterima")}
-                        disabled={p.statusPendaftaran === "Diterima"}
-                        className="flex-1 text-emerald-600 hover:text-white hover:bg-emerald-600 border-emerald-200 h-8 text-xs"
-                      >
-                        Terima
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => ubahStatus(p.id, "Ditolak")}
-                        disabled={p.statusPendaftaran === "Ditolak"}
-                        className="flex-1 text-destructive hover:text-white hover:bg-destructive h-8 text-xs"
-                      >
-                        Tolak
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => printIndividu(p)}
-                        className="h-8 text-xs px-3"
-                      >
-                        <Printer className="h-3.5 w-3.5 mr-1" /> Bukti
-                      </Button>
+                    <div className="pt-2 flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => ubahStatus(p.id, "Diterima")}
+                          disabled={p.statusPendaftaran === "Diterima"}
+                          className="flex-1 text-emerald-600 hover:text-white hover:bg-emerald-600 border-emerald-200 h-8 text-xs"
+                        >
+                          Terima
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => ubahStatus(p.id, "Ditolak")}
+                          disabled={p.statusPendaftaran === "Ditolak"}
+                          className="flex-1 text-destructive hover:text-white hover:bg-destructive h-8 text-xs"
+                        >
+                          Tolak
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenEdit(p)}
+                          className="flex-1 border-slate-300 h-8 text-xs text-blue-600 hover:bg-blue-50"
+                        >
+                          <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDeletingPendaftar(p)}
+                          className="flex-1 border-red-200 h-8 text-xs text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => printIndividu(p)}
+                          className="h-8 text-xs px-3"
+                        >
+                          <Printer className="h-3.5 w-3.5 mr-1" /> Bukti
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -431,7 +556,6 @@ export default function AdminPPDBPage() {
                     <th className="px-3 py-3.5">Waktu / NISN</th>
                     <th className="px-3 py-3.5">Nama & Sekolah</th>
                     <th className="px-3 py-3.5">Jurusan Utama</th>
-                    {/* ➕ Kolom Baru */}
                     <th className="px-3 py-3.5">Program & Ekskul</th>
                     <th className="px-3 py-3.5">Kontak WA</th>
                     <th className="px-3 py-3.5">Hasil Tes</th>
@@ -468,7 +592,7 @@ export default function AdminPPDBPage() {
                           </span>
                         </td>
 
-                        {/* ➕ PROGRAM UNGGULAN & EKSKUL */}
+                        {/* PROGRAM UNGGULAN & EKSKUL */}
                         <td className="px-3 py-3 whitespace-nowrap">
                           <div className="space-y-1">
                             <div className="flex items-center gap-1 text-[11px]">
@@ -571,11 +695,35 @@ export default function AdminPPDBPage() {
                             >
                               Tolak
                             </Button>
+                            
+                            {/* Tombol Edit */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenEdit(p)}
+                              className="h-7 px-2 text-[11px] text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950"
+                              title="Edit Nama, NISN & Sekolah"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+
+                            {/* Tombol Hapus */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setDeletingPendaftar(p)}
+                              className="h-7 px-2 text-[11px] text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950"
+                              title="Hapus Pendaftar"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+
                             <Button
                               size="sm"
                               variant="secondary"
                               onClick={() => printIndividu(p)}
                               className="h-7 px-2 text-[11px]"
+                              title="Cetak Bukti"
                             >
                               <Printer className="h-3 w-3 mr-1" /> Bukti
                             </Button>
@@ -590,6 +738,142 @@ export default function AdminPPDBPage() {
           </>
         )}
       </div>
+
+      {/* =========================================================================
+          MODAL EDIT DATA PENDAFTAR
+          ========================================================================= */}
+      {editingPendaftar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm print:hidden">
+          <div className="bg-card w-full max-w-md rounded-2xl border shadow-xl overflow-hidden p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Pencil className="h-5 w-5 text-blue-600" /> Edit Data Pendaftar
+              </h2>
+              <button 
+                onClick={() => setEditingPendaftar(null)}
+                className="text-muted-foreground hover:text-foreground transition rounded-lg p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                  Nama Lengkap
+                </label>
+                <input
+                  type="text"
+                  value={editNama}
+                  onChange={(e) => setEditNama(e.target.value)}
+                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary transition"
+                  placeholder="Masukkan Nama Lengkap"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                  NISN
+                </label>
+                <input
+                  type="text"
+                  value={editNisn}
+                  onChange={(e) => setEditNisn(e.target.value)}
+                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm font-mono outline-none focus:border-primary transition"
+                  placeholder="Masukkan NISN"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                  Asal Sekolah
+                </label>
+                <input
+                  type="text"
+                  value={editAsalSekolah}
+                  onChange={(e) => setEditAsalSekolah(e.target.value)}
+                  className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary transition"
+                  placeholder="Masukkan Asal Sekolah"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingPendaftar(null)}
+                disabled={isSubmittingEdit}
+              >
+                Batal
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveEdit}
+                disabled={isSubmittingEdit}
+                className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isSubmittingEdit ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" /> Simpan Perubahan
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL KONFIRMASI HAPUS PENDAFTAR
+          ========================================================================= */}
+      {deletingPendaftar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm print:hidden">
+          <div className="bg-card w-full max-w-sm rounded-2xl border shadow-xl overflow-hidden p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 flex items-center justify-center mx-auto">
+              <Trash2 className="h-6 w-6" />
+            </div>
+
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold">Hapus Data Pendaftar?</h2>
+              <p className="text-xs text-muted-foreground">
+                Apakah Anda yakin ingin menghapus data <strong className="text-foreground">{deletingPendaftar.namaLengkap}</strong> (NISN: {deletingPendaftar.nisn})? Action ini tidak dapat dibatalkan.
+              </p>
+            </div>
+
+            <div className="flex justify-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeletingPendaftar(null)}
+                disabled={isDeleting}
+                className="w-full"
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="w-full gap-1.5"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Menghapus...
+                  </>
+                ) : (
+                  "Ya, Hapus"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =========================================================================
           TEMPLATE SURAT BUKTI INDIVIDU (PRINT PROPER)
@@ -673,7 +957,7 @@ export default function AdminPPDBPage() {
                     <td className="py-2.5 font-bold">Pilihan Jurusan Utama</td>
                     <td className="py-2.5">: <strong>{selectedIndividu.pilihanJurusan}</strong></td>
                   </tr>
-                  {/* ➕ EKSKUL & PROGRAM UNGGULAN PADA SURAT BUKTI */}
+                  {/* EKSKUL & PROGRAM UNGGULAN PADA SURAT BUKTI */}
                   <tr className="border-b border-gray-300">
                     <td className="py-2.5 font-bold">Minat Program Unggulan</td>
                     <td className="py-2.5">: {selectedIndividu.programUnggulan || "Belum Memilih"}</td>

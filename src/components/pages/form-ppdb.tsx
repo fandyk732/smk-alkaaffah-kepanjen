@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { db } from "@/lib/firebase"; // Sesuaikan path config Firebase lo
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Send, Loader2 } from "lucide-react";
 
@@ -50,19 +50,30 @@ export function FormPPDB() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Handler khusus NISN: paksa cuma digit & maksimal 10 karakter.
+  // Sengaja dipisah dari handleChange biasa dan TIDAK pakai <input type="number">,
+  // karena type="number" otomatis strip leading zero (NISN sering diawali "0").
+  const handleNisnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const onlyDigits = e.target.value.replace(/\D/g, "").slice(0, 10);
+    setFormData({ ...formData, nisn: onlyDigits });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    if (formData.nisn.length < 10) {
-      setError("NISN harus berjumlah 10 digit.");
+    if (formData.nisn.length !== 10) {
+      setError("NISN harus berjumlah tepat 10 digit.");
       setLoading(false);
       return;
     }
 
     try {
-      await addDoc(collection(db, "ppdb"), {
+      // setDoc dengan docId = NISN (bukan addDoc dengan ID random).
+      // Ini bikin rule Firestore "allow create: if !exists(...)" beneran ngefek
+      // sebagai proteksi 1 NISN cuma boleh daftar 1x.
+      await setDoc(doc(db, "ppdb", formData.nisn), {
         ...formData,
         // Jika tidak memilih, set default "Belum Memilih" biar rapi di database
         ekstrakurikuler: formData.ekstrakurikuler || "Belum Memilih",
@@ -81,9 +92,14 @@ export function FormPPDB() {
         ekstrakurikuler: "",
         programUnggulan: "",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Terjadi kesalahan sistem. Silakan coba lagi.");
+      // Rules Firestore nolak create kalau docId (=NISN) udah pernah dipakai sebelumnya
+      if (err?.code === "permission-denied") {
+        setError("NISN ini sudah pernah terdaftar sebelumnya. Kalau ini bukan kamu, hubungi panitia SPMB.");
+      } else {
+        setError("Terjadi kesalahan sistem. Silakan coba lagi.");
+      }
     } finally {
       setLoading(false);
     }
@@ -122,7 +138,7 @@ export function FormPPDB() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label className="text-sm font-semibold">NISN</label>
-          <input type="number" name="nisn" required value={formData.nisn} onChange={handleChange} placeholder="10 Digit" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+          <input type="text" inputMode="numeric" pattern="[0-9]*" name="nisn" required maxLength={10} value={formData.nisn} onChange={handleNisnChange} placeholder="Contoh: 0081234567" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
         </div>
         <div className="space-y-1.5">
           <label className="text-sm font-semibold">Asal Sekolah</label>
