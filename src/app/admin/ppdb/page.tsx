@@ -248,7 +248,7 @@ export default function AdminPPDBPage() {
     }
   };
 
-  // --- FUNGSI DOWNLOAD EXCEL (CSV) + EKSKUL & PROGRAM UNGGULAN ---
+  // --- FUNGSI DOWNLOAD EXCEL (CSV UTF-8 AMAN BUKA DI EXCEL) ---
   const downloadExcel = () => {
     if (pendaftarDifilter.length === 0) return alert("Tidak ada data untuk diexport");
 
@@ -266,30 +266,38 @@ export default function AdminPPDBPage() {
       "Status Pendaftaran"
     ];
     
+    // Fungsi sanitasi sederhana biar aman dari tanda petik ganda
+    const clean = (text: any) => `"${String(text || "").replace(/"/g, '""')}"`;
+
     const rows = pendaftarDifilter.map(p => [
-      `"${formatTanggalIndo(p.createdAt)}"`,
-      `"${p.namaLengkap.replace(/"/g, '""')}"`,
-      `"${p.nisn}"`,
-      `"${p.asalSekolah.replace(/"/g, '""')}"`,
-      `"${p.whatsapp}"`,
-      `"${p.pilihanJurusan}"`,
-      `"${p.programUnggulan || "Belum Memilih"}"`,
-      `"${p.ekstrakurikuler || "Belum Memilih"}"`,
-      `"${p.tes?.butaWarna ? `${p.tes.butaWarna.status} (${p.tes.butaWarna.skor}/${p.tes.butaWarna.totalSoal})` : "Belum Tes"}"`,
-      `"${p.tes?.jurusan?.rekomendasi || "Belum Tes"}"`,
-      `"${p.statusPendaftaran}"`
+      clean(formatTanggalIndo(p.createdAt)),
+      clean(p.namaLengkap),
+      clean(`'${p.nisn}`), // Tambah petik tunggal di depan NISN agar Excel membacanya sebagai Teks (Nol depan/angka panjang tak terpotong)
+      clean(p.asalSekolah),
+      clean(`'${p.whatsapp}`),
+      clean(p.pilihanJurusan),
+      clean(p.programUnggulan || "Belum Memilih"),
+      clean(p.ekstrakurikuler || "Belum Memilih"),
+      clean(p.tes?.butaWarna ? `${p.tes.butaWarna.status} (${p.tes.butaWarna.skor}/${p.tes.butaWarna.totalSoal})` : "Belum Tes"),
+      clean(p.tes?.jurusan?.rekomendasi || "Belum Tes"),
+      clean(p.statusPendaftaran || "Menunggu Verifikasi")
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(","), ...rows.map(e => e.join(",")).join("\n")];
+    // Gabungkan baris header & data
+    const csvArray = [headers.map(clean).join(","), ...rows.map(row => row.join(","))];
+    const csvString = csvArray.join("\r\n");
+
+    // \uFEFF adalah UTF-8 BOM agar Excel Windows langsung membaca baris & karakter dengan sempurna
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
     
-    const encodedUri = encodeURI(csvContent);
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `Data_PPDB_Export_${new Date().toLocaleDateString("id-ID")}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const printSemua = () => {
