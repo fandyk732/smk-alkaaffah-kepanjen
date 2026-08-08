@@ -10,9 +10,8 @@ import {
   query, 
   orderBy, 
   doc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc 
+  getDoc,
+  writeBatch
 } from "firebase/firestore";
 import { 
   Search, 
@@ -200,8 +199,27 @@ export default function AdminPPDBPage() {
 
   const ubahStatus = async (id: string, statusBaru: "Diterima" | "Ditolak") => {
     try {
-      const docRef = doc(db, "ppdb", id);
-      await updateDoc(docRef, { statusPendaftaran: statusBaru });
+      // Ambil data siswa yang lagi ada di state, buat jaga-jaga kalau ppdb_public
+      // belum pernah kebentuk (data lama sebelum sistem ppdb_public ada) —
+      // set-merge di bawah bakal BIKIN dokumennya lengkap, bukan cuma field status doang.
+      const siswa = listPendaftar.find((item) => item.id === id);
+
+      const batch = writeBatch(db);
+      batch.update(doc(db, "ppdb", id), { statusPendaftaran: statusBaru });
+      batch.set(
+        doc(db, "ppdb_public", id),
+        {
+          statusPendaftaran: statusBaru,
+          ...(siswa && {
+            namaLengkap: siswa.namaLengkap,
+            nisn: siswa.nisn,
+            asalSekolah: siswa.asalSekolah,
+            pilihanJurusan: siswa.pilihanJurusan,
+          }),
+        },
+        { merge: true }
+      );
+      await batch.commit();
       
       setListPendaftar((prev) =>
         prev.map((item) => (item.id === id ? { ...item, statusPendaftaran: statusBaru } : item))
@@ -232,10 +250,22 @@ export default function AdminPPDBPage() {
       return;
     }
 
+    // ⚠️ docId ppdb & ppdb_public itu NISN LAMA (editingPendaftar.id), dan itu
+    // TIDAK ikut pindah walau field "nisn" di dalam dokumen diubah. Kalau admin
+    // ganti NISN di sini, halaman /ppdb/pengumuman bakal tetep nyari pakai NISN
+    // BARU tapi dokumennya masih "hidup" di docId NISN LAMA -> nggak ketemu.
+    if (editNisn.trim() !== editingPendaftar.nisn) {
+      const lanjut = confirm(
+        "Kamu mengubah NISN. Perlu diketahui: ini CUMA mengubah nilai field NISN di data, bukan memindahkan dokumennya. Fitur cek status di halaman publik akan tetap mencari pakai NISN yang baru dan TIDAK akan ketemu.\n\nUntuk NISN yang bener-bener berubah, disarankan hapus data ini lalu minta siswa daftar ulang pakai NISN yang benar.\n\nLanjutkan simpan perubahan lain (tanpa memperbaiki masalah ini)?"
+      );
+      if (!lanjut) return;
+    }
+
     setIsSubmittingEdit(true);
     try {
-      const docRef = doc(db, "ppdb", editingPendaftar.id);
-      await updateDoc(docRef, {
+      const batch = writeBatch(db);
+
+      batch.update(doc(db, "ppdb", editingPendaftar.id), {
         namaLengkap: editNama.trim(),
         nisn: editNisn.trim(),
         whatsapp: editWhatsapp.trim(),
@@ -244,6 +274,24 @@ export default function AdminPPDBPage() {
         programUnggulan: editProgramUnggulan.trim(),
         ekstrakurikuler: editEkskul.trim(),
       });
+
+      // Sinkronin ke ppdb_public pakai set+merge (BUKAN update), biar nggak gagal
+      // kalau dokumen ppdb_public-nya belum pernah kebentuk (data lama). Sekalian
+      // sertain nisn & statusPendaftaran biar kalau ini yang bikin dokumennya
+      // pertama kali, hasilnya lengkap — bukan cuma 3 field yang diedit doang.
+      batch.set(
+        doc(db, "ppdb_public", editingPendaftar.id),
+        {
+          namaLengkap: editNama.trim(),
+          asalSekolah: editAsalSekolah.trim(),
+          pilihanJurusan: editJurusan.trim(),
+          nisn: editingPendaftar.nisn, // nisn LAMA (docId), bukan editNisn — lihat catatan di atas
+          statusPendaftaran: editingPendaftar.statusPendaftaran || "Menunggu Verifikasi",
+        },
+        { merge: true }
+      );
+
+      await batch.commit();
 
       setListPendaftar((prev) =>
         prev.map((item) =>
@@ -277,7 +325,12 @@ export default function AdminPPDBPage() {
 
     setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, "ppdb", deletingPendaftar.id));
+      // Hapus dua-duanya sekalian biar nggak ninggalin data "hantu" di ppdb_public
+      // yang masih bisa dicek publik walau udah dihapus admin.
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "ppdb", deletingPendaftar.id));
+      batch.delete(doc(db, "ppdb_public", deletingPendaftar.id));
+      await batch.commit();
 
       setListPendaftar((prev) => prev.filter((item) => item.id !== deletingPendaftar.id));
       setDeletingPendaftar(null);

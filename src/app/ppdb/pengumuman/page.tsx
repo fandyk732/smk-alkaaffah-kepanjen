@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { functions } from "@/lib/firebase";
-import { httpsCallable } from "firebase/functions";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { Search, CheckCircle2, XCircle, Clock, Loader2, Award, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -33,19 +33,19 @@ export default function PengumumanPage() {
     setDataSiswa(null);
 
     try {
-      // Lewat Cloud Function, BUKAN query Firestore langsung dari client.
-      // Ini yang jaga supaya field sensitif (misal whatsapp) di dokumen ppdb
-      // nggak pernah ikut kekirim ke browser siapapun yang buka halaman ini.
-      const cekStatusPpdb = httpsCallable(functions, "cekStatusPpdb");
-      const result = await cekStatusPpdb({ nisn: nisnInput.trim() });
-      setDataSiswa(result.data as Siswa);
-    } catch (error: any) {
-      // Cloud Function balikin error code "not-found" kalau NISN nggak ada —
-      // itu bukan error sistem, jadi dataSiswa dibiarin null aja (state "Data Tidak Ditemukan").
-      if (error?.code !== "functions/not-found") {
-        console.error("Gagal mengecek nomor NISN:", error);
-        alert("Terjadi kesalahan sistem, silakan coba lagi beberapa saat.");
+      // Baca dari "ppdb_public" — collection TERPISAH dari "ppdb" yang cuma
+      // pernah ditulis dengan field aman (nama, asal sekolah, jurusan, status).
+      // Field whatsapp dkk TIDAK PERNAH ada di collection ini, jadi read publik
+      // di sini aman walau tanpa Cloud Function.
+      const docSnap = await getDoc(doc(db, "ppdb_public", nisnInput.trim()));
+
+      if (docSnap.exists()) {
+        setDataSiswa(docSnap.data() as Siswa);
       }
+      // Kalau nggak ketemu, dataSiswa dibiarin null -> state "Data Tidak Ditemukan"
+    } catch (error) {
+      console.error("Gagal mengecek nomor NISN:", error);
+      alert("Terjadi kesalahan sistem, silakan coba lagi beberapa saat.");
     } finally {
       setLoading(false);
     }

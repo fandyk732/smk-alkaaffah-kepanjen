@@ -35,9 +35,12 @@ service cloud.firestore {
       return hasRole('superadmin');
     }
 
-    // Cek apakah user adalah panitia PPDB (nama role ada 2 variasi casing di data lama)
+    // Cek apakah user adalah panitia PPDB.
+    // 3 variasi nama role ini SEMUA dianggap valid karena itu juga yang dicek
+    // di client (src/app/admin/ppdb/page.tsx) — kalau salah satu dilewatin di sini,
+    // user dengan role itu bisa masuk UI tapi semua operasi Firestore-nya ke-reject.
     function isPanitiaPpdb() {
-      return hasRole('panitia_ppdb') || hasRole('panitia_PPDB');
+      return hasRole('panitia_ppdb') || hasRole('panitia_PPDB') || hasRole('admin_ppdb');
     }
 
     // -------------------------------------------------------------
@@ -84,8 +87,9 @@ service cloud.firestore {
       allow create: if !exists(/databases/$(database)/documents/ppdb/$(docId));
 
       // 🔒 READ DIKUNCI. Publik TIDAK BISA baca collection ini langsung dari client.
-      // Fitur "cek status via NISN" WAJIB lewat Cloud Function `cekStatusPpdb`
-      // (pakai Admin SDK, jalan di server, rules ini nggak berlaku buat dia).
+      // Data lengkap (termasuk whatsapp) cuma bisa dibaca admin/panitia lewat dashboard.
+      // Fitur cek status publik pakai collection terpisah "ppdb_public" di bawah,
+      // yang emang sengaja cuma pernah ditulis field aman (lihat form-ppdb.tsx).
       allow read: if isSuperadmin() || isPanitiaPpdb();
 
       // Admin/panitia bebas ubah. Publik cuma boleh update field 'tes' —
@@ -96,6 +100,23 @@ service cloud.firestore {
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tes']);
 
       allow delete: if isSuperadmin() || isPanitiaPpdb();
+    }
+
+    // 5b. PPDB_PUBLIC — versi "aman" dari data pendaftar, khusus buat halaman
+    // publik /ppdb/pengumuman. Cuma boleh berisi field non-sensitif; whatsapp
+    // dan field lain di "ppdb" TIDAK PERNAH ditulis ke sini oleh kode aplikasi.
+    match /ppdb_public/{docId} {
+      allow read: if true; // 🌐 aman dibaca publik, karena field-nya sudah dibatasi di bawah
+
+      // docId = NISN, dan field yang boleh ditulis dibatasi ketat cuma yang non-sensitif.
+      allow create: if !exists(/databases/$(database)/documents/ppdb_public/$(docId))
+                    && request.resource.data.keys().hasOnly(
+                         ['namaLengkap', 'nisn', 'asalSekolah', 'pilihanJurusan', 'statusPendaftaran']
+                       );
+
+      // Publik nggak boleh ubah apapun di sini — cuma admin/panitia (lewat dashboard,
+      // sinkron pas ubah status di collection "ppdb").
+      allow update, delete: if isSuperadmin() || isPanitiaPpdb();
     }
 
     // 6. ALUMNI

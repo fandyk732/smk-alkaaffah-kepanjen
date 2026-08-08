@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TesButaWarna, { HasilTesButaWarna } from "@/components/ppdb/TesButaWarna";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 export default function TesButaWarnaPage() {
   // State Verifikasi NISN
@@ -25,21 +25,22 @@ export default function TesButaWarnaPage() {
 
     setIsVerifying(true);
     try {
-      // Cari pendaftar berdasarkan NISN di koleksi 'ppdb'
-      const q = query(collection(db, "ppdb"), where("nisn", "==", nisnInput.trim()));
-      const querySnapshot = await getDocs(q);
+      // 🔒 Baca dari "ppdb_public" (docId = NISN), BUKAN "ppdb".
+      // Collection "ppdb" read-nya udah dikunci admin/panitia only, jadi kalau
+      // dibaca langsung di sini siswa yang belum login bakal kena permission-denied.
+      // "ppdb_public" emang didesain buat dibaca publik dan docId-nya = NISN,
+      // jadi ini getDoc langsung, lebih simpel & cepat daripada where-query.
+      const docSnap = await getDoc(doc(db, "ppdb_public", nisnInput.trim()));
 
-      if (querySnapshot.empty) {
+      if (!docSnap.exists()) {
         alert("NISN tidak ditemukan! Pastikan kamu sudah mengisi form pendaftaran terlebih dahulu.");
         setIsVerifying(false);
         return;
       }
 
-      // Ambil dokumen pendaftar pertama yang cocok
-      const docData = querySnapshot.docs[0];
       setPendaftar({
-        id: docData.id,
-        nama: docData.data().namaLengkap || "Calon Siswa",
+        id: docSnap.id, // = NISN, sama persis dengan docId di "ppdb"
+        nama: docSnap.data().namaLengkap || "Calon Siswa",
       });
     } catch (error) {
       console.error("Gagal verifikasi NISN:", error);
@@ -54,6 +55,9 @@ export default function TesButaWarnaPage() {
     if (!pendaftar) return;
 
     try {
+      // Tulis hasil tes ke "ppdb" (BUKAN ppdb_public — hasil tes bukan data publik).
+      // Rules Firestore ngizinin publik update "ppdb" SELAMA cuma nyentuh field 'tes',
+      // jadi ini masih jalan walau pendaftar belum/nggak login sebagai admin.
       const docRef = doc(db, "ppdb", pendaftar.id);
 
       await updateDoc(docRef, {
