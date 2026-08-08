@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/galeri",
     "/ppdb",
     "/kontak",
+    "/buku-pelanggaran",
   ];
 
   return paths.map((p) => ({

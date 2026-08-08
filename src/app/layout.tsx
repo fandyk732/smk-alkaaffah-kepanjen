@@ -23,12 +23,25 @@ export const metadata: Metadata = {
     template: `%s — ${school.name}`,
   },
   description: school.description,
+  keywords: [
+    school.name,
+    "SMK Al Kaaffah Kepanjen",
+    "PPDB SMK Al Kaaffah",
+    "SPMB SMK Al Kaaffah",
+    "SMK Malang",
+    "Sekolah Kejuruan Kepanjen",
+    "Sekolah Pusat Keunggulan Kepanjen",
+  ],
   authors: [{ name: school.name }],
+  alternates: {
+    canonical: "./", // Mencegah isu duplikasi URL di Google
+  },
   openGraph: {
     title: school.name,
     description: school.description,
     type: "website",
     siteName: school.name,
+    locale: "id_ID",
   },
   twitter: {
     card: "summary_large_image",
