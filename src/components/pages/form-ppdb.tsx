@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { db } from "@/lib/firebase"; // Sesuaikan path config Firebase lo
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, writeBatch, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Send, Loader2 } from "lucide-react";
 
@@ -73,7 +73,10 @@ export function FormPPDB() {
       // setDoc dengan docId = NISN (bukan addDoc dengan ID random).
       // Ini bikin rule Firestore "allow create: if !exists(...)" beneran ngefek
       // sebagai proteksi 1 NISN cuma boleh daftar 1x.
-      await setDoc(doc(db, "ppdb", formData.nisn), {
+      const batch = writeBatch(db);
+
+      // 1. Dokumen lengkap — cuma bisa dibaca admin/panitia (lihat firestore.rules)
+      batch.set(doc(db, "ppdb", formData.nisn), {
         ...formData,
         // Jika tidak memilih, set default "Belum Memilih" biar rapi di database
         ekstrakurikuler: formData.ekstrakurikuler || "Belum Memilih",
@@ -81,6 +84,18 @@ export function FormPPDB() {
         statusPendaftaran: "Menunggu Verifikasi",
         createdAt: serverTimestamp(),
       });
+
+      // 2. Dokumen publik — SENGAJA cuma field yang aman buat ditampilin ke
+      // siapapun di halaman /ppdb/pengumuman. whatsapp TIDAK PERNAH ditulis ke sini.
+      batch.set(doc(db, "ppdb_public", formData.nisn), {
+        namaLengkap: formData.namaLengkap,
+        nisn: formData.nisn,
+        asalSekolah: formData.asalSekolah,
+        pilihanJurusan: formData.pilihanJurusan,
+        statusPendaftaran: "Menunggu Verifikasi",
+      });
+
+      await batch.commit();
       
       setSukses(true);
       setFormData({
