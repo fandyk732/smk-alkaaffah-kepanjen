@@ -18,7 +18,7 @@ import { toast } from "sonner";
 
 // Import Firebase Firestore
 import { db } from "@/lib/firebase"; // 👈 sesuaikan path dengan file firebase kamu
-import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp } from "firebase/firestore";
 
 // Pilihan Jurusan
 const majorOptions = [
@@ -69,8 +69,13 @@ export default function TracerStudyPage() {
       const cleanPhone = formData.noWhatsapp.replace(/[^0-9]/g, "");
       const customId = cleanPhone || formData.nisn || `alumni-${Date.now()}`;
 
-      // 1. 🟢 Simpan ke koleksi PUBLIC
-      await setDoc(doc(db, "alumni", customId), {
+      // 1. 🟢 Simpan ke koleksi PUBLIC + 2. 🔴 koleksi PRIVATE sekaligus, atomic
+      // (dua-duanya sukses bareng atau gagal bareng — nggak ada risiko satu
+      // kesimpen sementara pasangannya nggak, kayak yang sebelumnya bisa kejadian
+      // kalau salah satu dari 2 setDoc terpisah gagal di tengah jalan).
+      const batch = writeBatch(db);
+
+      batch.set(doc(db, "alumni", customId), {
         nama: formData.namaLengkap,
         tahunLulus: Number(formData.tahunLulus),
         jurusan: formData.jurusan,
@@ -81,8 +86,7 @@ export default function TracerStudyPage() {
         createdAt: serverTimestamp(),
       });
 
-      // 2. 🔴 Simpan ke koleksi PRIVATE (PAKAI customId YANG SAMA!)
-      await setDoc(doc(db, "tracer_private", customId), {
+      batch.set(doc(db, "tracer_private", customId), {
         namaLengkap: formData.namaLengkap,
         nisn: formData.nisn || "-",
         noWhatsapp: formData.noWhatsapp,
@@ -95,6 +99,8 @@ export default function TracerStudyPage() {
         kesanPesan: formData.kesanPesan || "-",
         createdAt: serverTimestamp(),
       });
+
+      await batch.commit();
 
       setIsSubmitted(true);
       toast.success("Data alumni berhasil dikirim ke database!");

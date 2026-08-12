@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import {
   collection,
-  addDoc,
   getDocs,
-  deleteDoc,
   doc,
   query,
   orderBy,
   getDoc,
   serverTimestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Alumni, AlumniFormState } from "@/types/alumni";
@@ -47,16 +46,26 @@ export function useAlumniAdmin() {
   const [formData, setFormData] = useState<AlumniFormState>(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Ambil Data Live Alumni
+  // Ambil Data Live Alumni (gabungan "alumni" [publik] + "tracer_private" [WA/email/NISN])
   const ambilDataAlumni = useCallback(async () => {
     setLoadingData(true);
     try {
       const q = query(collection(db, "alumni"), orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
+
+      // Admin punya akses baca "tracer_private" (lihat firestore.rules), jadi
+      // sekalian ditarik semua buat di-merge — ini yang bikin nomor WA hasil
+      // submit mandiri lewat tracer-study TETEP keliatan di dashboard admin,
+      // walau datanya nggak lagi disimpen di collection publik "alumni".
+      const privateSnapshot = await getDocs(collection(db, "tracer_private"));
+      const privateMap = new Map<string, any>();
+      privateSnapshot.forEach((d) => privateMap.set(d.id, d.data()));
+
       const list: Alumni[] = [];
 
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
+        const privateData = privateMap.get(docSnap.id);
 
         const normalizeStatus = () => {
           const rawStatus = data.status || data.statusAlumni || "";
@@ -75,7 +84,9 @@ export function useAlumniAdmin() {
           status: normalizeStatus(),
           tempat: data.tempat || data.namaInstansi || "-",
           posisi: data.posisi || data.jabatanJurusan || "",
-          whatsapp: data.whatsapp || data.noWhatsapp || "",
+          // Prioritas: tracer_private (skema baru) -> field lama di alumni (data lawas
+          // sebelum split ini ada, biar nggak ilang buat data yang udah kadung nyimpen di situ).
+          whatsapp: privateData?.noWhatsapp || privateData?.whatsapp || data.whatsapp || data.noWhatsapp || "",
           testimoni: data.testimoni || data.kesanPesan || "",
         });
       });
@@ -124,7 +135,8 @@ export function useAlumniAdmin() {
     return () => unsubscribe();
   }, [router, ambilDataAlumni]);
 
-  // Handler Tambah Alumni
+  // Handler Tambah Alumni — split ke 2 collection biar konsisten sama form publik
+  // tracer-study: field publik ke "alumni", whatsapp ke "tracer_private" (admin-only read).
   const handleTambahAlumni = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nama || !formData.angkatan) return alert("Mohon isi Nama Lengkap dan Angkatan!");
@@ -133,7 +145,15 @@ export function useAlumniAdmin() {
 
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, "alumni"), {
+      // Generate 1 ID yang dipakai bareng buat "alumni" & "tracer_private",
+      // sama kayak pola docId di tracer-study/page.tsx.
+      const newDocRef = doc(collection(db, "alumni"));
+      const newId = newDocRef.id;
+
+      const batch = writeBatch(db);
+
+      // 1. 🟢 Data publik — TIDAK ADA whatsapp di sini.
+      batch.set(newDocRef, {
         namaLengkap: formData.nama,
         nama: formData.nama,
         tahunLulus: Number(formData.angkatan),
@@ -145,12 +165,23 @@ export function useAlumniAdmin() {
         tempat: formData.status === "Mencari Kerja" ? "Sedang Mencari Kerja" : formData.tempat,
         jabatanJurusan: formData.posisi || "-",
         posisi: formData.posisi || "",
-        noWhatsapp: formData.whatsapp || "",
-        whatsapp: formData.whatsapp || "",
         kesanPesan: formData.testimoni || "",
         testimoni: formData.testimoni || "",
         createdAt: serverTimestamp(),
       });
+
+      // 2. 🔴 Data privat — whatsapp cuma di sini, admin_alumni/superadmin only.
+      batch.set(doc(db, "tracer_private", newId), {
+        namaLengkap: formData.nama,
+        noWhatsapp: formData.whatsapp || "",
+        whatsapp: formData.whatsapp || "",
+        tahunLulus: Number(formData.angkatan),
+        jurusan: formData.jurusan,
+        statusAlumni: formData.status.toLowerCase().replace(" ", "_"),
+        createdAt: serverTimestamp(),
+      });
+
+      await batch.commit();
 
       setFormData(INITIAL_FORM);
       await ambilDataAlumni();
@@ -163,12 +194,15 @@ export function useAlumniAdmin() {
     }
   };
 
-  // Handler Hapus Alumni
+  // Handler Hapus Alumni — hapus dua collection sekaligus secara atomic.
   const handleHapusAlumni = async (id: string, namaAlumni: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus data alumni "${namaAlumni}"?`)) {
       try {
-        await deleteDoc(doc(db, "alumni", id));
-        await deleteDoc(doc(db, "tracer_private", id));
+        const batch = writeBatch(db);
+        batch.delete(doc(db, "alumni", id));
+        batch.delete(doc(db, "tracer_private", id));
+        await batch.commit();
+
         setAlumniList((prev) => prev.filter((item) => item.id !== id));
         alert("Data berhasil dihapus.");
       } catch (error) {
