@@ -7,22 +7,18 @@ service cloud.firestore {
     // HELPER FUNCTIONS
     // -------------------------------------------------------------
 
-    // Cek apakah user sedang login
     function isAuthenticated() {
       return request.auth != null && request.auth.token.email != null;
     }
 
-    // Ambil data dokumen user dari koleksi users
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.token.email)).data;
     }
 
-    // Cek keberadaan dokumen user
     function userDocExists() {
       return exists(/databases/$(database)/documents/users/$(request.auth.token.email));
     }
 
-    // Cek role user (Aman untuk Anonim/Publik & Admin)
     function hasRole(roleName) {
       return isAuthenticated() && userDocExists() && (
         (getUserData().role is list && roleName in getUserData().role) ||
@@ -30,15 +26,10 @@ service cloud.firestore {
       );
     }
 
-    // Cek apakah user adalah Superadmin
     function isSuperadmin() {
       return hasRole('superadmin');
     }
 
-    // Cek apakah user adalah panitia PPDB.
-    // 3 variasi nama role ini SEMUA dianggap valid karena itu juga yang dicek
-    // di client (src/app/admin/ppdb/page.tsx) — kalau salah satu dilewatin di sini,
-    // user dengan role itu bisa masuk UI tapi semua operasi Firestore-nya ke-reject.
     function isPanitiaPpdb() {
       return hasRole('panitia_ppdb') || hasRole('panitia_PPDB') || hasRole('admin_ppdb');
     }
@@ -80,50 +71,57 @@ service cloud.firestore {
       allow read, update, delete: if isSuperadmin() || hasRole('admin_bkk');
     }
 
-    // 5. PPDB
+    // 5. PPDB (Data Utama)
     match /ppdb/{docId} {
-      // 🔒 docId sekarang = NISN (lihat setDoc di form-ppdb.tsx), jadi ini beneran
-      // nyegah 1 NISN daftar 2x — bukan cuma nyegah overwrite ID random yang nggak pernah kejadian.
+      // 🟢 Publik boleh buat dokumen baru HANYA jika ID dokumen (NISN) tersebut belum ada
       allow create: if !exists(/databases/$(database)/documents/ppdb/$(docId));
 
-      // 🔒 READ DIKUNCI. Publik TIDAK BISA baca collection ini langsung dari client.
-      // Data lengkap (termasuk whatsapp) cuma bisa dibaca admin/panitia lewat dashboard.
-      // Fitur cek status publik pakai collection terpisah "ppdb_public" di bawah,
-      // yang emang sengaja cuma pernah ditulis field aman (lihat form-ppdb.tsx).
-      allow read: if isSuperadmin() || isPanitiaPpdb();
+      // 🔒 Read/delete dikunci admin/panitia doang.
+      allow read, delete: if isSuperadmin() || isPanitiaPpdb();
 
-      // Admin/panitia bebas ubah. Publik cuma boleh update field 'tes' —
-      // masih ada residual risk (bisa ubah 'tes' punya NISN lain, bukan cuma
-      // punya sendiri), tapi status/nama/dll sudah nggak bisa disentuh publik.
+      // 🔧 FIX: publik tetap boleh update SELAMA cuma nyentuh field 'tes' —
+      // ini yang dipakai halaman /ppdb/tes/butawarna & /ppdb/tes/jurusan buat
+      // nyimpen hasil tes siswa TANPA perlu login. Klausa ini sempat kehapus
+      // di revisi sebelumnya dan bikin dua fitur itu mati total (permission-denied).
       allow update: if isSuperadmin()
                     || isPanitiaPpdb()
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tes']);
-
-      allow delete: if isSuperadmin() || isPanitiaPpdb();
     }
 
-    // 5b. PPDB_PUBLIC — versi "aman" dari data pendaftar, khusus buat halaman
-    // publik /ppdb/pengumuman. Cuma boleh berisi field non-sensitif; whatsapp
-    // dan field lain di "ppdb" TIDAK PERNAH ditulis ke sini oleh kode aplikasi.
+    // 5b. PPDB_PUBLIC (Data Publik untuk Pengumuman)
     match /ppdb_public/{docId} {
-      allow read: if true; // 🌐 aman dibaca publik, karena field-nya sudah dibatasi di bawah
+      allow read: if true; // 🌐 aman dibaca publik, field-nya dibatasi ketat di create
 
-      // docId = NISN, dan field yang boleh ditulis dibatasi ketat cuma yang non-sensitif.
+      // 🔧 FIX: balikin batasan field (sempat dilepas) SEKALIGUS nambah syarat
+      // dokumen "ppdb/{docId}" yang bersangkutan harus beneran ada dulu.
+      // Ini nutup celah orang bisa bikin status kelulusan palsu buat NISN
+      // yang nggak pernah beneran ngisi form pendaftaran.
       allow create: if !exists(/databases/$(database)/documents/ppdb_public/$(docId))
+                    && exists(/databases/$(database)/documents/ppdb/$(docId))
                     && request.resource.data.keys().hasOnly(
-                         ['namaLengkap', 'nisn', 'asalSekolah', 'pilihanJurusan', 'statusPendaftaran']
+                         ['namaLengkap', 'nisn', 'asalSekolah', 'pilihanJurusan', 'statusPendaftaran', 'noRegistrasi', 'gelombangId', 'namaGelombang']
                        );
 
-      // Publik nggak boleh ubah apapun di sini — cuma admin/panitia (lewat dashboard,
-      // sinkron pas ubah status di collection "ppdb").
       allow update, delete: if isSuperadmin() || isPanitiaPpdb();
     }
 
-    // 6. ALUMNI
+    // 🏆 RULES UNTUK GELOMBANG SPMB
+    match /gelombang_spmb/{document} {
+      allow read: if true;
+      allow write: if isSuperadmin() || isPanitiaPpdb();
+    }
+
+    // 6. ALUMNI (Data Publik — TIDAK BOLEH ada whatsapp/email/nisn di sini)
     match /alumni/{docId} {
       allow read: if true;
       allow create: if !exists(/databases/$(database)/documents/alumni/$(docId));
       allow update, delete: if isSuperadmin() || hasRole('admin_alumni');
+    }
+
+    // 6b. TRACER_PRIVATE (whatsapp, email, nisn alumni — admin_alumni only)
+    match /tracer_private/{docId} {
+      allow create: if !exists(/databases/$(database)/documents/tracer_private/$(docId));
+      allow read, update, delete: if isSuperadmin() || hasRole('admin_alumni');
     }
 
     // 7. BERITA
@@ -144,11 +142,5 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if isSuperadmin() || hasRole('admin_artikel');
     }
-
-    // Catatan: collection "_rateLimits" (dipakai internal oleh Cloud Function
-    // cekStatusPpdb) SENGAJA nggak punya match block sama sekali di sini.
-    // Firestore rules itu default-deny, jadi client nggak akan pernah bisa
-    // baca/tulis ke situ langsung — cuma Admin SDK di Cloud Function yang bisa,
-    // karena Admin SDK memang bypass rules ini sepenuhnya.
   }
 }
