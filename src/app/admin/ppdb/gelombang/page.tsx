@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { GelombangSPMB } from "@/types/gelombang";
 import { 
   getAllGelombang, 
@@ -9,16 +9,26 @@ import {
   deleteGelombang,
   setActiveGelombangOnly 
 } from "@/services/gelombangService";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, Edit2, CheckCircle2, Calendar, Sparkles, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function ManagementGelombangPage(): React.JSX.Element {
+  const router = useRouter();
+
+  // 🟢 1. KUMPULKAN SEMUA HOOKS & STATE DI PALING ATAS
+  const [isAuth, setIsAuth] = useState<boolean>(false);
+  const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
+
+  // List Gelombang States
   const [listGelombang, setListGelombang] = useState<GelombangSPMB[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form State
+  // Form States
   const [editingId, setEditingId] = useState<string | null>(null);
   const [namaGelombang, setNamaGelombang] = useState("");
   const [tanggalMulai, setTanggalMulai] = useState("");
@@ -26,7 +36,22 @@ export default function ManagementGelombangPage(): React.JSX.Element {
   const [keterangan, setKeterangan] = useState("");
   const [kuota, setKuota] = useState<number | "">("");
 
-  const loadData = async () => {
+  // 🟢 2. EFFECT UNTUK CEK AUTHENTICATION
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuth(true);
+      } else {
+        router.replace("/admin/login");
+      }
+      setCheckingAuth(false);
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  // 🟢 3. FUNCTION & EFFECT UNTUK FETCH DATA GELOMBANG
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getAllGelombang();
@@ -36,12 +61,16 @@ export default function ManagementGelombangPage(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
 
+  useEffect(() => {
+    // Hanya muat data jika user sudah ter-authentikasi
+    if (isAuth) {
+      loadData();
+    }
+  }, [isAuth, loadData]);
+
+  // 🛠️ HANDLERS FORM
   const resetForm = () => {
     setEditingId(null);
     setNamaGelombang("");
@@ -81,7 +110,7 @@ export default function ManagementGelombangPage(): React.JSX.Element {
           tanggalSelesai,
           keterangan,
           kuota: kuota ? Number(kuota) : undefined,
-          isActive: listGelombang.length === 0, // Aktif otomatis jika gelombang pertama
+          isActive: listGelombang.length === 0,
         });
       }
       resetForm();
@@ -115,6 +144,23 @@ export default function ManagementGelombangPage(): React.JSX.Element {
     }
   };
 
+  // 🟢 4. CONDITIONAL RENDER (EARLY RETURN) DITARUH DI BAWAH SEMUA HOOKS!
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm font-medium text-muted-foreground">
+          Memeriksa hak akses admin...
+        </p>
+      </div>
+    );
+  }
+
+  if (!isAuth) {
+    return <></>;
+  }
+
+  // 🟢 5. RENDER UI UTAMA
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-16 text-foreground">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">

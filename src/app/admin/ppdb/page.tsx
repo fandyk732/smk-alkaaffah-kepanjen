@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { usePPDBAdmin } from "@/hooks/usePPDBAdmin";
 import { downloadExcel } from "@/utils/exportExcel";
 import { Pendaftar } from "@/types/ppdb";
+
+// 🟢 GELOMBANG SERVICES & TYPES
+import { getAllGelombang } from "@/services/gelombangService";
+import { GelombangSPMB } from "@/types/gelombang";
 
 // Components
 import { EditPendaftarModal } from "@/components/admin/ppdb/EditPendaftarModal";
@@ -15,7 +19,19 @@ import { SpmbStatsChart, PendaftarSpmb } from "@/components/admin/SpmbStatsChart
 
 // UI Components & Icons
 import { Button } from "@/components/ui/button";
-import { Search, Filter, Loader2, RefreshCw, Printer, FileSpreadsheet, LogOut, LayoutGrid } from "lucide-react";
+import { 
+  Calendar, 
+  Search, 
+  Filter, 
+  Loader2, 
+  RefreshCw, 
+  Printer, 
+  FileSpreadsheet, 
+  LogOut, 
+  LayoutGrid, 
+  Layers 
+} from "lucide-react";
+import Link from "next/link";
 
 export default function AdminPPDBPage() {
   const {
@@ -43,10 +59,39 @@ export default function AdminPPDBPage() {
     handleDelete,
   } = usePPDBAdmin();
 
-  // 📊 MAPPER SUPER DEFENSIVE (Mencegah Typo Field Database)
+  // 🟢 1. STATE & EFFECT GELOMBANG
+  const [listGelombang, setListGelombang] = useState<GelombangSPMB[]>([]);
+  const [selectedGelombang, setSelectedGelombang] = useState<string>("all");
+
+  useEffect(() => {
+    const fetchGelombangList = async () => {
+      try {
+        const data = await getAllGelombang();
+        setListGelombang(data);
+      } catch (err) {
+        console.error("Gagal memuat daftar gelombang:", err);
+      }
+    };
+    fetchGelombangList();
+  }, []);
+
+  // 🟢 2. FILTER DATA PENDAFTAR BERDASARKAN GELOMBANG
+  const pendaftarByGelombang = useMemo(() => {
+    if (selectedGelombang === "all") return pendaftarDifilter;
+    return pendaftarDifilter.filter(
+      (p: any) => p.gelombangId === selectedGelombang
+    );
+  }, [pendaftarDifilter, selectedGelombang]);
+
+  // 📊 MAPPER SUPER DEFENSIVE (Filtered by Gelombang)
   const dataChartSpmb = useMemo<PendaftarSpmb[]>(() => {
-    return listPendaftar.map((p: any) => {
-      // A. Ambil Nilai Status dari Semua Kemungkinan Field
+    // Ambil data yang sudah difilter per Gelombang agar Statistik Chart ikut berubah
+    const rawList = selectedGelombang === "all" 
+      ? listPendaftar 
+      : listPendaftar.filter((p: any) => p.gelombangId === selectedGelombang);
+
+    return rawList.map((p: any) => {
+      // A. Ambil Nilai Status
       const rawStatus = String(
         p.statusSeleksi ?? p.status ?? p.statusPendaftaran ?? p.verifikasi ?? ""
       ).toLowerCase().trim();
@@ -72,27 +117,14 @@ export default function AdminPPDBPage() {
         statusFormatted = "proses";
       }
 
-      // B. Ambil Nilai Jurusan dari Semua Kemungkinan Field
-      const jurusan = 
-        p.pilihanJurusan || 
-        p.jurusan || 
-        p.jurusanPilihan || 
-        p.prodi || 
-        "Belum Memilih";
+      // B. Ambil Nilai Jurusan
+      const jurusan = p.pilihanJurusan || p.jurusan || p.jurusanPilihan || p.prodi || "Belum Memilih";
 
-      // C. Ambil Nilai Ekskul dari Semua Kemungkinan Field
-      const ekskul = 
-        p.ekstrakurikuler || 
-        p.ekskul || 
-        p.pilihanEkskul || 
-        "";
+      // C. Ambil Nilai Ekskul
+      const ekskul = p.ekstrakurikuler || p.ekskul || p.pilihanEkskul || "";
 
-      // Ambil Program Unggulan (dengan fallback property)
-      const progUnggulan = 
-        p.programUnggulan || 
-        p.program || 
-        p.pilihanProgram || 
-        "";  
+      // D. Ambil Program Unggulan
+      const progUnggulan = p.programUnggulan || p.program || p.pilihanProgram || "";  
 
       return {
         id: p.id || Math.random().toString(),
@@ -103,9 +135,7 @@ export default function AdminPPDBPage() {
         programUnggulan: String(progUnggulan),
       };
     });
-  }, [listPendaftar]);
-
-      
+  }, [listPendaftar, selectedGelombang]);
 
   const printSemua = () => {
     setSelectedIndividu(null);
@@ -121,15 +151,25 @@ export default function AdminPPDBPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-16 text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Dashboard */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-5 mb-8 print:hidden">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-5 mb-8 print:hidden">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">Dashboard Panitia SPMB</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Petugas: <span className="font-semibold text-foreground">{panitiaName || "Panitia SPMB"}</span> • Total pendaftar: <span className="font-bold text-primary">{listPendaftar.length} siswa</span>
+              Petugas: <span className="font-semibold text-foreground">{panitiaName || "Panitia SPMB"}</span> • Total pendaftar: <span className="font-bold text-primary">{pendaftarByGelombang.length} siswa</span>
             </p>
           </div>
+          
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={() => downloadExcel(pendaftarDifilter)} variant="outline" size="sm" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400">
+            {/* 🗓️ Tombol Atur Gelombang */}
+            <Link
+              href="/admin/ppdb/gelombang"
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition shadow-2xs"
+            >
+              <Calendar className="h-4 w-4 text-amber-500" />
+              <span>Atur Gelombang</span>
+            </Link>
+
+            <Button onClick={() => downloadExcel(pendaftarByGelombang)} variant="outline" size="sm" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400">
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel
             </Button>
             <Button onClick={printSemua} variant="outline" size="sm">
@@ -139,7 +179,7 @@ export default function AdminPPDBPage() {
               <RefreshCw className="mr-2 h-4 w-4" /> Refresh
             </Button>
             <Button onClick={handleKembaliKeDashboard} variant="outline" size="sm" className="gap-1.5 rounded-xl border-slate-300">
-              <LayoutGrid className="h-4 w-4" /> Kembali ke Dashboard
+              <LayoutGrid className="h-4 w-4" /> Kembali
             </Button>
             <Button onClick={handleLogout} variant="destructive" size="sm" className="gap-1.5 rounded-xl">
               <LogOut className="h-4 w-4" /> Keluar
@@ -163,8 +203,9 @@ export default function AdminPPDBPage() {
         )}
 
         {/* Filter & Search Bar */}
-        <div className="grid gap-4 sm:grid-cols-3 mb-6 print:hidden">
-          <div className="relative sm:col-span-2">
+        <div className="grid gap-4 sm:grid-cols-12 mb-6 print:hidden">
+          {/* Search Box */}
+          <div className="relative sm:col-span-6">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
@@ -174,7 +215,9 @@ export default function AdminPPDBPage() {
               className="w-full pl-9 rounded-xl border bg-card px-4 py-2 text-sm outline-none focus:border-primary transition"
             />
           </div>
-          <div className="relative">
+
+          {/* Filter Jurusan */}
+          <div className="relative sm:col-span-3">
             <Filter className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <select
               value={filterJurusan}
@@ -187,6 +230,23 @@ export default function AdminPPDBPage() {
               ))}
             </select>
           </div>
+
+          {/* 🟢 Filter Gelombang Baru */}
+          <div className="relative sm:col-span-3">
+            <Layers className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <select
+              value={selectedGelombang}
+              onChange={(e) => setSelectedGelombang(e.target.value)}
+              className="w-full pl-9 rounded-xl border bg-card px-4 py-2 text-sm outline-none focus:border-primary transition appearance-none"
+            >
+              <option value="all">Semua Gelombang</option>
+              {listGelombang.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.namaGelombang} {g.isActive ? "(Aktif)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Dynamic Views */}
@@ -195,21 +255,21 @@ export default function AdminPPDBPage() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground font-medium">Memuat data pendaftar...</p>
           </div>
-        ) : pendaftarDifilter.length === 0 ? (
+        ) : pendaftarByGelombang.length === 0 ? (
           <div className="text-center py-20 border rounded-2xl bg-card">
             <p className="text-muted-foreground">Tidak ada data pendaftar yang cocok.</p>
           </div>
         ) : (
           <>
             <PPDBMobileList
-              data={pendaftarDifilter}
+              data={pendaftarByGelombang}
               onUbahStatus={ubahStatus}
               onOpenEdit={setEditingPendaftar}
               onOpenDelete={setDeletingPendaftar}
               onPrintIndividu={printIndividu}
             />
             <PPDBDesktopTable
-              data={pendaftarDifilter}
+              data={pendaftarByGelombang}
               onUbahStatus={ubahStatus}
               onOpenEdit={setEditingPendaftar}
               onOpenDelete={setDeletingPendaftar}

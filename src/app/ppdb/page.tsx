@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileText, ClipboardList, UserPlus, CheckCircle2, ArrowRight } from "lucide-react";
@@ -7,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { school } from "@/data/site";
 import { FormPPDB } from "@/components/pages/form-ppdb"; // Import komponen form barusan
+import { BannerGelombang } from "@/components/ppdb/BannerGelombang";
+
 
 export const metadata: Metadata = {
   title: `SPMB — ${school.name}`,
@@ -37,6 +40,13 @@ export default function PPDBPage() {
     <>
       <PageHero eyebrow="SPMB 2027/2028" title="Sistem Penerimaan Murid Baru" description="Bergabunglah dengan SMK Al Kaaffah Kepanjen dan mulai perjalanan menuju masa depan gemilang." />
 
+        {/* Banner Gelombang Dipanggil di Sini */}
+        <section className="container-page py-6 max-w-2xl mx-auto">
+          <Reveal>
+            <BannerGelombang />
+          </Reveal>
+        </section>
+        
       {/* SECTION FORM PPDB INTEGRASI FIRESTORE */}
       <section className="container-page py-8 max-w-2xl mx-auto">
         <Reveal>

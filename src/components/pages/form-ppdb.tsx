@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation"; // 👈 Added router
-import { db } from "@/lib/firebase"; // Sesuaikan path config Firebase lo
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { db } from "@/lib/firebase";
 import { doc, writeBatch, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2 } from "lucide-react";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { GelombangSPMB } from "@/types/gelombang";
+import { getGelombangAktif } from "@/services/gelombangService";
 
 // 🚀 DAFTAR JURUSAN MANUAL
 const JURUSAN_MANUAL = [
@@ -34,7 +36,7 @@ const PROGRAM_UNGGULAN_MANUAL = [
 ];
 
 export function FormPPDB() {
-  const router = useRouter(); // 👈 Inisialisasi Next.js Router
+  const router = useRouter();
   
   const [formData, setFormData] = useState({
     namaLengkap: "",
@@ -48,6 +50,22 @@ export function FormPPDB() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // 🟢 1. GELOMBANG STATE & EFFECT (Ditaruh di paling atas komponen)
+  const [gelombangAktif, setGelombangAktif] = useState<GelombangSPMB | null>(null);
+
+  useEffect(() => {
+    const fetchGelombang = async () => {
+      try {
+        const data = await getGelombangAktif();
+        setGelombangAktif(data);
+      } catch (err) {
+        console.error("Gagal mengambil data gelombang aktif:", err);
+      }
+    };
+
+    fetchGelombang();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -72,17 +90,26 @@ export function FormPPDB() {
     try {
       const batch = writeBatch(db);
 
-      // 🎫 1. Generate Nomor Registrasi Unik (Contoh: REG-2026-981234)
+      // 🎫 1. Generate Nomor Registrasi Unik
       const year = new Date().getFullYear();
       const randomDigits = Date.now().toString().slice(-6);
       const noRegistrasi = `REG-${year}-${randomDigits}`;
 
-      // 2. Dokumen lengkap — cuma bisa dibaca admin/panitia
+      // 🟢 Data Gelombang Aktif saat ini
+      const gelombangId = gelombangAktif?.id || "manual";
+      const namaGelombang = gelombangAktif?.namaGelombang || "Umum / Tanpa Gelombang";
+
+      // 2. Dokumen lengkap (Admin/Panitia)
       batch.set(doc(db, "ppdb", formData.nisn), {
         ...formData,
-        noRegistrasi, // 👈 Disimpan ke database
+        noRegistrasi,
         ekstrakurikuler: formData.ekstrakurikuler || "Belum Memilih",
         programUnggulan: formData.programUnggulan || "Belum Memilih",
+        
+        // 🏷️ SIMPAN GELOMBANG DI SINI
+        gelombangId,
+        namaGelombang,
+
         statusPendaftaran: "Menunggu Verifikasi",
         createdAt: serverTimestamp(),
       });
@@ -94,6 +121,11 @@ export function FormPPDB() {
         noRegistrasi,
         asalSekolah: formData.asalSekolah,
         pilihanJurusan: formData.pilihanJurusan,
+
+        // 🏷️ SIMPAN GELOMBANG JUGA DI PUBLIC
+        gelombangId,
+        namaGelombang,
+
         statusPendaftaran: "Menunggu Verifikasi",
       });
 
@@ -102,7 +134,7 @@ export function FormPPDB() {
       // 📱 4. KIRIM NOTIFIKASI TELEGRAM OTOMATIS KE PANITIA
       try {
         await sendTelegramNotification({
-          noRegistrasi, // 👈 Sertakan di Telegram
+          noRegistrasi,
           namaLengkap: formData.namaLengkap,
           nisn: formData.nisn,
           asalSekolah: formData.asalSekolah,
@@ -125,7 +157,6 @@ export function FormPPDB() {
         wa: formData.whatsapp,
       }).toString();
 
-      // Alihkan ke /spmb/sukses (sesuaikan path jika folder sukses lo beda)
       router.push(`/ppdb/sukses?${queryParams}`);
 
     } catch (err: any) {
