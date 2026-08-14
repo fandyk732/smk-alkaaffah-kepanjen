@@ -5,13 +5,13 @@ export const school = {
   description:
     "Kami membekali siswa dengan kompetensi, pengalaman, dan keterampilan untuk berkarya, menciptakan peluang, dan membangun kemandirian sejak masih di bangku sekolah.",
   address: "Jl. Semeru Nomor 18a Dilem, Kepanjen, Kabupaten Malang, Jawa Timur",
-  phone: "+62 813-3332-8174",
+  phone: "081-3333-28174",
   whatsapp: "6281333328174",
   email: "smkalkaaffahkpj@gmail.com",
-  maps: "https://www.google.com/maps?q=@-8.117257930336452, 112.5735618389007&output=embed",
+  maps: "https://www.google.com/maps?q=@-8.117560147253995, 112.57358442882493&output=embed",
   socials: {
     instagram: "https://www.instagram.com/smkalkaaffah/",
-    facebook: "https://facebook.com",
+    facebook: "https://www.facebook.com/smkalkaaffah",
     tiktok: "https://www.tiktok.com/@smkalkaaffah",
   },
 };
