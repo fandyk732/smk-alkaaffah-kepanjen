@@ -38,7 +38,7 @@ export function Footer() {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Program Keahlian</h3>
+          <h3 className="text-sm font-semibold">Program Kami</h3>
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
             <li>
               <Link 
@@ -69,7 +69,7 @@ export function Footer() {
                 href="/program/digital-marketing" 
                 className="transition-colors hover:text-primary"
               >
-                Digital Marketing
+                Kelas Digital Marketing
               </Link>
             </li>
             <li>
@@ -77,7 +77,7 @@ export function Footer() {
                 href="/program/bahasa-jepang" 
                 className="transition-colors hover:text-primary"
               >
-                Bahasa Jepang
+                Kelas Bahasa Jepang
               </Link>
             </li>
           </ul>
