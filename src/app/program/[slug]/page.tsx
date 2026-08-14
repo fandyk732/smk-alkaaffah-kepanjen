@@ -139,7 +139,7 @@ export default async function ProgramDetailPage({
   return (
     <main className="min-h-screen pb-16">
       <PageHero
-        eyebrow={`Program Keahlian ${program.code}`}
+        eyebrow={`Program Keahlian atau Unggulan Kami`}
         title={program.title}
         description={program.desc}
       />
@@ -232,7 +232,7 @@ export default async function ProgramDetailPage({
 
             {/* CTA Box Pendaftaran */}
             <div className="rounded-3xl bg-gradient-primary p-8 text-primary-foreground shadow-lg">
-              <h3 className="text-xl font-extrabold mb-2">Minat masuk jurusan / program ini ?</h3>
+              <h3 className="text-xl font-extrabold mb-2">Minat mengikuti Program ini?</h3>
               <p className="text-sm opacity-90 mb-6">
                 Kuota pendaftaran terbatas. Amankan kursimu sekarang juga!
               </p>

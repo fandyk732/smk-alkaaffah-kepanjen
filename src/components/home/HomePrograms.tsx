@@ -80,7 +80,7 @@ export function HomePrograms() {
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {[
                 { v: "10++", l: "Mitra Kerja di Jepang" },
-                { v: "JLPT N4/N3", l: "Sertifikasi" },
+                { v: "JLPT N5/N4", l: "Sertifikasi" },
                 { v: "<1 tahun", l: "Peluang Karier" },
                 { v: ">40%", l: "Dana Talangan" },
               ].map((b) => (
