@@ -4,6 +4,10 @@ export interface MediaEmbed {
 }
 
 export interface Berita {
+  focusKeyword: string;
+  metaDescription: string;
+  seoTitle: string;
+  excerpt: string;
   id: string;
   judul: string;
   slug: string;

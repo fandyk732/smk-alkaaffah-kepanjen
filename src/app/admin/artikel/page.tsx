@@ -35,6 +35,10 @@ export default function AdminArtikelPage() {
   const [konten, setKonten] = useState("");
   const [gambarUrl, setGambarUrl] = useState("");
   const [isPinned, setIsPinned] = useState(false);
+  const [excerpt, setExcerpt] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [focusKeyword, setFocusKeyword] = useState("");
 
   // 🏷️ STATE BARU: Tags (Array of Strings)
   const [tags, setTags] = useState<string[]>([]);
@@ -169,6 +173,10 @@ export default function AdminArtikelPage() {
           tags: cleanedTags, // 🏷️ Update Tag
           konten,
           gambar: gambarUrl,
+          excerpt: excerpt.trim(),
+          seoTitle: seoTitle.trim(),
+          metaDescription: metaDescription.trim(),
+          focusKeyword: focusKeyword.trim(),
           isPinned,
           mediaEmbed: mediaData,
           updatedAt: serverTimestamp(),
@@ -185,6 +193,10 @@ export default function AdminArtikelPage() {
           tags: cleanedTags, // 🏷️ Simpan Tag baru
           konten,
           gambar: gambarUrl,
+          excerpt: excerpt.trim(),
+          seoTitle: seoTitle.trim(),
+          metaDescription: metaDescription.trim(),
+          focusKeyword: focusKeyword.trim(),
           isPinned,
           mediaEmbed: mediaData,
           tanggal: tanggalFormat,
@@ -228,6 +240,10 @@ export default function AdminArtikelPage() {
     setKonten(item.konten);
     setGambarUrl(item.gambar);
     setIsPinned(item.isPinned || false);
+    setExcerpt(item.excerpt || "");
+    setSeoTitle(item.seoTitle || "");
+    setMetaDescription(item.metaDescription || "");
+    setFocusKeyword(item.focusKeyword || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     if (item.mediaEmbed) {
@@ -247,6 +263,10 @@ export default function AdminArtikelPage() {
     setKonten("");
     setGambarUrl("");
     setIsPinned(false);
+    setExcerpt("");
+    setSeoTitle("");
+    setMetaDescription("");
+    setFocusKeyword(""); 
     setEmbedType("none");
     setEmbedUrl("");
   };
@@ -320,6 +340,14 @@ export default function AdminArtikelPage() {
             setJudul={setJudul}
             kategori={kategori}
             setKategori={setKategori}
+            excerpt={excerpt}
+            onExcerptChange={setExcerpt}
+            seoTitle={seoTitle}
+            setSeoTitle={setSeoTitle}
+            metaDescription={metaDescription}
+            setMetaDescription={setMetaDescription}
+            focusKeyword={focusKeyword}
+            setFocusKeyword={setFocusKeyword}
             tags={tags}           // 🏷️ Kirim props tags
             setTags={setTags}     // 🏷️ Kirim props setTags
             konten={konten}
