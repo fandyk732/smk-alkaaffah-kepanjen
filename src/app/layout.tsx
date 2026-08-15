@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     siteName: school.name,
     images: [
       {
-        url: "https://smkalkaaffah.sch.id/og-image.jpg",
+        url: "https://smkalkaaffah.sch.id/images/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "SMK Al Kaaffah Kepanjen",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: school.name,
     description: school.description,
-    images: ["https://smkalkaaffah.sch.id/og-image.jpg"],
+    images: ["https://smkalkaaffah.sch.id/images/og-image.jpg"],
   },
   icons: { icon: "/favicon.ico" },
 };
