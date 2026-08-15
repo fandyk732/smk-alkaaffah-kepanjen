@@ -3,7 +3,7 @@ export const school = {
   short: "SMK Al Kaaffah",
   tagline: "Belum Lulus, Sudah Produktif",
   description:
-    "Kami membekali siswa dengan kompetensi, pengalaman, dan keterampilan untuk berkarya, menciptakan peluang, dan membangun kemandirian sejak masih di bangku sekolah.",
+    "Membekali siswa dengan kompetensi dan keterampilan untuk berkarya, menciptakan peluang, dan mandiri sejak di bangku sekolah.",
   address: "Jl. Semeru Nomor 18a Dilem, Kepanjen, Kabupaten Malang, Jawa Timur",
   phone: "081-3333-28174",
   whatsapp: "6281333328174",
