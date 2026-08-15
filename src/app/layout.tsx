@@ -41,12 +41,21 @@ export const metadata: Metadata = {
     description: school.description,
     type: "website",
     siteName: school.name,
+    images: [
+      {
+        url: "https://smkalkaaffah.sch.id/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "SMK Al Kaaffah Kepanjen",
+      }
+    ],
     locale: "id_ID",
   },
   twitter: {
     card: "summary_large_image",
     title: school.name,
     description: school.description,
+    images: ["https://smkalkaaffah.sch.id/og-image.jpg"],
   },
   icons: { icon: "/favicon.ico" },
 };
