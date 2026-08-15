@@ -4,6 +4,7 @@ export interface Vacancy {
   company: string;
   location: string;
   targetJurusan: string[];
+  posters?: string[];
   description: string;
   deadline: string;
   status: string;

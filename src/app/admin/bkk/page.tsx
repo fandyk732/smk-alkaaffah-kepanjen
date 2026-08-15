@@ -35,6 +35,9 @@ export default function AdminBkkPage() {
     setDeadline,
     description,
     setDescription,
+    // 🟢 AMBIL STATE BARU INI DARI HOOK:
+    posters,
+    setPosters,
     selectedVacancyForApps,
     applications,
     loadingApps,
@@ -188,6 +191,8 @@ export default function AdminBkkPage() {
         setDeadline={setDeadline}
         description={description}
         setDescription={setDescription}
+        posters={posters}
+        setPosters={setPosters}
         submitting={submitting}
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleCreateVacancy}

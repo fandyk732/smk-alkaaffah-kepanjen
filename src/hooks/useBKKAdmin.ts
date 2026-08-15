@@ -33,6 +33,8 @@ export function useBKKAdmin() {
   const [targetJurusan, setTargetJurusan] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
+  // 🟢 State Baru untuk Link Gambar/Poster (Input String dipisah koma)
+  const [posters, setPosters] = useState("");
 
   // State Modal Pelamar
   const [selectedVacancyForApps, setSelectedVacancyForApps] = useState<Vacancy | null>(null);
@@ -139,6 +141,13 @@ export function useBKKAdmin() {
     }
 
     setSubmitting(true);
+
+    // 🟢 Pecah string URL posters (dipisah koma) menjadi Array URL bersih
+    const posterArray = posters
+      .split(",")
+      .map((url) => url.trim())
+      .filter((url) => url.length > 0);
+
     try {
       await addDoc(collection(db, "vacancies"), {
         title,
@@ -147,6 +156,7 @@ export function useBKKAdmin() {
         targetJurusan,
         description,
         deadline,
+        posters: posterArray, // 👈 Tersimpan sebagai Array URL di Firestore
         status: "active",
         createdAt: serverTimestamp(),
       });
@@ -159,6 +169,7 @@ export function useBKKAdmin() {
       setTargetJurusan([]);
       setDescription("");
       setDeadline("");
+      setPosters(""); // 👈 Reset state posters
       fetchVacancies();
     } catch (err) {
       console.error("Gagal menyimpan lowker:", err);
@@ -211,6 +222,9 @@ export function useBKKAdmin() {
     setDescription,
     deadline,
     setDeadline,
+    // 🟢 Export State & Setter Posters
+    posters,
+    setPosters,
     selectedVacancyForApps,
     applications,
     loadingApps,

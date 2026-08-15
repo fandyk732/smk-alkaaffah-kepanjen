@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Briefcase, Building2, MapPin, Calendar, ArrowRight, Loader2 } from "lucide-react";
+import { Briefcase, Building2, MapPin, Calendar, ArrowRight, Loader2, X } from "lucide-react";
 import { ApplyModal } from "@/components/bkk/apply-modal";
 
 interface Vacancy {
@@ -15,6 +15,7 @@ interface Vacancy {
   description: string;
   deadline: string;
   status: string;
+  posters?: string[]; // 🟢 Ditambahkan agar support array gambar
 }
 
 export default function BkkPage() {
@@ -25,10 +26,12 @@ export default function BkkPage() {
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // State untuk Preview Perbesar Gambar (Lightbox)
+  const [activeImage, setActiveImage] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchVacancies = async () => {
       try {
-        // Ambil lowongan yang berstatus "active" saja
         const q = query(
           collection(db, "vacancies"),
           where("status", "==", "active"),
@@ -92,9 +95,53 @@ export default function BkkPage() {
             {vacancies.map((item) => (
               <div
                 key={item.id}
-                className="bg-card border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4"
+                className="bg-card border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 overflow-hidden"
               >
                 <div className="space-y-3">
+                  {/* 🖼️ GAMBAR / POSTER LOWONGAN */}
+                  {item.posters && item.posters.length > 0 && (
+                    <div className="w-full overflow-hidden rounded-xl bg-secondary/30 border border-border/50">
+                      {item.posters.length === 1 ? (
+                        /* 1 Gambar */
+                        <div
+                          onClick={() => setActiveImage(item.posters![0])}
+                          className="cursor-pointer group relative overflow-hidden"
+                        >
+                          <img
+                            src={item.posters[0]}
+                            alt={item.title}
+                            className="w-full h-48 object-cover group-hover:scale-105 transition duration-300"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        /* Multi Gambar (Grid) */
+                        <div className="grid grid-cols-2 gap-1 p-1">
+                          {item.posters.slice(0, 2).map((imgUrl, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => setActiveImage(imgUrl)}
+                              className="relative cursor-pointer group overflow-hidden rounded-lg"
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`${item.title} ${idx + 1}`}
+                                className="w-full h-32 object-cover group-hover:scale-105 transition duration-300"
+                              />
+                              {idx === 1 && item.posters!.length > 2 && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold backdrop-blur-[2px]">
+                                  +{item.posters!.length - 2} Gambar Lainnya
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-start gap-2">
                     <div>
                       <h3 className="font-bold text-lg leading-tight text-foreground">
@@ -147,7 +194,7 @@ export default function BkkPage() {
           </div>
         )}
 
-        {/* 🚀 MODAL PELAMAR KITA PASANG DI SINI */}
+        {/* 🚀 MODAL PELAMAR */}
         {selectedVacancy && (
           <ApplyModal
             isOpen={isModalOpen}
@@ -158,6 +205,28 @@ export default function BkkPage() {
               company: selectedVacancy.company,
             }}
           />
+        )}
+
+        {/* 🔍 MODAL PERBESAR GAMBAR (LIGHTBOX) */}
+        {activeImage && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setActiveImage(null)}
+          >
+            <div className="relative max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl">
+              <button
+                onClick={() => setActiveImage(null)}
+                className="absolute top-3 right-3 p-2 bg-black/50 text-white rounded-full hover:bg-black/80 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <img
+                src={activeImage}
+                alt="Poster Detail"
+                className="max-h-[85vh] w-auto object-contain rounded-xl"
+              />
+            </div>
+          </div>
         )}
 
       </div>
