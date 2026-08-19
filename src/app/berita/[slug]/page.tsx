@@ -20,7 +20,7 @@ type Params = Promise<{ slug: string }>;
 
 interface Berita {
   id: string;
-  mediaEmbed: { type: "youtube" | "instagram" | "tiktok"; url: string; } | undefined;
+  mediaEmbed: { type: "youtube" | "instagram" | "tiktok"; url: string } | undefined;
   judul: string;
   kategori: string;
   tanggal: string;
@@ -33,7 +33,7 @@ interface Berita {
 // 🎯 HELPER 1: Unescape Entitas HTML + Sanitasi Spasi Tersembunyi (\u00a0 & &nbsp;)
 const decodeHtml = (htmlString: string) => {
   if (!htmlString) return "";
-  
+
   let decoded = htmlString
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
@@ -41,7 +41,6 @@ const decodeHtml = (htmlString: string) => {
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, "&");
 
-  // 🎯 FIX KUNCI: Bersihkan entitas &nbsp; DAN karakter Unicode Non-Breaking Space (\u00a0)
   return decoded
     .replace(/&nbsp;/gi, " ")
     .replace(/\u00a0/g, " ");
@@ -78,7 +77,7 @@ async function dapatkanBeritaTerkait(slugSekarang: string): Promise<Berita[]> {
     const q = query(collection(db, "berita"), limit(4));
     const querySnapshot = await getDocs(q);
     const list: Berita[] = [];
-    
+
     querySnapshot.forEach((doc) => {
       const data = doc.data() as Berita;
       if (data.slug !== slugSekarang) {
@@ -98,19 +97,44 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
   if (!a) return { title: "Berita tidak ditemukan — " + school.name, robots: { index: false } };
 
-  // 🎯 Pakai stripHtml biar deskripsi SEO di Google bersih dari tag & entity HTML
+  // 1. Sanitasi Deskripsi SEO
   const deskripsiBersih = stripHtml(a.konten);
   const deskripsiSeo = deskripsiBersih.substring(0, 150) + (deskripsiBersih.length > 150 ? "..." : "");
+
+  // 2. Kunci URL Halaman & Gambar Bersih (Anti-Redirect & WA Scraper Friendly)
+  const baseUrl = "https://www.smkalkaaffah.sch.id";
+  const pageUrl = `${baseUrl}/berita/${a.slug}`;
+  
+  // Pastikan URL gambar bersih dari spasi tidak perlu (jika ada spasi terenkode %20 di-replace/sanitasi)
+  const imageUrl = a.gambar ? a.gambar.trim() : `${baseUrl}/images/og-default.jpg`;
 
   return {
     title: `${a.judul} — ${school.name}`,
     description: deskripsiSeo,
-    alternates: { canonical: `/berita/${a.slug}` },
+    alternates: { 
+      canonical: pageUrl 
+    },
     openGraph: {
       title: a.judul,
       description: deskripsiSeo,
+      url: pageUrl,
+      siteName: school.name,
+      locale: "id_ID",
       type: "article",
-      images: [a.gambar],
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: a.judul,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: a.judul,
+      description: deskripsiSeo,
+      images: [imageUrl],
     },
   };
 }
@@ -132,8 +156,8 @@ export default async function ArticlePage({ params }: { params: Params }) {
     articleSection: article.kategori,
     author: {
       "@type": "Person",
-      name: article.penulis || "Guru SMK Al Kaaffah"
-    }
+      name: article.penulis || "Guru SMK Al Kaaffah",
+    },
   };
 
   return (
@@ -207,8 +231,8 @@ export default async function ArticlePage({ params }: { params: Params }) {
         />
       </div>
 
-    {/* 🎬 VIDEO EMBED (Jika Ada) */}
-       <MediaRenderer embed={article?.mediaEmbed} />
+      {/* 🎬 VIDEO EMBED (Jika Ada) */}
+      <MediaRenderer embed={article?.mediaEmbed} />
       
       {/* 🚀 FITUR FITUR BARU */}
       {/* 1. Tombol Bagikan ke WhatsApp & Salin Link */}

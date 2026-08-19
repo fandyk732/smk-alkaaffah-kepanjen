@@ -17,7 +17,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://smkalkaaffah.sch.id"),
+  metadataBase: new URL("https://www.smkalkaaffah.sch.id"),
   title: {
     default: `${school.name} — ${school.tagline}`,
     template: `%s — ${school.name}`,
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     siteName: school.name,
     images: [
       {
-        url: "https://smkalkaaffah.sch.id/images/og-image.jpg",
+        url: "https://www.smkalkaaffah.sch.id/images/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "SMK Al Kaaffah Kepanjen",
