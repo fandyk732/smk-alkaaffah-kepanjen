@@ -21,7 +21,6 @@ import { Loader2, LogOut, LayoutGrid } from "lucide-react";
 import { Berita } from "@/types/berita";
 import { ArticleForm } from "@/components/admin/ArticleForm";
 import { ArticleListTable } from "@/components/admin/ArticleListTable";
-
 export default function AdminArtikelPage() {
   const router = useRouter();
 
@@ -139,7 +138,13 @@ export default function AdminArtikelPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const cleanKonten = konten.replace(/<[^>]*>/g, "").trim();
+    // 1. Sanitasi Validasi Konten (Hapus Tag HTML & Spasi Tersembunyi)
+    const cleanKonten = konten
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\u00a0/g, " ")
+      .trim();
+
     if (!cleanKonten) {
       alert("Isi artikel tidak boleh kosong!");
       return;
@@ -158,19 +163,20 @@ export default function AdminArtikelPage() {
       }
 
       const slug = buatSlug(judul);
-      const cleanedTags = sanitizeTags(tags); // 🏷️ Sanitasi tag sebelum disimpan
+      const cleanedTags = sanitizeTags(tags);
     
       const mediaData = embedType !== "none" && embedUrl.trim()
         ? { type: embedType, url: embedUrl.trim() }
         : null;  
       
+      // 2. Simpan atau Update ke Firestore Terlebih Dahulu
       if (editId) {
         const docRef = doc(db, "berita", editId);
         await updateDoc(docRef, {
           judul,
           slug,
           kategori,
-          tags: cleanedTags, // 🏷️ Update Tag
+          tags: cleanedTags,
           konten,
           gambar: gambarUrl,
           excerpt: excerpt.trim(),
@@ -190,7 +196,7 @@ export default function AdminArtikelPage() {
           judul,
           slug,
           kategori,
-          tags: cleanedTags, // 🏷️ Simpan Tag baru
+          tags: cleanedTags,
           konten,
           gambar: gambarUrl,
           excerpt: excerpt.trim(),
@@ -205,6 +211,14 @@ export default function AdminArtikelPage() {
         });
         alert("Berita berhasil dipublikasikan!");
       }
+
+      // 3. 🎯 KUNCI: Panggil Revalidate Meta Scraper SETELAH Firestore Sukses Ter-update
+      const articleUrl = `https://www.smkalkaaffah.sch.id/berita/${slug}`;
+      fetch("/api/revalidate-meta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: articleUrl }),
+      }).catch((err) => console.error("Gagal ping meta scraper:", err));
 
       batalEdit();
       ambilBerita();

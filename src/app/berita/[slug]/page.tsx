@@ -30,6 +30,19 @@ interface Berita {
   slug: string;
 }
 
+// transformasi imagekit untuk og image
+  const getOgImageUrl = (url: string) => {
+    if (!url) return "https://www.smkalkaaffah.sch.id/images/og-default.jpg";
+
+  //jika menggunakan Imagekit, otomatis beri instruksi resize 1200x630 dan kompresi 80%
+    if (url.includes("ik.imagekit.io")) {
+      const cleanUrl = url.split('?')[0].trim();
+      return `${cleanUrl}?tr=w-1200,h-630,q-80`;
+    }
+
+    return url.trim();
+  };
+
 // 🎯 HELPER 1: Unescape Entitas HTML + Sanitasi Spasi Tersembunyi (\u00a0 & &nbsp;)
 const decodeHtml = (htmlString: string) => {
   if (!htmlString) return "";
@@ -97,6 +110,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
   if (!a) return { title: "Berita tidak ditemukan — " + school.name, robots: { index: false } };
 
+  
   // 1. Sanitasi Deskripsi SEO
   const deskripsiBersih = stripHtml(a.konten);
   const deskripsiSeo = deskripsiBersih.substring(0, 150) + (deskripsiBersih.length > 150 ? "..." : "");
@@ -107,8 +121,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   
   // Pastikan URL gambar bersih dari spasi tidak perlu (jika ada spasi terenkode %20 di-replace/sanitasi)
   const imageUrl = a.gambar ? a.gambar.trim() : `${baseUrl}/images/og-default.jpg`;
+  const ogImageUrl = getOgImageUrl(imageUrl);
 
   return {
+    metadataBase: new URL(baseUrl),
     title: `${a.judul} — ${school.name}`,
     description: deskripsiSeo,
     alternates: { 
@@ -126,6 +142,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
           url: imageUrl,
           width: 1200,
           height: 630,
+          type: "image/jpeg",
           alt: a.judul,
         },
       ],
