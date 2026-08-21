@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Search } from "lucide-react";
@@ -9,7 +9,6 @@ import { Reveal } from "@/components/motion-primitives";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// Import Firestore
 import { db } from "@/lib/firebase"; 
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
@@ -46,11 +45,11 @@ const stripHtml = (htmlString: string) => {
   return cleanText;
 };
 
-export function BeritaPage() {
+// 🎯 Sub-komponen yang menangani useSearchParams secara aman
+function BeritaContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // 1. Ambil nomor halaman dari URL query (?page=X), default ke 1 jika tidak ada
   const pageParam = Number(searchParams.get("page")) || 1;
 
   const [q, setQ] = useState("");
@@ -60,13 +59,11 @@ export function BeritaPage() {
   const [daftarBerita, setDaftarBerita] = useState<Berita[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Sync state page jika parameter URL berubah (misalnya setelah klik "Kembali")
   useEffect(() => {
     const p = Number(searchParams.get("page")) || 1;
     setPage(p);
   }, [searchParams]);
 
-  // Ambil data dari Firestore
   useEffect(() => {
     const ambilBerita = async () => {
       try {
@@ -90,7 +87,6 @@ export function BeritaPage() {
     ambilBerita();
   }, []);
 
-  // Filter pencarian & kategori
   const filtered = useMemo(() => {
     return daftarBerita.filter((n) =>
       (cat === "Semua" || n.kategori === cat) &&
@@ -101,13 +97,114 @@ export function BeritaPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const items = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  // Fungsi saat tombol pagination diklik
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    // Update URL tanpa reload halaman penuh, aktifkan scroll: false agar posisi layar pas
     router.push(`/berita?page=${newPage}`, { scroll: false });
   };
 
+  return (
+    <>
+      {/* Filter Pencarian & Kategori */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input 
+            value={q} 
+            onChange={(e) => { setQ(e.target.value); handlePageChange(1); }} 
+            placeholder="Cari berita..." 
+            className="pl-9" 
+            aria-label="Cari berita" 
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => { setCat(c); handlePageChange(1); }}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                cat === c 
+                  ? "bg-gradient-primary text-primary-foreground" 
+                  : "bg-secondary text-secondary-foreground hover:bg-primary/10"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* State Loading Spinner */}
+      {loading ? (
+        <div className="flex justify-center items-center py-24">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+        </div>
+      ) : items.length === 0 ? (
+        <p className="py-20 text-center text-muted-foreground">Tidak ada berita yang cocok.</p>
+      ) : (
+        /* Grid Berita Utama */
+        <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {items.map((n, i) => (
+            <Reveal key={n.slug} delay={i * 0.06}>
+              <Link 
+                href={`/berita/${n.slug}?fromPage=${page}`} 
+                className="group block h-full overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-elegant flex flex-col"
+              >
+                <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
+                  <img 
+                    src={n.gambar} 
+                    alt={n.judul} 
+                    loading="lazy" 
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800";
+                    }}
+                  />
+                </div>
+                
+                <div className="p-5 flex flex-col justify-between grow">
+                  <div>
+                    <div className="flex justify-between items-center text-xs font-semibold text-primary">
+                      <span>{n.kategori}</span>
+                      <span className="text-muted-foreground font-normal">{n.tanggal}</span>
+                    </div>
+                    
+                    <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2 break-words [word-break:normal] [overflow-wrap:anywhere]">
+                      {n.judul}
+                    </h3>
+                    
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground break-words [word-break:normal] [overflow-wrap:anywhere]">
+                      {stripHtml(n.konten)}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            </Reveal>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div className="mt-10 flex justify-center gap-2">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <Button 
+              key={i} 
+              variant={page === i + 1 ? "default" : "outline"} 
+              size="icon" 
+              onClick={() => handlePageChange(i + 1)} 
+              aria-label={`Halaman ${i + 1}`}
+            >
+              {i + 1}
+            </Button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// 🎯 Main Export Component yang membungkus Sub-komponen dengan Suspense
+export function BeritaPage() {
   return (
     <>
       <PageHero 
@@ -117,101 +214,13 @@ export function BeritaPage() {
       />
 
       <section className="container-page py-8">
-        {/* Filter Pencarian & Kategori */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input 
-              value={q} 
-              onChange={(e) => { setQ(e.target.value); handlePageChange(1); }} 
-              placeholder="Cari berita..." 
-              className="pl-9" 
-              aria-label="Cari berita" 
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((c) => (
-              <button
-                key={c}
-                onClick={() => { setCat(c); handlePageChange(1); }}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                  cat === c 
-                    ? "bg-gradient-primary text-primary-foreground" 
-                    : "bg-secondary text-secondary-foreground hover:bg-primary/10"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* State Loading Spinner */}
-        {loading ? (
+        <Suspense fallback={
           <div className="flex justify-center items-center py-24">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
           </div>
-        ) : items.length === 0 ? (
-          <p className="py-20 text-center text-muted-foreground">Tidak ada berita yang cocok.</p>
-        ) : (
-          /* Grid Berita Utama - Sertakan info parameter halaman saat card diklik */
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {items.map((n, i) => (
-              <Reveal key={n.slug} delay={i * 0.06}>
-                <Link 
-                  href={`/berita/${n.slug}?fromPage=${page}`} 
-                  className="group block h-full overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-elegant flex flex-col"
-                >
-                  <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
-                    <img 
-                      src={n.gambar} 
-                      alt={n.judul} 
-                      loading="lazy" 
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800";
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="p-5 flex flex-col justify-between grow">
-                    <div>
-                      <div className="flex justify-between items-center text-xs font-semibold text-primary">
-                        <span>{n.kategori}</span>
-                        <span className="text-muted-foreground font-normal">{n.tanggal}</span>
-                      </div>
-                      
-                      <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2 break-words [word-break:normal] [overflow-wrap:anywhere]">
-                        {n.judul}
-                      </h3>
-                      
-                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground break-words [word-break:normal] [overflow-wrap:anywhere]">
-                        {stripHtml(n.konten)}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        )}
-
-        {/* Pagination Controls */}
-        {!loading && totalPages > 1 && (
-          <div className="mt-10 flex justify-center gap-2">
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <Button 
-                key={i} 
-                variant={page === i + 1 ? "default" : "outline"} 
-                size="icon" 
-                onClick={() => handlePageChange(i + 1)} 
-                aria-label={`Halaman ${i + 1}`}
-              >
-                {i + 1}
-              </Button>
-            ))}
-          </div>
-        )}
+        }>
+          <BeritaContent />
+        </Suspense>
       </section>
     </>
   );
