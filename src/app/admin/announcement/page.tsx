@@ -13,8 +13,7 @@ import {
   Loader2, 
   CheckCircle2, 
   AlertCircle,
-  ExternalLink,
-  Power
+  Image as ImageIcon
 } from "lucide-react";
 
 export default function AnnouncementAdminPage() {
@@ -23,10 +22,15 @@ export default function AnnouncementAdminPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Form State
+  // Form State - Running Text
   const [isActive, setIsActive] = useState(true);
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
+
+  // Form State - Pop-up Modal
+  const [isPopupActive, setIsPopupActive] = useState(false);
+  const [popupImage, setPopupImage] = useState("");
+  const [popupTargetUrl, setPopupTargetUrl] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -55,13 +59,19 @@ export default function AnnouncementAdminPage() {
           return;
         }
 
-        // 2. Fetch Data Announcement yang sedang aktif/tersimpan
+        // 2. Fetch Data Pengumuman & Pop-up
         const annDoc = await getDoc(doc(db, "settings", "announcement"));
         if (annDoc.exists()) {
           const annData = annDoc.data();
+          // Setelan Running Text
           setIsActive(annData.isActive ?? true);
           setText(annData.text || "");
           setLink(annData.linkUrl || "");
+
+          // Setelan Pop-up Poster
+          setIsPopupActive(annData.isPopupActive ?? false);
+          setPopupImage(annData.popupImage || "");
+          setPopupTargetUrl(annData.popupTargetUrl || "");
         }
       } catch (err) {
         console.error("Error loading page data:", err);
@@ -73,30 +83,33 @@ export default function AnnouncementAdminPage() {
     return () => unsubscribe();
   }, [router]);
 
-  // 2. Pastikan fungsi Simpan mengikutsertakan `isActive`
-const handleSave = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setSaving(true);
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage(null);
 
-  try {
-    const docRef = doc(db, "settings", "announcement");
-    
-    // 🎯 SIMPAN KE FIRESTORE (Gunakan setDoc TANPA merge: true agar field 'link' yang lama terhapus bersih)
-    await setDoc(docRef, {
-      text: text,
-      linkUrl: link, // Tetap gunakan linkUrl
-      isActive: Boolean(isActive),
-      updatedAt: new Date().toISOString()
-    }); // 
+    try {
+      const docRef = doc(db, "settings", "announcement");
+      
+      // Simpan Semua Pengaturan ke Single Document Firestore
+      await setDoc(docRef, {
+        text: text.trim(),
+        linkUrl: link.trim(),
+        isActive: Boolean(isActive),
+        isPopupActive: Boolean(isPopupActive),
+        popupImage: popupImage.trim(),
+        popupTargetUrl: popupTargetUrl.trim(),
+        updatedAt: new Date().toISOString()
+      });
 
-    alert("Pengumuman berhasil diperbarui!");
-  } catch (err) {
-    console.error("Gagal simpan:", err);
-    alert("Gagal menyimpan data.");
-  } finally {
-    setSaving(false);
-  }
-};
+      setMessage({ type: "success", text: "Pengaturan pengumuman & pop-up berhasil diperbarui!" });
+    } catch (err) {
+      console.error("Gagal simpan:", err);
+      setMessage({ type: "error", text: "Gagal menyimpan data ke database." });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -110,18 +123,17 @@ const handleSave = async (e: React.FormEvent) => {
     <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
       <div className="max-w-3xl mx-auto space-y-8">
         
-        {/* Header + Navigasi Dashboard Hub */}
+        {/* Header + Navigasi */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold flex items-center gap-3">
-              <Megaphone className="h-8 w-8 text-amber-500" /> Pengumuman Running Bar
+              <Megaphone className="h-8 w-8 text-amber-500" /> Pengumuman & Pop-up Website
             </h1>
             <p className="text-slate-400 text-sm mt-1">
-              Kelola pesan running text / banner informasi yang muncul di halaman depan web.
+              Kelola running text atas dan pop-up poster promo di halaman utama website.
             </p>
           </div>
 
-          {/* 🎯 TOMBOL SWITCH HUB */}
           <Link
             href="/admin/dashboard"
             className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition shrink-0 self-start md:self-auto shadow-sm"
@@ -131,7 +143,7 @@ const handleSave = async (e: React.FormEvent) => {
           </Link>
         </div>
 
-        {/* Notifikasi Pesan */}
+        {/* Notifikasi Pesan Status */}
         {message && (
           <div
             className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
@@ -149,90 +161,172 @@ const handleSave = async (e: React.FormEvent) => {
           </div>
         )}
 
-        {/* Form Setelan Pengumuman */}
-        <form onSubmit={handleSave} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl">
-  
-          {/* 🎯 SWITCH TOGGLE MODERN (DARK THEME ELEGANT) */}
-          <div className="flex items-center justify-between p-5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2.5">
-                <label htmlFor="isActiveToggle" className="text-sm font-bold text-slate-100 cursor-pointer select-none">
-                  Status Banner Pengumuman
-                </label>
-                {/* Status Badge Indicator */}
-                <span
-                  className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1.5 transition-all ${
-                    isActive
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 animate-pulse"
-                      : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-emerald-400" : "bg-rose-400"}`} />
-                  {isActive ? "Aktif" : "Nonaktif"}
-                </span>
+        <form onSubmit={handleSave} className="space-y-8">
+          
+          {/* SECTION 1: RUNNING TEXT BAR */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl">
+            <h2 className="text-lg font-bold text-amber-400 border-b border-slate-800 pb-3 flex items-center gap-2">
+              <Megaphone className="h-5 w-5" /> 1. Banner Running Bar (Atas Website)
+            </h2>
+
+            {/* TOGGLE RUNNING BAR */}
+            <div className="flex items-center justify-between p-5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5">
+                  <label htmlFor="isActiveToggle" className="text-sm font-bold text-slate-100 cursor-pointer select-none">
+                    Status Running Bar
+                  </label>
+                  <span
+                    className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1.5 ${
+                      isActive
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-emerald-400" : "bg-rose-400"}`} />
+                    {isActive ? "Aktif" : "Nonaktif"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  {isActive ? "Tayang di bagian paling atas website utama." : "Disembunyikan dari pengunjung."}
+                </p>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                {isActive
-                  ? "Banner pengumuman tayang di bagian paling atas website utama."
-                  : "Banner disembunyikan total dari pengunjung website."}
-              </p>
+
+              <label htmlFor="isActiveToggle" className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  id="isActiveToggle"
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-12 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
             </div>
 
-            {/* Custom iOS/Flowbite Style Switch */}
-            <label htmlFor="isActiveToggle" className="relative inline-flex items-center cursor-pointer shrink-0">
+            {/* INPUT TEKS */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                Teks Informasi <span className="text-rose-500">*</span>
+              </label>
               <input
-                id="isActiveToggle"
-                type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="sr-only peer"
+                type="text"
+                required={isActive}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Contoh: SPMB 2027/2028 Telah Dibuka! Bebas Uang Gedung & Free SPP"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 rounded-xl text-sm text-white placeholder-slate-500 transition outline-none"
               />
-              <div className="w-12 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:shadow-lg peer-checked:shadow-blue-500/30"></div>
-            </label>
+            </div>
+
+            {/* INPUT LINK */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                Link Tujuan / Tombol "Selengkapnya" <span className="text-slate-500 font-normal">(Opsional)</span>
+              </label>
+              <input
+                type="text"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="/ppdb atau https://wa.me/62812345678"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 rounded-xl text-sm text-white placeholder-slate-500 transition outline-none font-mono"
+              />
+            </div>
           </div>
 
-          {/* INPUT TEKS PENGUMUMAN */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-              Teks Informasi <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Contoh: SPMB 2027/2028 Telah Dibuka! Bebas Uang Gedung & Free SPP 1 Semester"
-              className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 rounded-xl text-sm text-white placeholder-slate-500 transition outline-none"
-            />
+          {/* SECTION 2: POP-UP POSTER MODAL */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl">
+            <h2 className="text-lg font-bold text-blue-400 border-b border-slate-800 pb-3 flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" /> 2. Pop-up Poster Melayang (Homepage)
+            </h2>
+
+            {/* TOGGLE POP-UP */}
+            <div className="flex items-center justify-between p-5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5">
+                  <label htmlFor="isPopupActiveToggle" className="text-sm font-bold text-slate-100 cursor-pointer select-none">
+                    Status Pop-up Poster
+                  </label>
+                  <span
+                    className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1.5 ${
+                      isPopupActive
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${isPopupActive ? "bg-emerald-400" : "bg-rose-400"}`} />
+                    {isPopupActive ? "Aktif" : "Nonaktif"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  {isPopupActive ? "Pop-up poster akan muncul melayang saat homepage dibuka." : "Pop-up dinonaktifkan."}
+                </p>
+              </div>
+
+              <label htmlFor="isPopupActiveToggle" className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  id="isPopupActiveToggle"
+                  type="checkbox"
+                  checked={isPopupActive}
+                  onChange={(e) => setIsPopupActive(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-12 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            {isPopupActive && (
+              <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                    URL Gambar Poster (ImageKit / Cloudinary) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    required={isPopupActive}
+                    value={popupImage}
+                    onChange={(e) => setPopupImage(e.target.value)}
+                    placeholder="https://ik.imagekit.io/alkaaffah/poster-kegiatan.jpg"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 rounded-xl text-sm text-white placeholder-slate-500 transition outline-none font-mono"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                    Link Tujuan Saat Poster Diklik <span className="text-slate-500 font-normal">(Opsional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={popupTargetUrl}
+                    onChange={(e) => setPopupTargetUrl(e.target.value)}
+                    placeholder="Contoh: /ppdb atau /berita/juara-lomba"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 rounded-xl text-sm text-white placeholder-slate-500 transition outline-none font-mono"
+                  />
+                </div>
+
+                {popupImage && (
+                  <div className="p-4 border border-slate-800 rounded-xl bg-slate-950 text-center">
+                    <p className="text-xs text-slate-400 mb-2 font-medium">Preview Poster:</p>
+                    <img src={popupImage} alt="Preview Poster" className="max-h-52 mx-auto rounded-lg object-contain" />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* INPUT LINK TUJUAN */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-              Link Tujuan / Tombol "Selengkapnya" <span className="text-slate-500 font-normal">(Opsional)</span>
-            </label>
-            <input
-              type="text"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="Contoh: /ppdb atau https://wa.me/62812345678"
-              className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-3.5 rounded-xl text-sm text-white placeholder-slate-500 transition outline-none font-mono"
-            />
-          </div>
-
-          {/* TOMBOL SIMPAN */}
+          {/* TOMBOL SIMPAN GLOBAL */}
           <button
             type="submit"
             disabled={saving}
-            className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm transition duration-200 shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99]"
+            className="w-full py-4 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm transition duration-200 shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99]"
           >
             {saving ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Menyimpan...
+                <Loader2 className="h-4 w-4 animate-spin" /> Menyimpan Perubahan...
               </>
             ) : (
               <>
-                <Save className="h-4 w-4" /> Simpan Perubahan Banner
+                <Save className="h-4 w-4" /> Simpan Semua Pengaturan
               </>
             )}
           </button>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { HomePage } from "@/components/home-page";
 import { school } from "@/data/site";
+import AnnouncementModal from "@/components/AnnouncementModal";
 
 export const metadata: Metadata = {
   title: `${school.name} — ${school.tagline}`,
@@ -14,5 +15,12 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <HomePage />;
+  return (
+    <>
+      <HomePage />
+
+      {/* 🚀 POP-UP MODAL ANNOUNCEMENT (DINAMIS DARI FIRESTORE) */}
+      <AnnouncementModal />
+    </>
+  );
 }

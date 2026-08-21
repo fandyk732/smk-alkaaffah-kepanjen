@@ -17,7 +17,7 @@ export function HomePage() {
       <HomeHero />
 
       {/* BANNER SPMB */}
-      <BannerSPMB />
+      {/*<BannerSPMB />}
 
       {/* 2. NEWS SECTION */}
       <HomeNewsSection berita={beritaTerbaru} loading={loadingBerita} />
