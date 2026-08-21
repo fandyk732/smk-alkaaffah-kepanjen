@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
@@ -12,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebase"; 
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
-// Definisikan tipe data berita dari Firestore
 interface Berita {
   id: string;
   judul: string;
@@ -24,14 +24,11 @@ interface Berita {
   penulis: string;
 }
 
-// Kategorinya disesuaikan dengan opsi di form admin lo kemarin
 const categories = ["Semua", "Berita", "Pengumuman", "Prestasi", "Event"];
 const PER_PAGE = 6;
 
 const stripHtml = (htmlString: string) => {
   if (!htmlString) return "";
-
-  // 1. Unescape dulu entitas HTML yang ter-escape (misal &lt;p&gt; atau string mentah)
   let decoded = htmlString
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
@@ -39,13 +36,10 @@ const stripHtml = (htmlString: string) => {
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, "&");
 
-  // 2. Bersihkan semua tag HTML (<p>, <strong>, <em>, dll)
   let cleanText = decoded.replace(/<[^>]*>?/gm, " ");
-
-  // 3. Bersihkan sisa spasi khusus (&nbsp; / \u00a0) & spasi ganda
   cleanText = cleanText
     .replace(/&nbsp;/gi, " ")
-    .replace(/\u00a0/g, " ") // 🎯 FIX Tambahan: Bersihkan karakter Unicode Non-Breaking Space
+    .replace(/\u00a0/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -53,15 +47,26 @@ const stripHtml = (htmlString: string) => {
 };
 
 export function BeritaPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 1. Ambil nomor halaman dari URL query (?page=X), default ke 1 jika tidak ada
+  const pageParam = Number(searchParams.get("page")) || 1;
+
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("Semua");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(pageParam);
   
-  // State untuk menampung data dari Firestore dan status loading
   const [daftarBerita, setDaftarBerita] = useState<Berita[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Ambil data dari Firestore saat halaman di-load
+  // Sync state page jika parameter URL berubah (misalnya setelah klik "Kembali")
+  useEffect(() => {
+    const p = Number(searchParams.get("page")) || 1;
+    setPage(p);
+  }, [searchParams]);
+
+  // Ambil data dari Firestore
   useEffect(() => {
     const ambilBerita = async () => {
       try {
@@ -85,7 +90,7 @@ export function BeritaPage() {
     ambilBerita();
   }, []);
 
-  // Filter pencarian & kategori bekerja secara real-time di sisi client
+  // Filter pencarian & kategori
   const filtered = useMemo(() => {
     return daftarBerita.filter((n) =>
       (cat === "Semua" || n.kategori === cat) &&
@@ -95,6 +100,13 @@ export function BeritaPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const items = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  // Fungsi saat tombol pagination diklik
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    // Update URL tanpa reload halaman penuh, aktifkan scroll: false agar posisi layar pas
+    router.push(`/berita?page=${newPage}`, { scroll: false });
+  };
 
   return (
     <>
@@ -111,7 +123,7 @@ export function BeritaPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input 
               value={q} 
-              onChange={(e) => { setQ(e.target.value); setPage(1); }} 
+              onChange={(e) => { setQ(e.target.value); handlePageChange(1); }} 
               placeholder="Cari berita..." 
               className="pl-9" 
               aria-label="Cari berita" 
@@ -121,7 +133,7 @@ export function BeritaPage() {
             {categories.map((c) => (
               <button
                 key={c}
-                onClick={() => { setCat(c); setPage(1); }}
+                onClick={() => { setCat(c); handlePageChange(1); }}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                   cat === c 
                     ? "bg-gradient-primary text-primary-foreground" 
@@ -142,15 +154,14 @@ export function BeritaPage() {
         ) : items.length === 0 ? (
           <p className="py-20 text-center text-muted-foreground">Tidak ada berita yang cocok.</p>
         ) : (
-          /* Grid Berita Utama */
+          /* Grid Berita Utama - Sertakan info parameter halaman saat card diklik */
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {items.map((n, i) => (
               <Reveal key={n.slug} delay={i * 0.06}>
                 <Link 
-                  href={`/berita/${n.slug}`} 
+                  href={`/berita/${n.slug}?fromPage=${page}`} 
                   className="group block h-full overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-elegant flex flex-col"
                 >
-                  {/* Gambar Card */}
                   <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
                     <img 
                       src={n.gambar} 
@@ -170,12 +181,10 @@ export function BeritaPage() {
                         <span className="text-muted-foreground font-normal">{n.tanggal}</span>
                       </div>
                       
-                      {/* 🎯 FIX 1: JUDUL DENGAN BREAK-WORDS DAN WORD-BREAK NORMAL */}
                       <h3 className="mt-2 font-bold leading-snug group-hover:text-primary line-clamp-2 break-words [word-break:normal] [overflow-wrap:anywhere]">
                         {n.judul}
                       </h3>
                       
-                      {/* 🎯 FIX 2: PREVIEW DESKRIPSI DENGAN CLEAN STRIP HTML */}
                       <p className="mt-2 line-clamp-2 text-sm text-muted-foreground break-words [word-break:normal] [overflow-wrap:anywhere]">
                         {stripHtml(n.konten)}
                       </p>
@@ -195,7 +204,7 @@ export function BeritaPage() {
                 key={i} 
                 variant={page === i + 1 ? "default" : "outline"} 
                 size="icon" 
-                onClick={() => setPage(i + 1)} 
+                onClick={() => handlePageChange(i + 1)} 
                 aria-label={`Halaman ${i + 1}`}
               >
                 {i + 1}

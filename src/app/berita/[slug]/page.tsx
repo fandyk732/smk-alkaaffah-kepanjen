@@ -17,6 +17,7 @@ import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { ViewCounter } from "@/components/berita/ViewCounter";
 
 type Params = Promise<{ slug: string }>;
+type SearchParams = Promise<{ fromPage?: string }>;
 
 interface Berita {
   id: string;
@@ -30,18 +31,17 @@ interface Berita {
   slug: string;
 }
 
-// transformasi imagekit untuk og image
-  const getOgImageUrl = (url: string) => {
-    if (!url) return "https://www.smkalkaaffah.sch.id/images/og-default.jpg";
+// Transformasi imagekit untuk og image
+const getOgImageUrl = (url: string) => {
+  if (!url) return "https://www.smkalkaaffah.sch.id/images/og-default.jpg";
 
-  //jika menggunakan Imagekit, otomatis beri instruksi resize 1200x630 dan kompresi 80%
-    if (url.includes("ik.imagekit.io")) {
-      const cleanUrl = url.split('?')[0].trim();
-      return `${cleanUrl}?tr=w-1200,h-630,q-80`;
-    }
+  if (url.includes("ik.imagekit.io")) {
+    const cleanUrl = url.split('?')[0].trim();
+    return `${cleanUrl}?tr=w-1200,h-630,q-80`;
+  }
 
-    return url.trim();
-  };
+  return url.trim();
+};
 
 // 🎯 HELPER 1: Unescape Entitas HTML + Sanitasi Spasi Tersembunyi (\u00a0 & &nbsp;)
 const decodeHtml = (htmlString: string) => {
@@ -110,16 +110,12 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
   if (!a) return { title: "Berita tidak ditemukan — " + school.name, robots: { index: false } };
 
-  
-  // 1. Sanitasi Deskripsi SEO
   const deskripsiBersih = stripHtml(a.konten);
   const deskripsiSeo = deskripsiBersih.substring(0, 150) + (deskripsiBersih.length > 150 ? "..." : "");
 
-  // 2. Kunci URL Halaman & Gambar Bersih (Anti-Redirect & WA Scraper Friendly)
   const baseUrl = "https://www.smkalkaaffah.sch.id";
   const pageUrl = `${baseUrl}/berita/${a.slug}`;
   
-  // Pastikan URL gambar bersih dari spasi tidak perlu (jika ada spasi terenkode %20 di-replace/sanitasi)
   const imageUrl = a.gambar ? a.gambar.trim() : `${baseUrl}/images/og-default.jpg`;
   const ogImageUrl = getOgImageUrl(imageUrl);
 
@@ -139,7 +135,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       type: "article",
       images: [
         {
-          url: imageUrl,
+          url: ogImageUrl,
           width: 1200,
           height: 630,
           type: "image/jpeg",
@@ -151,13 +147,24 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       card: "summary_large_image",
       title: a.judul,
       description: deskripsiSeo,
-      images: [imageUrl],
+      images: [ogImageUrl],
     },
   };
 }
 
-export default async function ArticlePage({ params }: { params: Params }) {
+export default async function ArticlePage({ 
+  params, 
+  searchParams 
+}: { 
+  params: Params; 
+  searchParams: SearchParams; 
+}) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  
+  // 🎯 FIX: Ambil dari mana asal halaman user (default: page 1)
+  const fromPage = resolvedSearchParams?.fromPage || "1";
+
   const article = await dapatkanBeritaDariFirestore(slug);
 
   if (!article) notFound();
@@ -187,9 +194,9 @@ export default async function ArticlePage({ params }: { params: Params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Tombol Kembali */}
+      {/* 🎯 FIX: Tombol Kembali Mengarah ke URL Halaman Berita Asal */}
       <Button asChild variant="ghost" size="sm" className="mb-6">
-        <Link href="/berita">
+        <Link href={`/berita?page=${fromPage}`}>
           <ArrowLeft className="mr-1 h-4 w-4" /> Semua berita
         </Link>
       </Button>
@@ -268,7 +275,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
             {related.map((n, i) => (
               <Reveal key={n.slug} delay={i * 0.07}>
                 <Link 
-                  href={`/berita/${n.slug}`} 
+                  href={`/berita/${n.slug}?fromPage=${fromPage}`} 
                   className="group block overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-soft h-full flex flex-col"
                 >
                   <div className="aspect-video overflow-hidden bg-muted relative shrink-0">
