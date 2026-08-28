@@ -31,7 +31,7 @@ export default function ProfilPage() {
             description="Berdiri dengan semangat menghadirkan pendidikan kejuruan yang memadukan kompetensi teknologi dan nilai islami, SMK Al Kaaffah Kepanjen terus berkembang menjadi sekolah rujukan di wilayah Malang Selatan. Dari tahun ke tahun, kami memperkuat kemitraan industri, memperbarui fasilitas, dan meluluskan ribuan alumni yang tersebar di dunia kerja maupun perguruan tinggi." />
           <Reveal>
             <div className="overflow-hidden rounded-3xl border shadow-soft">
-              <img src="https://6a56f44fcec0a76b21484386.imgix.net/bg_alkaaffah.jpg" alt="Gedung sekolah" loading="lazy" className="h-full w-full object-cover" />
+              <img src="https://ik.imagekit.io/alkaaffah/koleksi%20foto%20artikel%20website%20al%20kaaffah/asset%20imgix/SARPRAS/1.jpg?updatedAt=1787056847019" alt="Gedung sekolah" loading="lazy" className="h-full w-full object-cover" />
             </div>
           </Reveal>
         </div>
