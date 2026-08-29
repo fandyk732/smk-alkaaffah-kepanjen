@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp } from "firebase/firestore";
 
 // 🎯 Schema Validasi Zod disesuaikan dengan AlumniFormState
 const alumniSchema = z.object({
@@ -78,23 +78,46 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Simpan ke Firestore
-    const docRef = await addDoc(collection(db, "alumni"), {
+    // 3. 🔧 FIX: split ke 2 collection (sempat regresi jadi 1 addDoc doang ke
+    // "alumni" publik, termasuk whatsapp — itu balik ngebocorin nomor WA
+    // alumni ke publik, padahal ini udah pernah ditutup sebelumnya). Sekarang
+    // konsisten lagi sama pattern di useAlumniAdmin.ts: field publik ke
+    // "alumni", whatsapp ke "tracer_private" (admin_alumni/superadmin only),
+    // pakai 1 docId yang sama biar bisa di-merge balik di dashboard admin.
+    const newDocRef = doc(collection(db, "alumni"));
+    const newId = newDocRef.id;
+
+    const batch = writeBatch(db);
+
+    // 3a. 🟢 Data publik — TIDAK ADA whatsapp di sini.
+    batch.set(newDocRef, {
       nama,
       angkatan,
       jurusan,
       status,
       tempat: status === "Mencari Kerja" ? "-" : tempat,
       posisi: status === "Bekerja" ? posisi : "-",
-      whatsapp,
       testimoni,
       createdAt: serverTimestamp(),
     });
 
+    // 3b. 🔴 Data privat — whatsapp cuma di sini.
+    batch.set(doc(db, "tracer_private", newId), {
+      namaLengkap: nama,
+      noWhatsapp: whatsapp,
+      whatsapp,
+      tahunLulus: Number(angkatan),
+      jurusan,
+      statusAlumni: status,
+      createdAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+
     return NextResponse.json({
       success: true,
       message: "Data alumni berhasil disimpan!",
-      id: docRef.id,
+      id: newId,
     });
   } catch (err: any) {
     console.error("Error Alumni Route:", err);
