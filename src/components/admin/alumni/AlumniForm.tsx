@@ -1,22 +1,30 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AlumniFormState } from "@/types/alumni";
+import { Turnstile } from "@marsidev/react-turnstile"; // 🟢 Import Turnstile
 
 interface Props {
   formData: AlumniFormState;
   setFormData: React.Dispatch<React.SetStateAction<AlumniFormState>>;
   isSubmitting: boolean;
-  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onSubmit: (e: React.FormEvent, token: string) => Promise<void>; // 🟢 Terima token di function onSubmit
 }
 
 export function AlumniForm({ formData, setFormData, isSubmitting, onSubmit }: Props) {
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(e, turnstileToken); // Oper token ke parent handler
   };
 
   return (
@@ -25,39 +33,21 @@ export function AlumniForm({ formData, setFormData, isSubmitting, onSubmit }: Pr
         <Plus className="h-4 w-4 text-primary" /> Input Data Alumni Baru
       </h2>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleFormSubmit} className="space-y-4">
+        {/* Input Form Alumni seperti semula ... */}
         <div>
           <label className="text-xs font-semibold block mb-1">Nama Lengkap</label>
-          <input
-            type="text"
-            name="nama"
-            value={formData.nama}
-            onChange={handleChange}
-            placeholder="Contoh: Ahmad Dani"
-            className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition"
-          />
+          <input type="text" name="nama" value={formData.nama} onChange={handleChange} placeholder="Contoh: Ahmad Dani" className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition" required />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold block mb-1">Angkatan (Tahun)</label>
-            <input
-              type="number"
-              name="angkatan"
-              value={formData.angkatan}
-              onChange={handleChange}
-              placeholder="2026"
-              className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition"
-            />
+            <input type="number" name="angkatan" value={formData.angkatan} onChange={handleChange} placeholder="2026" className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition" required />
           </div>
           <div>
             <label className="text-xs font-semibold block mb-1">Jurusan</label>
-            <select
-              name="jurusan"
-              value={formData.jurusan}
-              onChange={handleChange}
-              className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition"
-            >
+            <select name="jurusan" value={formData.jurusan} onChange={handleChange} className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition">
               <option value="TKJ">TKJ</option>
               <option value="TAV">TAV</option>
               <option value="TKR">TKR</option>
@@ -68,15 +58,10 @@ export function AlumniForm({ formData, setFormData, isSubmitting, onSubmit }: Pr
 
         <div>
           <label className="text-xs font-semibold block mb-1">Status Lulusan Saat Ini</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition"
-          >
+          <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition">
             <option value="Bekerja">💼 Bekerja</option>
             <option value="Kuliah">🎓 Kuliah / Lanjut Studi</option>
-            <option value="Wirausaha">🚀 Wirausaha / Bisnis</option>
+            <option value="Wirausaha">🏬 Wirausaha / Bisnis</option>
             <option value="Mencari Kerja">🔍 Mencari Kerja (Job Seeker)</option>
           </select>
         </div>
@@ -84,57 +69,39 @@ export function AlumniForm({ formData, setFormData, isSubmitting, onSubmit }: Pr
         {formData.status !== "Mencari Kerja" && (
           <div>
             <label className="text-xs font-semibold block mb-1">Nama Instansi / Univ / Usaha</label>
-            <input
-              type="text"
-              name="tempat"
-              value={formData.tempat}
-              onChange={handleChange}
-              placeholder="Contoh: PT. Toyota / Universitas Brawijaya"
-              className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition"
-            />
+            <input type="text" name="tempat" value={formData.tempat} onChange={handleChange} placeholder="Contoh: PT. Toyota / Universitas Brawijaya" className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition" />
           </div>
         )}
 
         {formData.status === "Bekerja" && (
           <div>
             <label className="text-xs font-semibold block mb-1">Jabatan / Posisi Kerja</label>
-            <input
-              type="text"
-              name="posisi"
-              value={formData.posisi}
-              onChange={handleChange}
-              placeholder="Contoh: Mekanik / Quality Control"
-              className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition"
-            />
+            <input type="text" name="posisi" value={formData.posisi} onChange={handleChange} placeholder="Contoh: Mekanik / Quality Control" className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition" />
           </div>
         )}
 
         <div>
           <label className="text-xs font-semibold block mb-1">No. WhatsApp Alumni (Opsional)</label>
-          <input
-            type="text"
-            name="whatsapp"
-            value={formData.whatsapp}
-            onChange={handleChange}
-            placeholder="081234567890"
-            className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition"
-          />
+          <input type="text" name="whatsapp" value={formData.whatsapp} onChange={handleChange} placeholder="081234567890" className="w-full bg-background border p-2.5 rounded-xl text-sm focus:outline-none focus:border-primary transition" />
         </div>
 
         <div>
           <label className="text-xs font-semibold block mb-1">Testimoni / Message (Opsional)</label>
-          <textarea
-            name="testimoni"
-            value={formData.testimoni}
-            onChange={handleChange}
-            placeholder="Kesan pesan untuk adik kelas di SMK Al Kaaffah..."
-            className="w-full bg-background border p-2.5 rounded-xl text-sm h-20 resize-none focus:outline-none focus:border-primary transition"
+          <textarea name="testimoni" value={formData.testimoni} onChange={handleChange} placeholder="Kesan pesan untuk adik kelas di SMK Al Kaaffah..." className="w-full bg-background border p-2.5 rounded-xl text-sm h-20 resize-none focus:outline-none focus:border-primary transition" />
+        </div>
+
+        {/* 🟢 Widget Turnstile */}
+        <div className="py-2 flex justify-center">
+          <Turnstile
+            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+            onSuccess={(token) => setTurnstileToken(token)}
+            onExpire={() => setTurnstileToken("")}
           />
         </div>
 
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !turnstileToken}
           className="w-full py-5 rounded-xl font-bold text-sm mt-2"
         >
           {isSubmitting ? "Menyimpan..." : "Simpan Data Alumni"}

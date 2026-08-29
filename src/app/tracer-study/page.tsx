@@ -15,10 +15,7 @@ import {
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
-
-// Import Firebase Firestore
-import { db } from "@/lib/firebase"; // 👈 sesuaikan path dengan file firebase kamu
-import { collection, doc, writeBatch, serverTimestamp } from "firebase/firestore";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 // Pilihan Jurusan
 const majorOptions = [
@@ -28,27 +25,26 @@ const majorOptions = [
   { value: "DM", label: "Digital Marketing (DM)" },
 ];
 
-// Status Kesibukan Alumni
+// Status Kesibukan Alumni (Nilai disesuaikan dengan Enum Zod Backend)
 const statusOptions = [
-  { value: "kerja", label: "Bekerja (Wirausaha / Karyawan)", icon: Briefcase },
-  { value: "kuliah", label: "Melanjutkan Studi (Kuliah)", icon: GraduationCap },
-  { value: "kerja_kuliah", label: "Bekerja Sambil Kuliah", icon: BookOpen },
-  { value: "mencari_kerja", label: "Mencari Kerja / Persiapan", icon: User },
+  { value: "Bekerja", label: "Bekerja (Karyawan / Swasta)", icon: Briefcase },
+  { value: "Kuliah", label: "Melanjutkan Studi (Kuliah)", icon: GraduationCap },
+  { value: "Wirausaha", label: "Wirausaha / Bisnis Mandiri", icon: BookOpen },
+  { value: "Mencari Kerja", label: "Mencari Kerja / Persiapan", icon: User },
 ];
 
 export default function TracerStudyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
 
   // Form State
   const [formData, setFormData] = useState({
     namaLengkap: "",
-    nisn: "",
     tahunLulus: new Date().getFullYear().toString(),
     jurusan: "TKJ",
-    email: "",
     noWhatsapp: "",
-    statusAlumni: "kerja",
+    statusAlumni: "Bekerja",
     namaInstansi: "",
     jabatanJurusan: "",
     kesanPesan: "",
@@ -61,52 +57,43 @@ export default function TracerStudyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!turnstileToken) {
+      toast.error("Silakan selesaikan verifikasi captcha terlebih dahulu.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // 🔑 GUNAKAN NO HP ATAU NISN SEBAGAI DOCUMENT ID UNIK
-      // (Kita bersihkan karakter non-angka biar ID-nya rapi)
-      const cleanPhone = formData.noWhatsapp.replace(/[^0-9]/g, "");
-      const customId = cleanPhone || formData.nisn || `alumni-${Date.now()}`;
-
-      // 1. 🟢 Simpan ke koleksi PUBLIC + 2. 🔴 koleksi PRIVATE sekaligus, atomic
-      // (dua-duanya sukses bareng atau gagal bareng — nggak ada risiko satu
-      // kesimpen sementara pasangannya nggak, kayak yang sebelumnya bisa kejadian
-      // kalau salah satu dari 2 setDoc terpisah gagal di tengah jalan).
-      const batch = writeBatch(db);
-
-      batch.set(doc(db, "alumni", customId), {
-        nama: formData.namaLengkap,
-        tahunLulus: Number(formData.tahunLulus),
-        jurusan: formData.jurusan,
-        status: formData.statusAlumni,
-        tempat: formData.statusAlumni !== "mencari_kerja" ? formData.namaInstansi : "-",
-        posisi: formData.statusAlumni !== "mencari_kerja" ? formData.jabatanJurusan : "-",
-        testimoni: formData.kesanPesan || "-",
-        createdAt: serverTimestamp(),
+      // 🚀 Tembak data ke API Route Backend
+      const res = await fetch("/api/alumni", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama: formData.namaLengkap,
+          angkatan: formData.tahunLulus,
+          jurusan: formData.jurusan,
+          status: formData.statusAlumni,
+          tempat: formData.namaInstansi,
+          posisi: formData.jabatanJurusan,
+          whatsapp: formData.noWhatsapp,
+          testimoni: formData.kesanPesan,
+          token: turnstileToken,
+        }),
       });
 
-      batch.set(doc(db, "tracer_private", customId), {
-        namaLengkap: formData.namaLengkap,
-        nisn: formData.nisn || "-",
-        noWhatsapp: formData.noWhatsapp,
-        email: formData.email || "-",
-        tahunLulus: Number(formData.tahunLulus),
-        jurusan: formData.jurusan,
-        statusAlumni: formData.statusAlumni,
-        namaInstansi: formData.statusAlumni !== "mencari_kerja" ? formData.namaInstansi : "-",
-        jabatanJurusan: formData.statusAlumni !== "mencari_kerja" ? formData.jabatanJurusan : "-",
-        kesanPesan: formData.kesanPesan || "-",
-        createdAt: serverTimestamp(),
-      });
+      const result = await res.json();
 
-      await batch.commit();
+      if (!res.ok) {
+        throw new Error(result.message || "Gagal mengirim data");
+      }
 
       setIsSubmitted(true);
-      toast.success("Data alumni berhasil dikirim ke database!");
-    } catch (error) {
-      console.error("Firebase Error: ", error);
-      toast.error("Gagal mengirim data ke database.");
+      toast.success("Data alumni berhasil dikirim!");
+    } catch (error: any) {
+      console.error("Firebase/Server Error: ", error);
+      toast.error(error.message || "Gagal mengirim data ke database.");
     } finally {
       setIsSubmitting(false);
     }
@@ -131,7 +118,7 @@ export default function TracerStudyPage() {
                 </div>
                 <h2 className="mt-6 text-2xl font-bold sm:text-3xl">Data Berhasil Terkirim!</h2>
                 <p className="mt-3 text-muted-foreground">
-                  Terima kasih, <span className="font-semibold text-foreground">{formData.namaLengkap}</span>. Data rekam jejak alumni kamu telah tersimpan dalam sistem Tracer Study sekolah.
+                  Terima kasih, <span className="font-semibold text-foreground">{formData.namaLengkap}</span>. Data rekam jejak alumni kamu telah tersimpan.
                 </p>
                 <div className="mt-8 flex justify-center gap-4">
                   <button
@@ -139,16 +126,15 @@ export default function TracerStudyPage() {
                       setIsSubmitted(false);
                       setFormData({
                         namaLengkap: "",
-                        nisn: "",
                         tahunLulus: new Date().getFullYear().toString(),
                         jurusan: "TKJ",
-                        email: "",
                         noWhatsapp: "",
-                        statusAlumni: "kerja",
+                        statusAlumni: "Bekerja",
                         namaInstansi: "",
                         jabatanJurusan: "",
                         kesanPesan: "",
                       });
+                      setTurnstileToken("");
                     }}
                     className="rounded-xl border border-input bg-background px-6 py-2.5 text-sm font-semibold transition-colors hover:bg-accent"
                   >
@@ -194,20 +180,8 @@ export default function TracerStudyPage() {
                     </div>
 
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold">NISN (Opsional)</label>
-                      <input
-                        type="text"
-                        name="nisn"
-                        value={formData.nisn}
-                        onChange={handleChange}
-                        placeholder="00xxxxxxxx"
-                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-
-                    <div>
                       <label className="mb-1.5 block text-xs font-semibold">
-                        Tahun Lulus <span className="text-destructive">*</span>
+                        Tahun Lulus / Angkatan <span className="text-destructive">*</span>
                       </label>
                       <input
                         type="number"
@@ -221,9 +195,9 @@ export default function TracerStudyPage() {
                       />
                     </div>
 
-                    <div className="sm:col-span-2">
+                    <div>
                       <label className="mb-1.5 block text-xs font-semibold">
-                        Jurusan / Kompetensi Keahlian <span className="text-destructive">*</span>
+                        Jurusan <span className="text-destructive">*</span>
                       </label>
                       <select
                         name="jurusan"
@@ -247,37 +221,23 @@ export default function TracerStudyPage() {
                     <Phone className="h-4 w-4 text-primary" /> Informasi Kontak
                   </h3>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold">
-                        No. WhatsApp / HP <span className="text-destructive">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        name="noWhatsapp"
-                        required
-                        value={formData.noWhatsapp}
-                        onChange={handleChange}
-                        placeholder="08xxxxxxxxxx"
-                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold">Email (Opsional)</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="alumni@email.com"
-                        className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold">
+                      No. WhatsApp / HP <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      name="noWhatsapp"
+                      required
+                      value={formData.noWhatsapp}
+                      onChange={handleChange}
+                      placeholder="08xxxxxxxxxx"
+                      className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
                   </div>
                 </div>
 
-                {/* Section 3: Status Karir / Studi */}
+                {/* Section 3: Status Kesibukan */}
                 <div className="space-y-4 pt-4 border-t">
                   <h3 className="flex items-center gap-2 text-base font-semibold">
                     <Briefcase className="h-4 w-4 text-primary" /> Status Kesibukan Saat Ini
@@ -311,33 +271,32 @@ export default function TracerStudyPage() {
                     })}
                   </div>
 
-                  {/* Input Tambahan Jika Bekerja/Kuliah */}
-                  {formData.statusAlumni !== "mencari_kerja" && (
-                    <div className="grid gap-4 pt-2 sm:grid-cols-2 animate-in fade-in slide-in-from-top-2">
+                  {formData.statusAlumni !== "Mencari Kerja" && (
+                    <div className="grid gap-4 pt-2 sm:grid-cols-2">
                       <div>
                         <label className="mb-1.5 block text-xs font-semibold">
-                          {formData.statusAlumni.includes("kuliah") ? "Nama Perguruan Tinggi / Universitas" : "Nama Perusahaan / Tempat Kerja"}
+                          {formData.statusAlumni === "Kuliah" ? "Nama Perguruan Tinggi / Universitas" : "Nama Perusahaan / Tempat Usaha"}
                         </label>
                         <input
                           type="text"
                           name="namaInstansi"
                           value={formData.namaInstansi}
                           onChange={handleChange}
-                          placeholder={formData.statusAlumni.includes("kuliah") ? "Contoh: Universitas Brawijaya" : "Contoh: PT. Telekomunikasi Indonesia"}
+                          placeholder={formData.statusAlumni === "Kuliah" ? "Contoh: Universitas Brawijaya" : "Contoh: PT. Toyota"}
                           className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                         />
                       </div>
 
                       <div>
                         <label className="mb-1.5 block text-xs font-semibold">
-                          {formData.statusAlumni.includes("kuliah") ? "Program Studi / Jurusan" : "Jabatan / Posisi Kerja"}
+                          {formData.statusAlumni === "Kuliah" ? "Program Studi / Jurusan" : "Jabatan / Posisi Kerja"}
                         </label>
                         <input
                           type="text"
                           name="jabatanJurusan"
                           value={formData.jabatanJurusan}
                           onChange={handleChange}
-                          placeholder={formData.statusAlumni.includes("kuliah") ? "Contoh: Teknik Informatika" : "Contoh: Network Engineer"}
+                          placeholder={formData.statusAlumni === "Kuliah" ? "Contoh: Teknik Informatika" : "Contoh: Mekanik / Staff IT"}
                           className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                         />
                       </div>
@@ -351,27 +310,34 @@ export default function TracerStudyPage() {
                     <BookOpen className="h-4 w-4 text-primary" /> Kesan & Pesan untuk Sekolah
                   </h3>
 
-                  <div>
-                    <textarea
-                      name="kesanPesan"
-                      rows={4}
-                      value={formData.kesanPesan}
-                      onChange={handleChange}
-                      placeholder="Bagikan saran, masukan, atau pesan motivasi untuk adik-adik kelas di sekolah..."
-                      className="w-full rounded-xl border bg-background p-4 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
+                  <textarea
+                    name="kesanPesan"
+                    rows={4}
+                    value={formData.kesanPesan}
+                    onChange={handleChange}
+                    placeholder="Bagikan saran, masukan, atau pesan motivasi untuk adik-adik kelas di sekolah..."
+                    className="w-full rounded-xl border bg-background p-4 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                {/* Captcha Turnstile Widget */}
+                <div className="flex justify-center py-2">
+                  <Turnstile
+                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken("")}
+                  />
                 </div>
 
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg active:scale-[0.99] disabled:opacity-50"
+                  disabled={isSubmitting || !turnstileToken}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-md transition-all hover:bg-primary/90 disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Menyimpan ke Database...
+                      <Loader2 className="h-4 w-4 animate-spin" /> Menyimpan Data...
                     </>
                   ) : (
                     <>

@@ -2,22 +2,18 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { db } from "@/lib/firebase";
-import { doc, writeBatch, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2 } from "lucide-react";
-import { sendTelegramNotification } from "@/lib/telegram";
 import { GelombangSPMB } from "@/types/gelombang";
 import { getGelombangAktif } from "@/services/gelombangService";
+import { Turnstile } from "@marsidev/react-turnstile"; // 🟢 1. Import Turnstile
 
-// 🚀 DAFTAR JURUSAN MANUAL
 const JURUSAN_MANUAL = [
   { code: "TKJ", title: "Teknik Komputer & Jaringan" },
   { code: "TAV", title: "Teknik Audio Video" },
   { code: "TKR", title: "Teknik Kendaraan Ringan" },
 ];
 
-// 🚀 DAFTAR EKSKUL MANUAL
 const EKSKUL_MANUAL = [
   "Pramuka",
   "Paskibra",
@@ -28,7 +24,6 @@ const EKSKUL_MANUAL = [
   "English Club",
 ];
 
-// 🚀 DAFTAR PROGRAM UNGGULAN MANUAL
 const PROGRAM_UNGGULAN_MANUAL = [
   "Kelas Bahasa Jepang",
   "Kelas Digital Marketing",
@@ -48,11 +43,10 @@ export function FormPPDB() {
     programUnggulan: "",
   });
 
+  const [gelombangAktif, setGelombangAktif] = useState<GelombangSPMB | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>(""); // 🟢 2. State Token
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // 🟢 1. GELOMBANG STATE & EFFECT (Ditaruh di paling atas komponen)
-  const [gelombangAktif, setGelombangAktif] = useState<GelombangSPMB | null>(null);
 
   useEffect(() => {
     const fetchGelombang = async () => {
@@ -76,6 +70,7 @@ export function FormPPDB() {
     setFormData({ ...formData, nisn: onlyDigits });
   };
 
+  // 🟢 3. Panggil API Route di handleSubmit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -87,85 +82,46 @@ export function FormPPDB() {
       return;
     }
 
+    if (!turnstileToken) {
+      setError("Silakan centang/selesaikan verifikasi captcha terlebih dahulu.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const batch = writeBatch(db);
-
-      // 🎫 1. Generate Nomor Registrasi Unik
-      const year = new Date().getFullYear();
-      const randomDigits = Date.now().toString().slice(-6);
-      const noRegistrasi = `REG-${year}-${randomDigits}`;
-
-      // 🟢 Data Gelombang Aktif saat ini
-      const gelombangId = gelombangAktif?.id || "manual";
-      const namaGelombang = gelombangAktif?.namaGelombang || "Umum / Tanpa Gelombang";
-
-      // 2. Dokumen lengkap (Admin/Panitia)
-      batch.set(doc(db, "ppdb", formData.nisn), {
-        ...formData,
-        noRegistrasi,
-        ekstrakurikuler: formData.ekstrakurikuler || "Belum Memilih",
-        programUnggulan: formData.programUnggulan || "Belum Memilih",
-        
-        // 🏷️ SIMPAN GELOMBANG DI SINI
-        gelombangId,
-        namaGelombang,
-
-        statusPendaftaran: "Menunggu Verifikasi",
-        createdAt: serverTimestamp(),
+      // Tembak ke API Route /api/ppdb
+      const res = await fetch("/api/ppdb", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          gelombangId: gelombangAktif?.id || "manual",
+          namaGelombang: gelombangAktif?.namaGelombang || "Umum / Tanpa Gelombang",
+          token: turnstileToken, // Kirim captcha token
+        }),
       });
 
-      // 3. Dokumen publik
-      batch.set(doc(db, "ppdb_public", formData.nisn), {
-        namaLengkap: formData.namaLengkap,
-        nisn: formData.nisn,
-        noRegistrasi,
-        asalSekolah: formData.asalSekolah,
-        pilihanJurusan: formData.pilihanJurusan,
+      const result = await res.json();
 
-        // 🏷️ SIMPAN GELOMBANG JUGA DI PUBLIC
-        gelombangId,
-        namaGelombang,
-
-        statusPendaftaran: "Menunggu Verifikasi",
-      });
-
-      await batch.commit();
-
-      // 📱 4. KIRIM NOTIFIKASI TELEGRAM OTOMATIS KE PANITIA
-      try {
-        await sendTelegramNotification({
-          noRegistrasi,
-          namaLengkap: formData.namaLengkap,
-          nisn: formData.nisn,
-          asalSekolah: formData.asalSekolah,
-          pilihanJurusan: formData.pilihanJurusan,
-          programUnggulan: formData.programUnggulan,
-          ekstrakurikuler: formData.ekstrakurikuler,
-          whatsapp: formData.whatsapp,
-        });
-      } catch (telegramErr) {
-        console.error("Gagal mengirim notif Telegram:", telegramErr);
+      if (!res.ok) {
+        throw new Error(result.message || "Gagal mengirim data pendaftaran");
       }
 
-      // 🚀 5. REDIRECT LANGSUNG KE HALAMAN BUKTI BERSAMA DATA PEMOHON
+      // Redirect ke halaman bukti
       const queryParams = new URLSearchParams({
-        id: noRegistrasi,
-        nama: formData.namaLengkap,
-        nisn: formData.nisn,
-        jurusan: formData.pilihanJurusan,
-        asal: formData.asalSekolah,
-        wa: formData.whatsapp,
+        id: result.data.noRegistrasi,
+        nama: result.data.namaLengkap,
+        nisn: result.data.nisn,
+        jurusan: result.data.pilihanJurusan,
+        asal: result.data.asalSekolah,
+        wa: result.data.whatsapp,
       }).toString();
 
       router.push(`/ppdb/sukses?${queryParams}`);
 
     } catch (err: any) {
       console.error(err);
-      if (err?.code === "permission-denied") {
-        setError("NISN ini sudah pernah terdaftar sebelumnya. Kalau ini bukan kamu, hubungi panitia SPMB.");
-      } else {
-        setError("Terjadi kesalahan sistem. Silakan coba lagi.");
-      }
+      setError(err.message || "Terjadi kesalahan sistem. Silakan coba lagi.");
       setLoading(false);
     }
   };
@@ -178,13 +134,12 @@ export function FormPPDB() {
         </div>
       )}
 
-      {/* Nama Lengkap */}
+      {/* Input Nama, NISN, dll tetap sama seperti sebelumnya */}
       <div className="space-y-1.5">
         <label className="text-sm font-semibold">Nama Lengkap</label>
         <input type="text" name="namaLengkap" required value={formData.namaLengkap} onChange={handleChange} placeholder="Sesuai Ijazah" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
       </div>
 
-      {/* NISN & Asal Sekolah */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label className="text-sm font-semibold">NISN</label>
@@ -196,13 +151,11 @@ export function FormPPDB() {
         </div>
       </div>
 
-      {/* WhatsApp */}
       <div className="space-y-1.5">
         <label className="text-sm font-semibold">No. WhatsApp Aktif Kamu / Ortu Kamu</label>
         <input type="tel" name="whatsapp" required value={formData.whatsapp} onChange={handleChange} placeholder="Contoh: 081234567xxx" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
       </div>
 
-      {/* Pilihan Jurusan */}
       <div className="space-y-1.5">
         <label className="text-sm font-semibold">Pilihan Jurusan</label>
         <select name="pilihanJurusan" required value={formData.pilihanJurusan} onChange={handleChange} className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition">
@@ -215,7 +168,6 @@ export function FormPPDB() {
         </select>
       </div>
 
-      {/* PILIHAN PROGRAM UNGGULAN (OPSIONAL) */}
       <div className="space-y-1.5">
         <div className="flex justify-between items-center">
           <label className="text-sm font-semibold">Pilihan Program Unggulan</label>
@@ -231,7 +183,6 @@ export function FormPPDB() {
         </select>
       </div>
 
-      {/* PILIHAN EKSTRAKURIKULER (OPSIONAL) */}
       <div className="space-y-1.5">
         <div className="flex justify-between items-center">
           <label className="text-sm font-semibold">Pilihan Ekstrakurikuler Minat</label>
@@ -247,8 +198,16 @@ export function FormPPDB() {
         </select>
       </div>
 
-      {/* Tombol Submit */}
-      <Button type="submit" disabled={loading} className="w-full bg-gradient-primary rounded-xl py-6 font-semibold">
+      {/* 🟢 4. Pasang Widget Turnstile Tepat Di Atas Tombol Submit */}
+      <div className="py-2 flex justify-center">
+        <Turnstile
+          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+          onSuccess={(token) => setTurnstileToken(token)}
+          onExpire={() => setTurnstileToken("")}
+        />
+      </div>
+
+      <Button type="submit" disabled={loading || !turnstileToken} className="w-full bg-gradient-primary rounded-xl py-6 font-semibold">
         {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memproses...</> : <><Send className="mr-2 h-4 w-4" /> Kirim Formulir Pendaftaran</>}
       </Button>
     </form>
