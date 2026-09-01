@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, CheckCircle2, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { school } from "@/data/site";
-import heroImg from "@/assets/hero.jpg";
+import heroImg from "@/assets/hero.webp";
 
 export function HomeHero() {
   return (
@@ -68,7 +68,7 @@ export function HomeHero() {
         <div className="overflow-hidden rounded-3xl border shadow-elegant relative h-[350px] sm:h-[450px] lg:h-[500px]">
           <Image
             src={heroImg}
-            alt="Siswa SMK Al Kaaffah belajar di laboratorium komputer"
+            alt="Hero"
             priority
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
