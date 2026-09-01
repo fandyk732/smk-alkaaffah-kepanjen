@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { HomePage } from "@/components/home-page";
 import { school } from "@/data/site";
-import AnnouncementModal from "@/components/AnnouncementModal";
+
+// ⚡ Dynamic Import dengan SSR Disabled untuk Modal Pengumuman
+// Ini akan memangkas TBT drastis karena JS Modal & Firestore query-nya 
+// tidak dimuat di detik pertama loading halaman utama!
+const AnnouncementModal = dynamic(
+  () => import("@/components/AnnouncementModal"),
+  { ssr: false }
+);
 
 export const metadata: Metadata = {
   title: `${school.name} — ${school.tagline}`,
@@ -19,7 +27,7 @@ export default function Page() {
     <>
       <HomePage />
 
-      {/* 🚀 POP-UP MODAL ANNOUNCEMENT (DINAMIS DARI FIRESTORE) */}
+      {/* 🚀 POP-UP MODAL ANNOUNCEMENT (Lazy Loaded) */}
       <AnnouncementModal />
     </>
   );
