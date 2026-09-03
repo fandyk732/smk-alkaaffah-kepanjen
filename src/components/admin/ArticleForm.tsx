@@ -28,6 +28,9 @@ interface ArticleFormProps {
   judul: string;
   setJudul: (val: string) => void;
 
+  slug: string;
+  setSlug: React.Dispatch<React.SetStateAction<string>>;
+  
   kategori: string;
   setKategori: (val: string) => void;
 
@@ -85,6 +88,9 @@ export function ArticleForm({
 
   judul,
   setJudul,
+
+  slug,
+  setSlug,
 
   kategori,
   setKategori,
@@ -316,6 +322,8 @@ export function ArticleForm({
 
       <ArticleSEO
         judul={judul}
+        slug={slug}
+        setSlug={setSlug}
         seoTitle={seoTitle}
         setSeoTitle={setSeoTitle}
         metaDescription={metaDescription}

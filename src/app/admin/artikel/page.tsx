@@ -30,6 +30,7 @@ export default function AdminArtikelPage() {
   
   // State Form
   const [judul, setJudul] = useState("");
+  const [slug, setSlug] = useState("");
   const [kategori, setKategori] = useState("Berita");
   const [konten, setKonten] = useState("");
   const [gambarUrl, setGambarUrl] = useState("");
@@ -162,7 +163,7 @@ export default function AdminArtikelPage() {
         await unpinAllBerita();
       }
 
-      const slug = buatSlug(judul);
+      const finalSlug = slug.trim() ? slug.trim() : buatSlug(judul);
       const cleanedTags = sanitizeTags(tags);
     
       const mediaData = embedType !== "none" && embedUrl.trim()
@@ -174,7 +175,7 @@ export default function AdminArtikelPage() {
         const docRef = doc(db, "berita", editId);
         await updateDoc(docRef, {
           judul,
-          slug,
+          slug: finalSlug,
           kategori,
           tags: cleanedTags,
           konten,
@@ -194,7 +195,7 @@ export default function AdminArtikelPage() {
 
         await addDoc(collection(db, "berita"), {
           judul,
-          slug,
+          slug: finalSlug,
           kategori,
           tags: cleanedTags,
           konten,
@@ -213,7 +214,7 @@ export default function AdminArtikelPage() {
       }
 
       // 3. 🎯 KUNCI: Panggil Revalidate Meta Scraper SETELAH Firestore Sukses Ter-update
-      const articleUrl = `https://www.smkalkaaffah.sch.id/berita/${slug}`;
+      const articleUrl = `https://www.smkalkaaffah.sch.id/berita/${finalSlug}`;
       fetch("/api/revalidate-meta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -249,6 +250,7 @@ export default function AdminArtikelPage() {
   const handleEditPersiapan = (item: Berita) => {
     setEditId(item.id);
     setJudul(item.judul);
+    setSlug(item.slug || "");
     setKategori(item.kategori);
     setTags(item.tags || []); // 🏷️ Set tag ke state jika tersedia
     setKonten(item.konten);
@@ -272,6 +274,7 @@ export default function AdminArtikelPage() {
   const batalEdit = () => {
     setEditId(null);
     setJudul("");
+    setSlug("");
     setKategori("Berita");
     setTags([]); // 🏷️ Reset tag
     setKonten("");
@@ -352,6 +355,8 @@ export default function AdminArtikelPage() {
             editId={editId}
             judul={judul}
             setJudul={setJudul}
+            slug={slug}
+            setSlug={setSlug}
             kategori={kategori}
             setKategori={setKategori}
             excerpt={excerpt}

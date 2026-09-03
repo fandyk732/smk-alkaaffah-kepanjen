@@ -146,7 +146,7 @@ function BeritaContent() {
           {items.map((n, i) => (
             <Reveal key={n.slug} delay={i * 0.06}>
               <Link 
-                href={`/berita/${n.slug}?fromPage=${page}`} 
+                href={`/berita/${n.slug}`} 
                 className="group block h-full overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-elegant flex flex-col"
               >
                 <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">

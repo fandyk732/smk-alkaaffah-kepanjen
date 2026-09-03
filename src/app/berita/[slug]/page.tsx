@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, Tag } from "lucide-react";
+import { Calendar, Tag } from "lucide-react";
 import { Reveal } from "@/components/motion-primitives";
-import { Button } from "@/components/ui/button";
 import { school } from "@/data/site";
 import { MediaRenderer } from "@/components/berita/MediaRenderer";
+import { BackButton } from "@/components/BackButton"; // 👈 Komponen Client pembungkus router.back()
+
 // Import Komponen Client-Side
 import ShareButtons from "@/components/ShareButtons";
 import CommentSection from "@/components/CommentSection";
@@ -154,16 +155,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function ArticlePage({ 
   params, 
-  searchParams 
 }: { 
   params: Params; 
-  searchParams: SearchParams; 
 }) {
   const { slug } = await params;
-  const resolvedSearchParams = await searchParams;
-  
-  // 🎯 FIX: Ambil dari mana asal halaman user (default: page 1)
-  const fromPage = resolvedSearchParams?.fromPage || "1";
 
   const article = await dapatkanBeritaDariFirestore(slug);
 
@@ -194,12 +189,8 @@ export default async function ArticlePage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* 🎯 FIX: Tombol Kembali Mengarah ke URL Halaman Berita Asal */}
-      <Button asChild variant="ghost" size="sm" className="mb-6">
-        <Link href={`/berita?page=${fromPage}`}>
-          <ArrowLeft className="mr-1 h-4 w-4" /> Semua berita
-        </Link>
-      </Button>
+      {/* 🚀 FIX: Pakai Komponen Client BackButton yang Sudah Diimpor */}
+      <BackButton />
 
       {/* Kategori & Tanggal */}
       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
@@ -274,8 +265,9 @@ export default async function ArticlePage({
           <div className="mt-6 grid gap-5 sm:grid-cols-3">
             {related.map((n, i) => (
               <Reveal key={n.slug} delay={i * 0.07}>
+                {/* 🎯 LINK BERSIH TANPA ?fromPage=... */}
                 <Link 
-                  href={`/berita/${n.slug}?fromPage=${fromPage}`} 
+                  href={`/berita/${n.slug}`} 
                   className="group block overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-soft h-full flex flex-col"
                 >
                   <div className="aspect-video overflow-hidden bg-muted relative shrink-0">
