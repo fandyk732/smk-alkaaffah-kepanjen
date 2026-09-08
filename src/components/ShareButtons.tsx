@@ -6,8 +6,10 @@ import { Share2, Check, Link as LinkIcon } from "lucide-react";
 export default function ShareButtons({ title }: { title: string }) {
   const [copied, setCopied] = useState(false);
 
-  // Ambil URL artikel saat ini
-  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+  // 🎯 FIX: Ambil path-nya saja (contoh: /berita/guru-tamu-digital-marketing)
+  // Lalu gabungkan dengan domain resmi sekolah .sch.id
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+  const currentUrl = `https://www.smkalkaaffah.sch.id${pathname}`;
 
   // Link khusus WhatsApp
   const waText = encodeURIComponent(`Halo! Coba baca artikel keren ini dari SMK Al Kaaffah:\n\n*"${title}"*\n\nSelengkapnya di: ${currentUrl}`);
