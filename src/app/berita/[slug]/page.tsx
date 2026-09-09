@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -5,7 +6,7 @@ import { Calendar, Tag } from "lucide-react";
 import { Reveal } from "@/components/motion-primitives";
 import { school } from "@/data/site";
 import { MediaRenderer } from "@/components/berita/MediaRenderer";
-import { BackButton } from "@/components/BackButton"; // 👈 Komponen Client pembungkus router.back()
+import { BackButton } from "@/components/BackButton";
 
 // Import Komponen Client-Side
 import ShareButtons from "@/components/ShareButtons";
@@ -17,8 +18,11 @@ import { collection, query, where, getDocs, limit } from "firebase/firestore";
 
 import { ViewCounter } from "@/components/berita/ViewCounter";
 
+// 🚀 OPTIMASI 1: Incremental Static Regeneration (ISR)
+// Halaman di-cache di Vercel Edge CDN selama 60 detik (Menghemat kuota Firestore & CPU Vercel)
+export const revalidate = 60;
+
 type Params = Promise<{ slug: string }>;
-type SearchParams = Promise<{ fromPage?: string }>;
 
 interface Berita {
   id: string;
@@ -70,7 +74,9 @@ const stripHtml = (htmlString: string) => {
     .trim();
 };
 
-async function dapatkanBeritaDariFirestore(slug: string): Promise<Berita | null> {
+// 🚀 OPTIMASI 2: React cache()
+// Mencegah double-fetch Firestore saat generateMetadata() & ArticlePage() dipanggil bersamaan
+const dapatkanBeritaDariFirestore = cache(async (slug: string): Promise<Berita | null> => {
   try {
     const q = query(collection(db, "berita"), where("slug", "==", slug), limit(1));
     const querySnapshot = await getDocs(q);
@@ -84,22 +90,22 @@ async function dapatkanBeritaDariFirestore(slug: string): Promise<Berita | null>
     console.error("Gagal mengambil detail berita di server:", error);
     return null;
   }
-}
+});
 
+// 🚀 OPTIMASI 3: Direct Filter Firestore untuk Berita Terkait
 async function dapatkanBeritaTerkait(slugSekarang: string): Promise<Berita[]> {
   try {
-    const q = query(collection(db, "berita"), limit(4));
+    const q = query(
+      collection(db, "berita"),
+      where("slug", "!=", slugSekarang),
+      limit(3)
+    );
     const querySnapshot = await getDocs(q);
-    const list: Berita[] = [];
-
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as Berita;
-      if (data.slug !== slugSekarang) {
-        list.push(data);
-      }
-    });
-
-    return list.slice(0, 3);
+    
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Berita[];
   } catch (error) {
     return [];
   }
@@ -179,6 +185,13 @@ export default async function ArticlePage({
     },
   };
 
+  // Helper url gambar terkompresi
+  const isImageKit = article.gambar?.includes("ik.imagekit.io");
+  const cleanImgUrl = isImageKit ? article.gambar.split('?')[0].trim() : article.gambar;
+  
+  const blurBgUrl = isImageKit ? `${cleanImgUrl}?tr=w-50,bl-10,q-40` : article.gambar;
+  const mainImgUrl = isImageKit ? `${cleanImgUrl}?tr=w-800,q-80` : article.gambar;
+
   return (
     <article className="container-page max-w-3xl py-24 sm:py-32 text-foreground">
       {/* 👁️ VIEW COUNTER INVISIBLE LOGIC */}
@@ -189,7 +202,7 @@ export default async function ArticlePage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* 🚀 FIX: Pakai Komponen Client BackButton yang Sudah Diimpor */}
+      {/* Tombol Back Client Component */}
       <BackButton />
 
       {/* Kategori & Tanggal */}
@@ -209,19 +222,19 @@ export default async function ArticlePage({
         {article.judul}
       </h1>
 
-      {/* Gambar Utama */}
+      {/* 🚀 OPTIMASI 4: Gambar Utama Terkompresi Via ImageKit */}
       <div className="relative mt-8 w-full max-h-[500px] overflow-hidden rounded-2xl border shadow-soft bg-muted flex items-center justify-center">
-        {/* 1. Background Blur */}
+        {/* 1. Background Blur (Ukuran mikro 50px untuk hemat kuota) */}
         <img 
-          src={article.gambar} 
+          src={blurBgUrl} 
           alt="" 
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover blur-xl opacity-40 scale-110 pointer-events-none" 
         />
 
-        {/* 2. Gambar Asli di Tengah */}
+        {/* 2. Gambar Asli Terkompresi (Max width 800px) */}
         <img 
-          src={article.gambar} 
+          src={mainImgUrl} 
           alt={article.judul} 
           className="relative z-10 max-h-[500px] w-auto object-contain mx-auto rounded-lg shadow-md" 
         />
@@ -263,29 +276,35 @@ export default async function ArticlePage({
         <>
           <h2 className="text-xl font-bold">Artikel terkait</h2>
           <div className="mt-6 grid gap-5 sm:grid-cols-3">
-            {related.map((n, i) => (
-              <Reveal key={n.slug} delay={i * 0.07}>
-                {/* 🎯 LINK BERSIH TANPA ?fromPage=... */}
-                <Link 
-                  href={`/berita/${n.slug}`} 
-                  className="group block overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-soft h-full flex flex-col"
-                >
-                  <div className="aspect-video overflow-hidden bg-muted relative shrink-0">
-                    <img 
-                      src={n.gambar} 
-                      alt={n.judul} 
-                      loading="lazy" 
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                    />
-                  </div>
-                  <div className="p-4 flex flex-col justify-between grow">
-                    <h3 className="text-sm font-semibold leading-snug group-hover:text-primary line-clamp-2 break-words [word-break:normal] [overflow-wrap:anywhere]">
-                      {n.judul}
-                    </h3>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
+            {related.map((n, i) => {
+              const relImgIsIK = n.gambar?.includes("ik.imagekit.io");
+              const relImgUrl = relImgIsIK 
+                ? `${n.gambar.split('?')[0].trim()}?tr=w-400,h-225,q-80` 
+                : n.gambar;
+
+              return (
+                <Reveal key={n.slug} delay={i * 0.07}>
+                  <Link 
+                    href={`/berita/${n.slug}`} 
+                    className="group block overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-soft h-full flex flex-col"
+                  >
+                    <div className="aspect-video overflow-hidden bg-muted relative shrink-0">
+                      <img 
+                        src={relImgUrl} 
+                        alt={n.judul} 
+                        loading="lazy" 
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                      />
+                    </div>
+                    <div className="p-4 flex flex-col justify-between grow">
+                      <h3 className="text-sm font-semibold leading-snug group-hover:text-primary line-clamp-2 break-words [word-break:normal] [overflow-wrap:anywhere]">
+                        {n.judul}
+                      </h3>
+                    </div>
+                  </Link>
+                </Reveal>
+              );
+            })}
           </div>
         </>
       )}
