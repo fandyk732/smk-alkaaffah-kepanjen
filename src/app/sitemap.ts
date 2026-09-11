@@ -1,7 +1,9 @@
 import { MetadataRoute } from "next";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query } from "firebase/firestore";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://smkalkaaffah.sch.id"; // Sesuaikan domain kamu
+  const baseUrl = "https://smkalkaaffah.sch.id";
 
   // 1. URL Statis Utama
   const staticRoutes = [
@@ -40,8 +42,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  // 💡 CATATAN: Jika ingin menambahkan artikel berita dari Firestore secara otomatis:
-  // Kamu bisa fetch data slug berita di sini lalu di-map ke format sitemap!
+  // 🚀 4. URL Dynamic Artikel Berita dari Firestore
+  let beritaRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const q = query(collection(db, "berita"));
+    const querySnapshot = await getDocs(q);
 
-  return [...staticRoutes, ...programRoutes, ...kategoriRoutes];
+    beritaRoutes = querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        url: `${baseUrl}/berita/${data.slug}`,
+        lastModified: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+        changeFrequency: "monthly" as const,
+        priority: 0.7,
+      };
+    });
+  } catch (error) {
+    console.error("Gagal mengambil data berita untuk sitemap:", error);
+  }
+
+  return [...staticRoutes, ...programRoutes, ...kategoriRoutes, ...beritaRoutes];
 }
