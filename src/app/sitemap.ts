@@ -2,6 +2,25 @@ import { MetadataRoute } from "next";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query } from "firebase/firestore";
 
+// Helper fungsi untuk convert tanggal Firestore / String / Undefined ke Date JS yang aman
+function parseSafeDate(dateVal: any): Date {
+  if (!dateVal) return new Date();
+  
+  // Jika tipe data adalah Firestore Timestamp (punya method toDate)
+  if (typeof dateVal === "object" && typeof dateVal.toDate === "function") {
+    return dateVal.toDate();
+  }
+  
+  // Jika tipe data sudah Date JS
+  if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
+    return dateVal;
+  }
+
+  // Jika tipe data String/Number
+  const parsed = new Date(dateVal);
+  return !isNaN(parsed.getTime()) ? parsed : new Date();
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://smkalkaaffah.sch.id";
 
@@ -42,21 +61,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  // 🚀 4. URL Dynamic Artikel Berita dari Firestore
+  // 4. URL Dynamic Artikel Berita dari Firestore (Aman dari error Date)
   let beritaRoutes: MetadataRoute.Sitemap = [];
   try {
     const q = query(collection(db, "berita"));
     const querySnapshot = await getDocs(q);
 
-    beritaRoutes = querySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        url: `${baseUrl}/berita/${data.slug}`,
-        lastModified: data.updatedAt ? new Date(data.updatedAt) : new Date(),
-        changeFrequency: "monthly" as const,
-        priority: 0.7,
-      };
-    });
+    beritaRoutes = querySnapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        if (!data.slug) return null; // Skip jika dokumen tidak punya slug
+
+        return {
+          url: `${baseUrl}/berita/${data.slug}`,
+          lastModified: parseSafeDate(data.updatedAt || data.createdAt), // 🚀 Pakai helper parser aman
+          changeFrequency: "monthly" as const,
+          priority: 0.7,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
   } catch (error) {
     console.error("Gagal mengambil data berita untuk sitemap:", error);
   }
