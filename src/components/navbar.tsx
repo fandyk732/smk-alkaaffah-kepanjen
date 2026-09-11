@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Moon, Sun, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { school } from "@/data/site"; // navItems kita define lokal dulu di bawah
+import { school } from "@/data/site";
 import { cn } from "@/lib/utils";
 import { LogoSmkIcon } from "@/components/logo-smk-icon";
 
-// 🚀 DAFTAR MENU BARU DENGAN SUB-ITEM (DROPDOWN)
 const mainNavItems = [
   { label: "Beranda", to: "/" },
   { label: "Profil", to: "/profil" },
@@ -63,7 +62,7 @@ function useTheme() {
   return { dark, toggle };
 }
 
-// Komponen Sub-Menu khusus Mobile (Biar bisa Expand/Collapse)
+// Sub-Menu Mobile Ringan
 function MobileNavItem({ item, pathname, closeMenu }: { item: any; pathname: string; closeMenu: () => void }) {
   const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
   const [isOpen, setIsOpen] = useState(active);
@@ -79,37 +78,34 @@ function MobileNavItem({ item, pathname, closeMenu }: { item: any; pathname: str
           )}
         >
           {item.label}
-          <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+          <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")} />
         </button>
-        <AnimatePresence>
-          {isOpen && (
-            <motion.ul
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden pl-4 pr-2"
-            >
-              <div className="mt-1 flex flex-col gap-1 border-l-2 border-primary/20 pl-2">
-                {item.subItems.map((sub: any) => {
-                  const subActive = pathname === sub.to;
-                  return (
-                    <Link
-                      key={sub.to}
-                      href={sub.to}
-                      onClick={closeMenu}
-                      className={cn(
-                        "block rounded-lg px-4 py-2.5 text-sm transition-colors",
-                        subActive ? "bg-primary/10 text-primary font-semibold" : "hover:bg-secondary text-foreground/70"
-                      )}
-                    >
-                      {sub.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            </motion.ul>
+        {/* CSS Transition menggantikan Framer Motion Height untuk performa mobile */}
+        <div 
+          className={cn(
+            "grid transition-all duration-200 ease-in-out pl-4 pr-2",
+            isOpen ? "grid-rows-[1fr] opacity-100 mt-1" : "grid-rows-[0fr] opacity-0"
           )}
-        </AnimatePresence>
+        >
+          <div className="overflow-hidden border-l-2 border-primary/20 pl-2 flex flex-col gap-1">
+            {item.subItems.map((sub: any) => {
+              const subActive = pathname === sub.to;
+              return (
+                <Link
+                  key={sub.to}
+                  href={sub.to}
+                  onClick={closeMenu}
+                  className={cn(
+                    "block rounded-lg px-4 py-2.5 text-sm transition-colors",
+                    subActive ? "bg-primary/10 text-primary font-semibold" : "hover:bg-secondary text-foreground/70"
+                  )}
+                >
+                  {sub.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </li>
     );
   }
@@ -135,11 +131,21 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { dark, toggle } = useTheme();
   const pathname = usePathname();
+  const ticking = useRef(false);
 
+  // 🚀 OPTIMASI SCROLL: Pakai requestAnimationFrame biar ga stutter di HP
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    const onScroll = () => {
+      if (!ticking.current) {
+        requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 12);
+          ticking.current = false;
+        });
+        ticking.current = true;
+      }
+    };
     onScroll();
-    window.addEventListener("scroll", onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -148,13 +154,12 @@ export function Navbar() {
   return (
     <div
       className={cn(
-        "w-full transition-all duration-300 z-50 relative",
+        "w-full transition-all duration-200 z-50 relative will-change-transform",
         scrolled ? "glass-card border-b py-2 shadow-sm" : "bg-transparent py-3"
       )}
     >
       <nav className="container-page flex items-center justify-between mx-auto" aria-label="Navigasi utama">
         
-        {/* ================= BRAND LOGO SEKOLAH ================= */}
         <Link href="/" className="flex items-center gap-2.5 group z-50">
           <span className="grid h-9 w-9 place-items-center rounded-xl transition-transform group-hover:scale-105">
             <LogoSmkIcon className="h-full w-full object-contain" />
@@ -170,7 +175,6 @@ export function Navbar() {
           {mainNavItems.map((item) => {
             const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             
-            // Render jika ada Sub Items (Dropdown)
             if (item.subItems) {
               return (
                 <li key={item.to} className="relative group">
@@ -185,7 +189,6 @@ export function Navbar() {
                     <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
                   </Link>
                   
-                  {/* Dropdown Panel Desktop */}
                   <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 w-56 z-50">
                     <div className="flex flex-col gap-1 rounded-2xl border bg-background/95 backdrop-blur-xl p-2 shadow-xl">
                       {item.subItems.map((sub) => {
@@ -209,7 +212,6 @@ export function Navbar() {
               );
             }
 
-            // Render Menu Normal
             return (
               <li key={item.to}>
                 <Link
@@ -256,14 +258,16 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile Menu Dropdown */}
+      {/* 🚀 OPTIMASI MOBILE MENU: Animasi Opacity & TranslateY menggantikan Height */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="absolute top-full left-0 w-full lg:hidden overflow-hidden bg-background/95 backdrop-blur-xl border-b shadow-lg z-40"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            style={{ willChange: "transform, opacity" }}
+            className="absolute top-full left-0 w-full lg:hidden bg-background/95 backdrop-blur-xl border-b shadow-lg z-40"
           >
             <ul className="container-page flex flex-col gap-1 py-4 mx-auto max-h-[75vh] overflow-y-auto">
               {mainNavItems.map((item) => (
