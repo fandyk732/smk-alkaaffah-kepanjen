@@ -19,7 +19,6 @@ import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { ViewCounter } from "@/components/berita/ViewCounter";
 
 // 🚀 OPTIMASI 1: Incremental Static Regeneration (ISR)
-// Halaman di-cache di Vercel Edge CDN selama 60 detik (Menghemat kuota Firestore & CPU Vercel)
 export const revalidate = 60;
 
 type Params = Promise<{ slug: string }>;
@@ -75,7 +74,6 @@ const stripHtml = (htmlString: string) => {
 };
 
 // 🚀 OPTIMASI 2: React cache()
-// Mencegah double-fetch Firestore saat generateMetadata() & ArticlePage() dipanggil bersamaan
 const dapatkanBeritaDariFirestore = cache(async (slug: string): Promise<Berita | null> => {
   try {
     const q = query(collection(db, "berita"), where("slug", "==", slug), limit(1));
@@ -224,7 +222,7 @@ export default async function ArticlePage({
 
       {/* 🚀 OPTIMASI 4: Gambar Utama Terkompresi Via ImageKit */}
       <div className="relative mt-8 w-full max-h-[500px] overflow-hidden rounded-2xl border shadow-soft bg-muted flex items-center justify-center">
-        {/* 1. Background Blur (Ukuran mikro 50px untuk hemat kuota) */}
+        {/* 1. Background Blur */}
         <img 
           src={blurBgUrl} 
           alt="" 
@@ -232,7 +230,7 @@ export default async function ArticlePage({
           className="absolute inset-0 h-full w-full object-cover blur-xl opacity-40 scale-110 pointer-events-none" 
         />
 
-        {/* 2. Gambar Asli Terkompresi (Max width 800px) */}
+        {/* 2. Gambar Asli Terkompresi */}
         <img 
           src={mainImgUrl} 
           alt={article.judul} 
@@ -262,11 +260,8 @@ export default async function ArticlePage({
       {/* 🎬 VIDEO EMBED (Jika Ada) */}
       <MediaRenderer embed={article?.mediaEmbed} />
       
-      {/* 🚀 FITUR FITUR BARU */}
-      {/* 1. Tombol Bagikan ke WhatsApp & Salin Link */}
+      {/* 🚀 FITUR BARU */}
       <ShareButtons title={article.judul} />
-
-      {/* 2. Kolom Komentar Realtime */}
       <CommentSection articleIdentifier={article.slug} />
 
       <hr className="my-12" />

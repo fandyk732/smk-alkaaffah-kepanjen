@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import dynamic from "next/dynamic";
 import {
   Plus,
   Save,
@@ -12,15 +11,7 @@ import {
 } from "lucide-react";
 
 import { ArticleSEO } from "./article-form/ArticleSEO";
-
-const ReactQuill = dynamic(() => import("react-quill-new"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-48 w-full bg-slate-100 animate-pulse rounded-lg flex items-center justify-center text-slate-400 text-sm">
-      Memuat Editor Artikel...
-    </div>
-  ),
-});
+import { TiptapEditor } from "@/components/admin/TiptapEditor";
 
 interface ArticleFormProps {
   editId: string | null;
@@ -72,16 +63,6 @@ interface ArticleFormProps {
 
   batalEdit: () => void;
 }
-
-const quillModules = {
-  toolbar: [
-    [{ header: [2, 3, false] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    [{ align: [] }],
-    ["link", "clean"],
-  ],
-};
 
 export function ArticleForm({
   editId,
@@ -429,7 +410,7 @@ export function ArticleForm({
       </div>
 
       {/* =================================================
-          EDITOR ARTIKEL
+          EDITOR ARTIKEL (TIPTAP EDITOR MODERN)
       ================================================= */}
 
       <div>
@@ -437,22 +418,7 @@ export function ArticleForm({
           Isi Artikel / Berita
         </label>
 
-        <div
-          className="
-            bg-white text-slate-900 rounded-lg border border-slate-200 overflow-hidden
-            [&_.ql-editor]:min-h-[220px]
-            [&_.ql-editor]:max-h-[500px]
-            [&_.ql-editor]:overflow-y-auto
-          "
-        >
-          <ReactQuill
-            theme="snow"
-            value={konten}
-            onChange={setKonten}
-            modules={quillModules}
-            placeholder="Tuliskan berita lengkap di sini..."
-          />
-        </div>
+        <TiptapEditor content={konten} onChange={setKonten} />
       </div>
 
       {/* =================================================
