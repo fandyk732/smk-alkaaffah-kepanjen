@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react"; // 🟢 Tambahkan useRef
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/motion-primitives";
 import { 
@@ -37,6 +37,7 @@ export default function TracerStudyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const turnstileRef = useRef<any>(null); // 🟢 1. Ref untuk mengontrol Turnstile
 
   // Form State
   const [formData, setFormData] = useState({
@@ -59,7 +60,7 @@ export default function TracerStudyPage() {
     e.preventDefault();
 
     if (!turnstileToken) {
-      toast.error("Silakan selesaikan verifikasi captcha terlebih dahulu.");
+      toast.error("Verifikasi captcha belum siap / kadaluwarsa. Silakan tunggu atau muat ulang.");
       return;
     }
 
@@ -94,6 +95,10 @@ export default function TracerStudyPage() {
     } catch (error: any) {
       console.error("Firebase/Server Error: ", error);
       toast.error(error.message || "Gagal mengirim data ke database.");
+      
+      // 🟢 2. Reset Turnstile otomatis jika submit gagal
+      setTurnstileToken("");
+      turnstileRef.current?.reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -135,6 +140,7 @@ export default function TracerStudyPage() {
                         kesanPesan: "",
                       });
                       setTurnstileToken("");
+                      turnstileRef.current?.reset();
                     }}
                     className="rounded-xl border border-input bg-background px-6 py-2.5 text-sm font-semibold transition-colors hover:bg-accent"
                   >
@@ -320,12 +326,20 @@ export default function TracerStudyPage() {
                   />
                 </div>
 
-                {/* Captcha Turnstile Widget */}
+                {/* 🟢 3. Captcha Turnstile Widget dengan Handler Anti-Stuck */}
                 <div className="flex justify-center py-2">
                   <Turnstile
+                    ref={turnstileRef}
                     siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
                     onSuccess={(token) => setTurnstileToken(token)}
-                    onExpire={() => setTurnstileToken("")}
+                    onExpire={() => {
+                      setTurnstileToken("");
+                      turnstileRef.current?.reset(); // Auto refresh saat expired 2 menit
+                    }}
+                    onError={() => {
+                      setTurnstileToken("");
+                      turnstileRef.current?.reset(); // Auto refresh jika jaringan sempat DC
+                    }}
                   />
                 </div>
 

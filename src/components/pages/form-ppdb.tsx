@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react"; // 🟢 Tambahkan useRef
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2 } from "lucide-react";
 import { GelombangSPMB } from "@/types/gelombang";
 import { getGelombangAktif } from "@/services/gelombangService";
-import { Turnstile } from "@marsidev/react-turnstile"; // 🟢 1. Import Turnstile
+import { Turnstile } from "@marsidev/react-turnstile";
 
 const JURUSAN_MANUAL = [
   { code: "TKJ", title: "Teknik Komputer & Jaringan" },
@@ -32,6 +32,7 @@ const PROGRAM_UNGGULAN_MANUAL = [
 
 export function FormPPDB() {
   const router = useRouter();
+  const turnstileRef = useRef<any>(null); // 🟢 1. Ref untuk kontrol Turnstile
   
   const [formData, setFormData] = useState({
     namaLengkap: "",
@@ -44,7 +45,7 @@ export function FormPPDB() {
   });
 
   const [gelombangAktif, setGelombangAktif] = useState<GelombangSPMB | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string>(""); // 🟢 2. State Token
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -70,7 +71,6 @@ export function FormPPDB() {
     setFormData({ ...formData, nisn: onlyDigits });
   };
 
-  // 🟢 3. Panggil API Route di handleSubmit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -83,13 +83,12 @@ export function FormPPDB() {
     }
 
     if (!turnstileToken) {
-      setError("Silakan centang/selesaikan verifikasi captcha terlebih dahulu.");
+      setError("Verifikasi keamanan belum siap/kadaluwarsa. Silakan tunggu atau muat ulang.");
       setLoading(false);
       return;
     }
 
     try {
-      // Tembak ke API Route /api/ppdb
       const res = await fetch("/api/ppdb", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -97,7 +96,7 @@ export function FormPPDB() {
           ...formData,
           gelombangId: gelombangAktif?.id || "manual",
           namaGelombang: gelombangAktif?.namaGelombang || "Umum / Tanpa Gelombang",
-          token: turnstileToken, // Kirim captcha token
+          token: turnstileToken,
         }),
       });
 
@@ -107,7 +106,6 @@ export function FormPPDB() {
         throw new Error(result.message || "Gagal mengirim data pendaftaran");
       }
 
-      // Redirect ke halaman bukti
       const queryParams = new URLSearchParams({
         id: result.data.noRegistrasi,
         nama: result.data.namaLengkap,
@@ -123,18 +121,27 @@ export function FormPPDB() {
       console.error(err);
       setError(err.message || "Terjadi kesalahan sistem. Silakan coba lagi.");
       setLoading(false);
+      // 🟢 2. Reset Turnstile otomatis jika submit gagal
+      setTurnstileToken("");
+      turnstileRef.current?.reset();
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border bg-card p-6 shadow-soft sm:p-8 text-foreground text-left">
       {error && (
-        <div className="p-3 text-sm rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium">
-          {error}
+        <div className="p-3 text-sm rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium flex items-center justify-between gap-2">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => turnstileRef.current?.reset()}
+            className="text-xs underline font-bold shrink-0"
+          >
+            Muat Ulang Captcha
+          </button>
         </div>
       )}
 
-      {/* Input Nama, NISN, dll tetap sama seperti sebelumnya */}
       <div className="space-y-1.5">
         <label className="text-sm font-semibold">Nama Lengkap</label>
         <input type="text" name="namaLengkap" required value={formData.namaLengkap} onChange={handleChange} placeholder="Sesuai Ijazah" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
@@ -198,12 +205,20 @@ export function FormPPDB() {
         </select>
       </div>
 
-      {/* 🟢 4. Pasang Widget Turnstile Tepat Di Atas Tombol Submit */}
+      {/* 🟢 3. Widget Turnstile dengan Handlers Anti-Stuck */}
       <div className="py-2 flex justify-center">
         <Turnstile
+          ref={turnstileRef}
           siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
           onSuccess={(token) => setTurnstileToken(token)}
-          onExpire={() => setTurnstileToken("")}
+          onExpire={() => {
+            setTurnstileToken("");
+            turnstileRef.current?.reset(); // Auto refresh saat expired
+          }}
+          onError={() => {
+            setTurnstileToken("");
+            turnstileRef.current?.reset(); // Auto refresh saat ada gangguan jaringan
+          }}
         />
       </div>
 
