@@ -11,6 +11,7 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { Youtube } from "@tiptap/extension-youtube";
 import { Placeholder } from "@tiptap/extension-placeholder";
+
 import {
   Bold,
   Italic,
@@ -27,6 +28,36 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// 🚀 CUSTOM EXTENSION UNTUK GAMBAR + CAPTION/KREDIT (ZERO INSTALL)
+const CustomImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      caption: {
+        default: null,
+      },
+    };
+  },
+  renderHTML({ HTMLAttributes }) {
+    const { caption, ...imageAttributes } = HTMLAttributes;
+    
+    if (caption) {
+      return [
+        "figure",
+        { class: "my-6 text-center group" },
+        ["img", imageAttributes],
+        [
+          "figcaption",
+          { class: "text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic mt-2 font-medium tracking-tight" },
+          caption,
+        ],
+      ];
+    }
+
+    return ["img", imageAttributes];
+  },
+});
+
 interface TiptapEditorProps {
   content: string;
   onChange: (richText: string) => void;
@@ -41,10 +72,10 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       Placeholder.configure({
         placeholder: "Tulis artikel berita sekolah di sini...",
       }),
-      Image.configure({
+      CustomImage.configure({
         allowBase64: true,
         HTMLAttributes: {
-          class: "rounded-2xl max-w-full h-auto mx-auto my-4 border shadow-sm",
+          class: "rounded-2xl max-w-full h-auto mx-auto border shadow-sm",
         },
       }),
       Link.configure({
@@ -89,7 +120,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     },
   });
 
-  // 🚀 SINKRONISASI KONTEN SAAT MODE EDIT ARTIKEL LAMA
+  // Sinkronisasi Konten saat Mode Edit
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content || "");
@@ -98,9 +129,20 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
   if (!editor) return null;
 
+  // 📷 FUNGSI TAMBAH GAMBAR (+KREDIT/CAPTION)
   const addImage = () => {
     const url = window.prompt("Masukkan URL Gambar (ImageKit / Firebase Storage):");
-    if (url) {
+    if (!url) return;
+
+    const caption = window.prompt("Masukkan Kredit / Keterangan Gambar (Opsional, misal: Foto: Humas SMK):");
+
+    if (caption) {
+      editor
+        .chain()
+        .focus()
+        .setImage({ src: url, caption: caption } as any)
+        .run();
+    } else {
       editor.chain().focus().setImage({ src: url }).run();
     }
   };
@@ -192,7 +234,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
         <div className="h-4 w-[1px] bg-border mx-1" />
 
-        <Button type="button" size="sm" variant="ghost" onClick={addImage} title="Sisipkan Gambar">
+        <Button type="button" size="sm" variant="ghost" onClick={addImage} title="Sisipkan Gambar (+Kredit)">
           <ImageIcon className="h-4 w-4" />
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={addTable} title="Sisipkan Tabel">
