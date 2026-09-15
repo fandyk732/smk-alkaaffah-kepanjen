@@ -171,7 +171,7 @@
   padding-inline: 1.25rem;
 }
 
-/* 🟢 Optimasi Glass Card: Solid di Mobile, Blur hanya di Desktop */
+/* 🟢 Glass Card Utility */
 @utility glass-card {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -179,7 +179,7 @@
 }
 
 @media (min-width: 640px) {
-  @utility glass-card {
+  .glass-card {
     backdrop-filter: blur(12px);
   }
 }
