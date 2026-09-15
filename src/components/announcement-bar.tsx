@@ -35,21 +35,24 @@ export function AnnouncementBar() {
   if (!data || !data.isActive || !isVisible) return null;
 
   return (
-    <div className="relative bg-gradient-to-r from-primary via-blue-600 to-indigo-600 text-white text-xs sm:text-sm py-2 px-2 sm:px-4 shadow-sm z-50 overflow-hidden">
-      <div className="container-page flex items-center justify-between gap-1.5 sm:gap-3 mx-auto">
+    <div 
+      style={{ transform: "translateZ(0)" }} // 🚀 Force GPU Acceleration
+      className="relative bg-gradient-to-r from-primary via-blue-600 to-indigo-600 text-white text-xs sm:text-sm py-2 px-2 sm:px-4 shadow-sm z-50 overflow-hidden"
+    >
+      <div className="container-page flex items-center justify-between gap-2 sm:gap-4 mx-auto">
         
-        {/* Badge / Tag Info Left - Compact di Mobile */}
-        <span className="inline-flex items-center gap-1 bg-white/20 px-1.5 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shrink-0 backdrop-blur-sm z-10">
-          <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-          <span className="hidden xs:inline sm:inline">INFO AK</span>
-        </span>
+        {/* Badge / Tag Info Left - Fixed Width & Z-Index */}
+        <div className="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shrink-0 backdrop-blur-sm z-10">
+          <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-pulse" />
+          <span className="inline">INFO AK</span>
+        </div>
 
-        {/* 🎯 AREA RUNNING TEXT: DIBUAT MAKSIMAL & LEBAR */}
-        <div className="flex-1 overflow-hidden relative mx-1 sm:mx-2">
-          <div className="flex whitespace-nowrap animate-marquee">
+        {/* 🎯 AREA RUNNING TEXT: Masking Gradient Kiri-Kanan */}
+        <div className="flex-1 overflow-hidden relative mx-1 [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+          <div className="animate-marquee flex whitespace-nowrap items-center gap-12">
             
             {/* Loop Pertama */}
-            <div className="flex items-center gap-2 pr-8 sm:pr-12">
+            <div className="flex items-center gap-2 shrink-0">
               <span className="font-medium">{data.text}</span>
               {data.linkUrl && (
                 <Link 
@@ -61,8 +64,8 @@ export function AnnouncementBar() {
               )}
             </div>
 
-            {/* Loop Kedua (Seamless Marquee Effect) */}
-            <div className="flex items-center gap-2 pr-8 sm:pr-12">
+            {/* Loop Kedua (Seamless Duplikasi untuk Animasi Mulus) */}
+            <div className="flex items-center gap-2 shrink-0" aria-hidden="true">
               <span className="font-medium">{data.text}</span>
               {data.linkUrl && (
                 <Link 
@@ -77,11 +80,11 @@ export function AnnouncementBar() {
           </div>
         </div>
 
-        {/* Tombol Close Right - Ringkas */}
+        {/* Tombol Close Right */}
         <div className="flex items-center shrink-0 z-10">
           <button
             onClick={() => setIsVisible(false)}
-            className="text-white/80 hover:text-white p-0.5 sm:p-1 rounded-lg hover:bg-white/10 transition"
+            className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
             aria-label="Tutup Pengumuman"
           >
             <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
