@@ -5,7 +5,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const variants: Variants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 15 }, // 🚀 Diturunkan ke 15px agar jarak render GPU lebih pendek & cepat
   visible: { opacity: 1, y: 0 },
 };
 
@@ -24,9 +24,12 @@ export function Reveal({
       variants={variants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-20px" }} // 🚀 Diubah dari -80px biar di HP ringan
-      transition={{ duration: 0.4, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
-      style={{ willChange: "transform, opacity" }} // 🚀 Direct GPU Offload
+      viewport={{ once: true, margin: "-20px" }} // 🚀 Ringan & aman untuk scroll mobile
+      transition={{ duration: 0.35, delay, ease: [0.21, 0.47, 0.32, 0.98] }} // 🚀 Durasi dipersingkat ke 0.35s
+      style={{
+        willChange: "transform, opacity",
+        transform: "translateZ(0)", // 🚀 Hardware Acceleration paksa GPU (Ringan di CPU HP jadul)
+      }}
     >
       {children}
     </motion.div>
@@ -69,7 +72,10 @@ export function Counter({ value, suffix = "" }: { value: number; suffix?: string
 
   useEffect(() => {
     return spring.on("change", (v) => {
-      if (ref.current) ref.current.textContent = `${Math.round(v)}${suffix}`;
+      // 🚀 Bungkus update DOM dengan requestAnimationFrame agar FPS tidak drop di HP RAM 2GB
+      requestAnimationFrame(() => {
+        if (ref.current) ref.current.textContent = `${Math.round(v)}${suffix}`;
+      });
     });
   }, [spring, suffix]);
 

@@ -80,7 +80,7 @@ function MobileNavItem({ item, pathname, closeMenu }: { item: any; pathname: str
           {item.label}
           <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")} />
         </button>
-        {/* CSS Transition menggantikan Framer Motion Height untuk performa mobile */}
+        {/* CSS Transition murni menggantikan Framer Motion untuk performa mobile */}
         <div 
           className={cn(
             "grid transition-all duration-200 ease-in-out pl-4 pr-2",
@@ -133,7 +133,7 @@ export function Navbar() {
   const pathname = usePathname();
   const ticking = useRef(false);
 
-  // 🚀 OPTIMASI SCROLL: Pakai requestAnimationFrame biar ga stutter di HP
+  // 🚀 OPTIMASI SCROLL: requestAnimationFrame + passive listener
   useEffect(() => {
     const onScroll = () => {
       if (!ticking.current) {
@@ -153,6 +153,7 @@ export function Navbar() {
 
   return (
     <div
+      style={{ transform: "translateZ(0)" }} // 🚀 Hardware Acceleration
       className={cn(
         "w-full transition-all duration-200 z-50 relative will-change-transform",
         scrolled ? "glass-card border-b py-2 shadow-sm" : "bg-transparent py-3"
@@ -189,8 +190,9 @@ export function Navbar() {
                     <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
                   </Link>
                   
+                  {/* Dropdown Desktop dengan fallback transparan ringan */}
                   <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 w-56 z-50">
-                    <div className="flex flex-col gap-1 rounded-2xl border bg-background/95 backdrop-blur-xl p-2 shadow-xl">
+                    <div className="flex flex-col gap-1 rounded-2xl border bg-background/98 sm:bg-background/90 sm:backdrop-blur-xl p-2 shadow-xl">
                       {item.subItems.map((sub) => {
                         const subActive = pathname === sub.to;
                         return (
@@ -227,6 +229,7 @@ export function Navbar() {
                       layoutId="nav-pill"
                       className="absolute inset-0 -z-10 rounded-full bg-secondary"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      style={{ transform: "translateZ(0)" }} // 🚀 Force GPU pill animation
                     />
                   )}
                 </Link>
@@ -258,16 +261,19 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* 🚀 OPTIMASI MOBILE MENU: Animasi Opacity & TranslateY menggantikan Height */}
+      {/* 🚀 OPTIMASI MOBILE MENU: Memakai bg-background/98 (Solid di mobile agar GPU ringan, blur khusus di desktop) */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            style={{ willChange: "transform, opacity" }}
-            className="absolute top-full left-0 w-full lg:hidden bg-background/95 backdrop-blur-xl border-b shadow-lg z-40"
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            style={{
+              willChange: "transform, opacity",
+              transform: "translateZ(0)", // 🚀 GPU Offload
+            }}
+            className="absolute top-full left-0 w-full lg:hidden bg-background/98 sm:bg-background/90 sm:backdrop-blur-xl border-b shadow-lg z-40"
           >
             <ul className="container-page flex flex-col gap-1 py-4 mx-auto max-h-[75vh] overflow-y-auto">
               {mainNavItems.map((item) => (
