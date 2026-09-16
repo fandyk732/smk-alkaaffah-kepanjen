@@ -18,7 +18,7 @@ export function HomeHero() {
       <div className="lg:col-span-6">
         {/* Badge */}
         <span className="inline-flex items-center gap-2 rounded-full glass-card px-4 py-1.5 text-xs font-semibold text-primary animate-fade-in">
-          <Sparkles className="h-3.5 w-3.5" /> Tagline dan Visi Kami
+          <CheckCircle2 className="h-3.5 w-3.5" /> Tagline dan Visi Kami
         </span>
 
         {/* LCP Target: Judul Utama */}
@@ -43,7 +43,7 @@ export function HomeHero() {
         </div>
 
         {/* Feature List */}
-        <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted-foreground">
+        <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-foreground/90">
           {["Terakreditasi B", "Kurikulum Industri", "Sertifikasi Kompetensi"].map((t) => (
             <span key={t} className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" /> {t}
@@ -65,12 +65,8 @@ export function HomeHero() {
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
               quality={80}
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-cover brightness-125 transition-transform duration-500 group-hover:scale-105"
             />
-            
-            {/* Overlay Gradient Halus */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
             
           </div>
 
@@ -85,9 +81,9 @@ export function HomeHero() {
                 fill
                 sizes="(max-width: 640px) 33vw, 200px"
                 quality={75}
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                className="object-cover brightness-125 transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              
               <span className="absolute bottom-2 left-2 text-[10px] sm:text-[11px] font-semibold text-white/90 backdrop-blur-md px-2 py-0.5 rounded-md bg-black/40 border border-white/10">
                 TKJ
               </span>
@@ -101,9 +97,9 @@ export function HomeHero() {
                 fill
                 sizes="(max-width: 640px) 33vw, 200px"
                 quality={75}
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                className="object-cover brightness-125 transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              
               <span className="absolute bottom-2 left-2 text-[10px] sm:text-[11px] font-semibold text-white/90 backdrop-blur-md px-2 py-0.5 rounded-md bg-black/40 border border-white/10">
                 TAV
               </span>
@@ -119,7 +115,7 @@ export function HomeHero() {
                 quality={75}
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              
               <span className="absolute bottom-2 left-2 text-[10px] sm:text-[11px] font-semibold text-white/90 backdrop-blur-md px-2 py-0.5 rounded-md bg-black/40 border border-white/10">
                 TKR
               </span>
