@@ -339,3 +339,45 @@ article,
 .animate-marquee:hover {
   animation-play-state: paused !important;
 }
+
+/* ========================================== */
+/* CUSTOM OVERRIDE / KODE TAMBAHAN BARU      */
+/* ========================================== */
+/* 🟢 PERBAIKAN ALIGNMENT GAMBAR & CAPTION TIPTAP */
+
+/* 1. Atur container figure agar selalu di tengah */
+.prose figure,
+.berita-content figure {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important; /* Memaksa gambar & caption center rata tengah */
+  justify-content: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  max-width: 100% !important;
+}
+
+/* 2. Atur gambar (Portrait/Landscape) agar presisi di tengah */
+.prose img,
+.berita-content img,
+.ProseMirror img {
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: var(--radius-md, 0.5rem);
+}
+
+/* 3. Atur caption agar rapi di bawah gambar */
+.prose figcaption,
+.berita-content figcaption {
+  text-align: center !important;
+  margin-top: 0.5rem !important;
+  font-size: 0.875rem !important; /* 14px */
+  color: var(--color-muted-foreground) !important;
+  font-style: italic !important;
+  width: 100% !important;
+}
