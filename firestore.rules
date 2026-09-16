@@ -34,6 +34,10 @@ service cloud.firestore {
       return hasRole('panitia_ppdb') || hasRole('panitia_PPDB') || hasRole('admin_ppdb');
     }
 
+    function isAdminArtikel() {
+      return isSuperadmin() || hasRole('admin_artikel');
+    }
+
     // -------------------------------------------------------------
     // ATURAN KOLEKSI
     // -------------------------------------------------------------
@@ -73,34 +77,29 @@ service cloud.firestore {
 
     // 5. PPDB (Data Utama)
     match /ppdb/{docId} {
-      // 🟢 Publik boleh buat dokumen baru HANYA jika ID dokumen (NISN) tersebut belum ada
       allow create: if !exists(/databases/$(database)/documents/ppdb/$(docId));
-
-      // 🔒 Read/delete dikunci admin/panitia doang.
       allow read, delete: if isSuperadmin() || isPanitiaPpdb();
-
-      // 🔧 FIX: publik tetap boleh update SELAMA cuma nyentuh field 'tes' —
-      // ini yang dipakai halaman /ppdb/tes/butawarna & /ppdb/tes/jurusan buat
-      // nyimpen hasil tes siswa TANPA perlu login. Klausa ini sempat kehapus
-      // di revisi sebelumnya dan bikin dua fitur itu mati total (permission-denied).
       allow update: if isSuperadmin()
                     || isPanitiaPpdb()
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tes']);
     }
 
-    // 5b. PPDB_PUBLIC (Data Publik untuk Pengumuman)
+    // 5b. PPDB_PUBLIC (Versi Publik)
     match /ppdb_public/{docId} {
-      allow read: if true; // 🌐 aman dibaca publik, field-nya dibatasi ketat di create
+      allow read: if true;
 
-      // 🔧 FIX: balikin batasan field (sempat dilepas) SEKALIGUS nambah syarat
-      // dokumen "ppdb/{docId}" yang bersangkutan harus beneran ada dulu.
-      // Ini nutup celah orang bisa bikin status kelulusan palsu buat NISN
-      // yang nggak pernah beneran ngisi form pendaftaran.
       allow create: if !exists(/databases/$(database)/documents/ppdb_public/$(docId))
-                    && exists(/databases/$(database)/documents/ppdb/$(docId))
-                    && request.resource.data.keys().hasOnly(
-                         ['namaLengkap', 'nisn', 'asalSekolah', 'pilihanJurusan', 'statusPendaftaran', 'noRegistrasi', 'gelombangId', 'namaGelombang']
-                       );
+                    && existsAfter(/databases/$(database)/documents/ppdb/$(docId))
+                    && request.resource.data.keys().hasOnly([
+                         'namaLengkap',
+                         'nisn',
+                         'noRegistrasi',
+                         'asalSekolah',
+                         'pilihanJurusan',
+                         'statusPendaftaran',
+                         'gelombangId',
+                         'namaGelombang'
+                       ]);
 
       allow update, delete: if isSuperadmin() || isPanitiaPpdb();
     }
@@ -125,9 +124,13 @@ service cloud.firestore {
     }
 
     // 7. BERITA
-    match /berita/{docId} {
+    match /berita/{beritaId} {
       allow read: if true;
-      allow write: if isSuperadmin() || hasRole('admin_artikel');
+
+      allow update: if isAdminArtikel()
+                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
+
+      allow create, delete: if isAdminArtikel();
     }
 
     // 8. GALERI
