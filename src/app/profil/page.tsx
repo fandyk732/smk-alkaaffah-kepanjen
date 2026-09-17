@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Target, Eye, HeartHandshake, Building, Users, TreePine } from "lucide-react";
+import { Target, Eye, HeartHandshake, Building, Users, TreePine, Badge, Award } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { Reveal, SectionHeading } from "@/components/motion-primitives";
 import { school } from "@/data/site";
@@ -16,6 +16,7 @@ const values = [
   { icon: Users, t: "Kolaborasi", d: "Tumbuh bersama dalam kebersamaan." },
   { icon: Target, t: "Profesionalisme", d: "Bekerja dengan standar terbaik." },
   { icon: TreePine, t: "Berkelanjutan", d: "Peduli lingkungan dan masa depan." },
+  { icon: Award, t: "Akreditasi", d: "Terus melangkah menuju A. Peningkatan mutu pembelajaran, fasilitas, dan kompetensi guru menjadi fokus utama kami setiap tahunnya." },
 ];
 
 const facilities = ["Laboratorium Komputer & Jaringan", "Bengkel Listrik", "Bengkel Otomotif", "Studio Digital Marketing", "Perpustakaan Digital", "Masjid Sekolah", "Lapangan Olahraga", "Kantin Sehat",  "Aula Serbaguna", "Bus Sekolah", "Ruang UKS", "Laboratorium Elektronika", "Laboratorium Kendaraan Ringan", "Ruang Guru & Staf", "Ruang Administrasi", "Area Parkir Luas", "Taman Edukasi"];
@@ -115,7 +116,6 @@ export default function ProfilPage() {
               { n: "Arif Mafatia Karim, S.Pd., Gr. Mt.Rt", r: "Wakil Kurikulum & Kaprodi TAV" },
               { n: "Khusnul Huda, S.H.I", r: "Wakil Kesiswaan & Kaprodi TKR" },
               { n: "Asfa Al Makmun Muttakin, S.Kom", r: "Kepala Tata Usaha" },
-              { n: "Rubika Nastiti", r: "Kaprodi TKJ & DM" },
             ].map((p, i) => (
               <Reveal key={p.n} delay={i * 0.05}>
                 <div className="flex items-center gap-4 rounded-2xl border bg-card p-5">

@@ -44,7 +44,7 @@ export function HomeHero() {
 
         {/* Feature List */}
         <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-foreground/90">
-          {["Terakreditasi B", "Kurikulum Industri", "Sertifikasi Kompetensi"].map((t) => (
+          {["Berbasis Kurikulum Industri", "Membekali Siswa dengan Sertifikasi Kompetensi"].map((t) => (
             <span key={t} className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" /> {t}
             </span>
@@ -63,9 +63,9 @@ export function HomeHero() {
               alt="Siswa SMK Al Kaaffah"
               priority // ⚡ Target LCP Fast Paint
               fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
-              quality={80}
-              className="object-cover brightness-125 transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1200px) 70vw, 600px"
+              quality={90}
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             
           </div>

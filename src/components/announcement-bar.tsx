@@ -34,6 +34,21 @@ export function AnnouncementBar() {
 
   if (!data || !data.isActive || !isVisible) return null;
 
+  // Komponen Teks Tunggal biar kodenya DRY (Don't Repeat Yourself)
+  const TextItem = () => (
+    <div className="flex items-center gap-2 shrink-0 pr-12">
+      <span className="font-medium">{data.text}</span>
+      {data.linkUrl && (
+        <Link 
+          href={data.linkUrl} 
+          className="inline-flex items-center gap-1 font-bold underline underline-offset-4 hover:text-white/80 transition"
+        >
+          Selengkapnya <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+        </Link>
+      )}
+    </div>
+  );
+
   return (
     <div 
       style={{ transform: "translateZ(0)" }} // 🚀 Force GPU Acceleration
@@ -41,40 +56,26 @@ export function AnnouncementBar() {
     >
       <div className="container-page flex items-center justify-between gap-2 sm:gap-4 mx-auto">
         
-        {/* Badge / Tag Info Left - Fixed Width & Z-Index */}
+        {/* Badge / Tag Info Left */}
         <div className="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shrink-0 backdrop-blur-sm z-10">
           <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-pulse" />
           <span className="inline">INFO AK</span>
         </div>
 
-        {/* 🎯 AREA RUNNING TEXT: Masking Gradient Kiri-Kanan */}
+        {/* 🎯 AREA RUNNING TEXT: Seamless Loop Fix */}
         <div className="flex-1 overflow-hidden relative mx-1 [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
-          <div className="animate-marquee flex whitespace-nowrap items-center gap-12">
+          <div className="animate-marquee flex whitespace-nowrap w-max">
             
-            {/* Loop Pertama */}
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="font-medium">{data.text}</span>
-              {data.linkUrl && (
-                <Link 
-                  href={data.linkUrl} 
-                  className="inline-flex items-center gap-1 font-bold underline underline-offset-4 hover:text-white/80 transition"
-                >
-                  Selengkapnya <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Link>
-              )}
+            {/* GROUP 1 (2 Set Teks) */}
+            <div className="flex shrink-0 items-center">
+              <TextItem />
+              <TextItem />
             </div>
 
-            {/* Loop Kedua (Seamless Duplikasi untuk Animasi Mulus) */}
-            <div className="flex items-center gap-2 shrink-0" aria-hidden="true">
-              <span className="font-medium">{data.text}</span>
-              {data.linkUrl && (
-                <Link 
-                  href={data.linkUrl} 
-                  className="inline-flex items-center gap-1 font-bold underline underline-offset-4 hover:text-white/80 transition"
-                >
-                  Selengkapnya <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </Link>
-              )}
+            {/* GROUP 2 (2 Set Teks Duplikat untuk Mencegah Gap Kosong) */}
+            <div className="flex shrink-0 items-center" aria-hidden="true">
+              <TextItem />
+              <TextItem />
             </div>
 
           </div>
