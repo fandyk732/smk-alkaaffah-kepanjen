@@ -47,8 +47,9 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  /* 🟢 iOS / Apple System Font Fallback Hierarchy */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
 }
 
 :root {
@@ -161,6 +162,16 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* 🟢 iOS Letter Spacing: Rapat halus khas UI Apple */
+    letter-spacing: -0.015em;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* 🟢 Heading iOS Style: Padat & Bolder */
+  h1, h2, h3, h4, h5, h6, .font-bold, .font-extrabold {
+    letter-spacing: -0.028em !important;
+    line-height: 1.15 !important;
   }
 }
 
@@ -345,12 +356,11 @@ article,
 /* ========================================== */
 /* 🟢 PERBAIKAN ALIGNMENT GAMBAR & CAPTION TIPTAP */
 
-/* 1. Atur container figure agar selalu di tengah */
 .prose figure,
 .berita-content figure {
   display: flex !important;
   flex-direction: column !important;
-  align-items: center !important; /* Memaksa gambar & caption center rata tengah */
+  align-items: center !important;
   justify-content: center !important;
   margin-left: auto !important;
   margin-right: auto !important;
@@ -359,7 +369,6 @@ article,
   max-width: 100% !important;
 }
 
-/* 2. Atur gambar (Portrait/Landscape) agar presisi di tengah */
 .prose img,
 .berita-content img,
 .ProseMirror img {
@@ -371,12 +380,11 @@ article,
   border-radius: var(--radius-md, 0.5rem);
 }
 
-/* 3. Atur caption agar rapi di bawah gambar */
 .prose figcaption,
 .berita-content figcaption {
   text-align: center !important;
   margin-top: 0.5rem !important;
-  font-size: 0.875rem !important; /* 14px */
+  font-size: 0.875rem !important;
   color: var(--color-muted-foreground) !important;
   font-style: italic !important;
   width: 100% !important;

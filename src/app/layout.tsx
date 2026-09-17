@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google"; 
+import { Inter } from "next/font/google"; // 🟢 Switched to Inter (iOS/Helvetica Aesthetic)
 import "./globals.css";
 import { AnnouncementBar } from "@/components/announcement-bar"; 
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { AnimatedBackground } from "@/components/animated-background";
 import { Toaster } from "@/components/ui/sonner";
-import { BackToTop } from "@/components/back-to-top"; // 👈 1. IMPORT DI SINI
+import { BackToTop } from "@/components/back-to-top";
 import { school } from "@/data/site";
 
-const plusJakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
-  variable: "--font-plus-jakarta",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -76,7 +76,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" data-scroll-behavior="smooth" className={`${plusJakarta.className} ${plusJakarta.variable}`}>
+    <html lang="id" data-scroll-behavior="smooth" className={`${inter.className} ${inter.variable}`}>
       <head>
         <script
           type="application/ld+json"
