@@ -243,7 +243,7 @@ article img,
   border-radius: var(--radius-md, 0.5rem);
   display: block;
   margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem !important;
 }
 
 .ql-editor iframe,
@@ -354,7 +354,7 @@ article,
 /* ========================================== */
 /* CUSTOM OVERRIDE / KODE TAMBAHAN BARU      */
 /* ========================================== */
-/* 🟢 PERBAIKAN ALIGNMENT GAMBAR & CAPTION TIPTAP */
+/* 🟢 PERBAIKAN ALIGNMENT GAMBAR & CAPTION (SERBAGUNA) */
 
 .prose figure,
 .berita-content figure {
@@ -380,12 +380,36 @@ article,
   border-radius: var(--radius-md, 0.5rem);
 }
 
+/* Standard HTML Figcaption */
 .prose figcaption,
 .berita-content figcaption {
   text-align: center !important;
-  margin-top: 0.5rem !important;
-  font-size: 0.875rem !important;
+  margin-top: 0.35rem !important;
+  font-size: 0.8125rem !important; /* ~13px */
   color: var(--color-muted-foreground) !important;
   font-style: italic !important;
   width: 100% !important;
+}
+
+/* 🟢 FALLBACK: Jika caption di-input sebagai Paragraf / Teks Miring tepat di bawah Gambar */
+.prose img + p,
+.berita-content img + p,
+.ql-editor img + p,
+.ProseMirror img + p {
+  text-align: center !important;
+  font-size: 0.8125rem !important; /* ~13px (Pasti Kecil) */
+  color: var(--color-muted-foreground) !important;
+  font-style: italic !important;
+  margin-top: 0.35rem !important;
+  margin-bottom: 1.25rem !important;
+  line-height: 1.4 !important;
+}
+
+/* Memastikan teks em/i di dalam paragraf caption tetap konsisten */
+.prose img + p em,
+.berita-content img + p em,
+.ql-editor img + p em,
+.ProseMirror img + p em {
+  font-size: 0.8125rem !important;
+  color: var(--color-muted-foreground) !important;
 }
