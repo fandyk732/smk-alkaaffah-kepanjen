@@ -25,6 +25,7 @@ export const navItems = [
   { label: "Alumni", to: "/alumni" },
   { label: "SPMB", to: "/ppdb" },
   { label: "Kontak", to: "/kontak" },
+  { label: "Pusat Karir", to: "/pusatkarir"}
 ] as const;
 
 export const stats = [

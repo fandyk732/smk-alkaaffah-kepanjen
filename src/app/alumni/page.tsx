@@ -221,7 +221,7 @@ export default function AlumniPage() {
           </Link>
 
           <Link
-            href="/bkk"
+            href="/pusatkarir"
             className="group relative inline-flex items-center gap-3 rounded-2xl bg-secondary hover:bg-secondary/80 border border-border px-6 py-3.5 text-sm font-bold text-foreground shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Briefcase className="h-5 w-5 text-primary" />

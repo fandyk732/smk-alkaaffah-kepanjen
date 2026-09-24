@@ -36,6 +36,7 @@ const mainNavItems = [
   },
   { label: "Galeri", to: "/galeri" },
   { label: "Alumni", to: "/alumni" },
+  { label: "Pusat Karir", to: "/pusatkarir"},
   { label: "SPMB", to: "/ppdb" },
   { label: "Kontak", to: "/kontak" },
 ];
