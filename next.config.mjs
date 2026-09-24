@@ -11,7 +11,12 @@ const nextConfig = {
     deviceSizes: [375, 640, 750, 828, 1080, 1200],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
 
-    // 4. Remote Patterns (Sudah ditambah wildcard biar bebas nempes link mana aja)
+    // 4. Remote Patterns — HANYA domain yang beneran dipake buat serve gambar.
+    // Sebelumnya ada wildcard hostname: '**' di sini, yang bikin endpoint
+    // /_next/image bisa dipake siapapun buat proxy URL APAPUN dari internet
+    // lewat domain sekolah sendiri (resource abuse + risiko reputasi domain).
+    // Kalau nanti nambah sumber gambar baru, tambahin hostname-nya di sini
+    // satu-satu — JANGAN pakai wildcard lagi.
     remotePatterns: [
       {
         protocol: 'https',
@@ -25,15 +30,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
       },
-      // WILDCARD HTTPS: Bebas pakai link CDN luar apa aja tanpa error!
       {
+        // Supabase Storage — asset sekolah yang dimigrasi biar nggak kena
+        // block Internet Positif.
         protocol: 'https',
-        hostname: '**',
-      },
-      // WILDCARD HTTP (opsional kalau ada link image lama pakai http)
-      {
-        protocol: 'http',
-        hostname: '**',
+        hostname: 'bciawezxmfvosfftvgwa.supabase.co',
       },
     ],
   },
