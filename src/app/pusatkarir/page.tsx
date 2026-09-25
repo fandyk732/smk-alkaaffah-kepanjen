@@ -20,7 +20,7 @@ interface LowonganKerja {
 
 const SUPABASE_URL = "https://uytuckdnmkmqlkctwvnx.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5dHVja2RubWttcWxrY3R3dm54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NDg1OTUsImV4cCI6MjEwNTIyNDU5NX0.UbHX51sbKQTjYhGuw8GP-qXODqGnD9xGbYBmiAtTe1s"; // Gantilah dengan Anon Key Supabase
-const BKK_APP_URL = "https://webapp-bkk.vercel.app";
+const BKK_APP_URL = "https://bkk.smkalkaaffah.sch.id/";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
