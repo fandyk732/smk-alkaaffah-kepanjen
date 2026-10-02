@@ -44,7 +44,7 @@ export function useHomeNews() {
         const combinedNews = [
           ...(pinnedNews ? [pinnedNews] : []),
           ...otherNews,
-        ].slice(0, 3);
+        ].slice(0, 6);
 
         setBeritaTerbaru(combinedNews);
       } catch (error) {

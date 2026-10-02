@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Network, Code2, Clapperboard, Calculator, Wifi, CheckCircle2, ArrowRight } from "lucide-react";
+import { Network, Video, BookOpen,TrendingUp, Code2, Clapperboard, Calculator, Wifi, Wrench, CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal, SectionHeading } from "@/components/motion-primitives";
 import { programs } from "@/data/site";
 
-const iconMap = { Network, Code2, Clapperboard, Calculator } as const;
+const iconMap = { Network, Video, BookOpen, TrendingUp, Code2, Clapperboard, Calculator, Wifi, Wrench } as const;
 
 export function HomePrograms() {
   return (
@@ -60,10 +60,10 @@ export function HomePrograms() {
               </p>
               <ul className="mt-6 grid gap-2 text-sm">
                 {[
-                  "Sensei berlisensi N1",
-                  "Fasilitas kelas modern",
-                  "Biaya Terjangkau",
-                  "Peluang kerja di Jepang",
+                  "Sensei berlisensi minimal N3",
+                  "Fasilitas kelas dan asrama",
+                  "Biaya sangat terjangkau",
+                  "Peluang kerja dan magang ke Jepang yang luas",
                 ].map((t) => (
                   <li key={t} className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 shrink-0" /> <span>{t}</span>
@@ -82,7 +82,7 @@ export function HomePrograms() {
                 { v: "10++", l: "Mitra Kerja di Jepang" },
                 { v: "JLPT N5/N4", l: "Sertifikasi" },
                 { v: "<1 tahun", l: "Peluang Karier" },
-                { v: ">40%", l: "Dana Talangan" },
+                { v: ">100%", l: "Dana Talangan" },
               ].map((b) => (
                 <div key={b.l} className="rounded-2xl bg-white/10 p-4 sm:p-5 backdrop-blur flex flex-col justify-between">
                   <p className="text-2xl sm:text-3xl font-extrabold leading-tight">{b.v}</p>

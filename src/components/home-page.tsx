@@ -31,9 +31,6 @@ export function HomePage() {
       {/* 2. NEWS SECTION (Terisolasi) */}
       <NewsSectionWrapper />
 
-      {/* 3. INTRO & SAMBUTAN KEPALA SEKOLAH (Pure HTML Server Rendered) */}
-      <HomeIntro />
-
       {/* 4. PROGRAM KEAHLIAN & KELAS JEPANG */}
       <HomePrograms />
 
