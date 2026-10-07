@@ -38,6 +38,10 @@ service cloud.firestore {
       return isSuperadmin() || hasRole('admin_artikel');
     }
 
+    function isAdminGuru() {
+      return isSuperadmin() || hasRole('admin_guru');
+    }
+
     // -------------------------------------------------------------
     // ATURAN KOLEKSI
     // -------------------------------------------------------------
@@ -144,6 +148,12 @@ service cloud.firestore {
       allow read, create: if true;
       allow update: if false;
       allow delete: if isSuperadmin() || hasRole('admin_artikel');
+    }
+
+    // 10. GURU & STAF (DIREKTORI GURU)
+    match /teachers/{teacherId} {
+      allow read: if true;
+      allow write: if isAdminGuru();
     }
   }
 }

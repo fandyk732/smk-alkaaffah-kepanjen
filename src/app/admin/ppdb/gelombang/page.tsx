@@ -193,7 +193,7 @@ export default function ManagementGelombangPage(): React.JSX.Element {
                   required
                   value={namaGelombang}
                   onChange={(e) => setNamaGelombang(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-xl bg-background text-sm outline-none focus:border-primary"
+                  className="w-full mt-2 px-3 py-2 border rounded-xl bg-background text-sm outline-none focus:border-primary"
                 />
               </div>
 
@@ -205,7 +205,7 @@ export default function ManagementGelombangPage(): React.JSX.Element {
                     required
                     value={tanggalMulai}
                     onChange={(e) => setTanggalMulai(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border rounded-xl bg-background text-sm outline-none focus:border-primary"
+                    className="w-full mt-2 px-3 py-2 border rounded-xl bg-background text-sm outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -215,7 +215,7 @@ export default function ManagementGelombangPage(): React.JSX.Element {
                     required
                     value={tanggalSelesai}
                     onChange={(e) => setTanggalSelesai(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border rounded-xl bg-background text-sm outline-none focus:border-primary"
+                    className="w-full mt-2 px-3 py-2 border rounded-xl bg-background text-sm outline-none focus:border-primary"
                   />
                 </div>
               </div>

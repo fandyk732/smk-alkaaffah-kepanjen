@@ -75,14 +75,18 @@ export default function LoginPage() {
           router.push("/admin/artikel");
         } else if (singleRole === "panitia_ppdb" || singleRole === "admin_ppdb") {
           router.push("/admin/ppdb");
+        } else if (singleRole === "admin_guru") {
+          router.push("/admin/guru"); // 🎯 REDIRECT LANGSUNG KE ADMIN GURU
         } else if (singleRole === "admin_alumni") {
           router.push("/admin/alumni");
+        } else if (singleRole === "admin_bkk") {
+          router.push("/admin/bkk");
         } else if (singleRole === "admin_galeri") {
           router.push("/admin/galeri");
         } else if (singleRole === "admin_prestasi") {
           router.push("/admin/prestasi");
         } else if (singleRole === "admin_announcement") {
-          router.push("/admin/announcement"); // 🎯 INJEKSI HALAMAN ANNOUNCEMENT
+          router.push("/admin/announcement");
         } else {
           alert("Role tidak dikenali. Hubungi Superadmin.");
           await auth.signOut();

@@ -7,6 +7,7 @@ export const AVAILABLE_ROLES: RoleOption[] = [
   { id: "superadmin", label: "Superadmin (Akses Penuh)" },
   { id: "admin_artikel", label: "Admin Artikel (Berita & Blog)" },
   { id: "panitia_PPDB", label: "Panitia SPMB" },
+  { id: "admin_guru", label: "Admin Direktori Guru & Staf" }, // 👈 TAMBAHKAN DI SINI
   { id: "admin_alumni", label: "Admin Alumni & Tracer Study" },
   { id: "admin_bkk", label: "Admin BKK (Bursa Kerja Khusus)" },
   { id: "admin_galeri", label: "Admin Galeri (Foto & Dok)" },

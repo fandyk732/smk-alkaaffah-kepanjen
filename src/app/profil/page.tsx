@@ -1,5 +1,16 @@
 import type { Metadata } from "next";
-import { Target, Eye, HeartHandshake, Building, Users, TreePine, Badge, Award } from "lucide-react";
+import Link from "next/link";
+import { 
+  Target, 
+  Eye, 
+  HeartHandshake, 
+  Building, 
+  Users, 
+  TreePine, 
+  Award, 
+  UserCheck, 
+  ArrowRight 
+} from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { Reveal, SectionHeading } from "@/components/motion-primitives";
 import { school } from "@/data/site";
@@ -41,7 +52,7 @@ export default function ProfilPage() {
       {/* SECTION VISI & MISI */}
       <section className="bg-section py-16">
         <div className="container-page grid gap-8 lg:grid-cols-12 lg:items-start">
-          {/* VISI (4 Kolom di Dekstop) */}
+          {/* VISI */}
           <Reveal className="lg:col-span-5">
             <div className="rounded-2xl border bg-card p-8 shadow-soft">
               <Target className="h-9 w-9 text-primary" />
@@ -52,7 +63,7 @@ export default function ProfilPage() {
             </div>
           </Reveal>
 
-          {/* MISI (7 Kolom di Dekstop) */}
+          {/* MISI */}
           <Reveal delay={0.1} className="lg:col-span-7">
             <div className="rounded-2xl border bg-card p-8 shadow-soft">
               <Eye className="h-9 w-9 text-primary" />
@@ -107,27 +118,58 @@ export default function ProfilPage() {
         </div>
       </section>
 
+      {/* SECTION MANAJEMEN & DIREKTORI GURU */}
       <section className="bg-section py-16">
-        <div className="container-page">
-          <SectionHeading eyebrow="Struktur Organisasi" title="Tim manajemen sekolah" />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { n: "Maya Dian Rosita, S.A.P", r: "Kepala Sekolah" },
-              { n: "Arif Mafatia Karim, S.Pd., Gr. Mt.Rt", r: "Wakil Kurikulum & Kaprodi TAV" },
-              { n: "Khusnul Huda, S.H.I", r: "Wakil Kesiswaan & Kaprodi TKR" },
-              { n: "Asfa Al Makmun Muttakin, S.Kom", r: "Kepala Tata Usaha" },
-            ].map((p, i) => (
-              <Reveal key={p.n} delay={i * 0.05}>
-                <div className="flex items-center gap-4 rounded-2xl border bg-card p-5">
-                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-primary font-bold text-primary-foreground">{p.n.charAt(0)}</span>
-                  <div>
-                    <p className="font-semibold leading-tight">{p.n}</p>
-                    <p className="text-sm text-muted-foreground">{p.r}</p>
+        <div className="container-page space-y-12">
+          <div>
+            <SectionHeading eyebrow="Struktur Organisasi" title="Tim manajemen sekolah" />
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { n: "Maya Dian Rosita, S.A.P", r: "Kepala Sekolah" },
+                { n: "Arif Mafatia Karim, S.Pd., Gr. Mt.Rt", r: "Wakil Kurikulum & Kaprodi TAV" },
+                { n: "Khusnul Huda, S.H.I", r: "Wakil Kesiswaan & Kaprodi TKR" },
+                { n: "Asfa Al Makmun Muttakin, S.Kom", r: "Kepala Tata Usaha" },
+              ].map((p, i) => (
+                <Reveal key={p.n} delay={i * 0.05}>
+                  <div className="flex items-center gap-4 rounded-2xl border bg-card p-5 h-full">
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-primary font-bold text-primary-foreground">{p.n.charAt(0)}</span>
+                    <div>
+                      <p className="font-semibold leading-tight">{p.n}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{p.r}</p>
+                    </div>
                   </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              ))}
+            </div>
           </div>
+
+          {/* 🟢 CARD BANNER DIREKTORI GURU & STAF */}
+          <Reveal delay={0.2}>
+            <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-card p-8 md:p-10 shadow-soft">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                    <UserCheck className="h-3.5 w-3.5" />
+                    <span>Tenaga Pendidik & Kependidikan</span>
+                  </div>
+                  <h3 className="text-2xl font-extrabold text-foreground tracking-tight">
+                    Lihat Seluruh Dewan Guru & Staf Pengajar
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Mengenal lebih dekat tim guru produktif, guru umum, dan staf profesional yang membimbing serta mendampingi siswa-siswi SMK Al Kaaffah.
+                  </p>
+                </div>
+
+                <Link
+                  href="/profil/direktori-guru"
+                  className="inline-flex items-center gap-2 shrink-0 px-6 py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-all shadow-md group"
+                >
+                  <span>Buka Direktori Guru</span>
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

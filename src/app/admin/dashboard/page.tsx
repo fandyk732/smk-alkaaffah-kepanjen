@@ -17,7 +17,8 @@ import {
   Image as ImageIcon,
   Trophy,
   Megaphone,
-  Briefcase // 🚀 1. TAMBAHKAN IMPORT ICON BRIEFCASE
+  Briefcase,
+  Users // 🚀 IMPORT ICON UNTUK GURU & STAF
 } from "lucide-react";
 
 export default function AdminDashboardHub() {
@@ -40,7 +41,6 @@ export default function AdminDashboardHub() {
           setUserName(data.nama || user.displayName || "Admin");
           
           const rawRoles = Array.isArray(data.role) ? data.role : [data.role];
-          // Normalisasi ke lowercase untuk mencegah bug typo huruf besar/kecil
           const normalizedRoles = rawRoles.map((r: string) => String(r).toLowerCase().trim());
           
           setUserRoles(normalizedRoles);
@@ -62,7 +62,6 @@ export default function AdminDashboardHub() {
     router.push("/login");
   };
 
-  // Helper Pengecekan Role
   const hasRole = (roleKey: string) => {
     return userRoles.includes("superadmin") || userRoles.includes(roleKey.toLowerCase());
   };
@@ -140,7 +139,27 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 3. Admin Alumni */}
+          {/* 🚀 3. ADMIN GURU & STAF (MODUL BARU) */}
+          {hasRole("admin_guru") && (
+            <Link
+              href="/admin/guru"
+              className="group bg-slate-900 border border-slate-800 hover:border-teal-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-teal-500/5 flex items-start gap-4"
+            >
+              <div className="p-3 bg-teal-500/10 text-teal-400 rounded-xl group-hover:scale-110 transition">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-slate-100 group-hover:text-teal-400 transition">
+                  Direktori Guru & Staf
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Tambah, edit, dan atur data foto serta profil guru dan staf pendidik.
+                </p>
+              </div>
+            </Link>
+          )}
+
+          {/* 4. Admin Alumni */}
           {hasRole("admin_alumni") && (
             <Link
               href="/admin/alumni"
@@ -160,7 +179,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 🚀 4. Admin BKK (Modul Bursa Kerja Khusus) */}
+          {/* 5. Admin BKK */}
           {hasRole("admin_bkk") && (
             <Link
               href="/admin/bkk"
@@ -180,7 +199,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 5. Admin Galeri */}
+          {/* 6. Admin Galeri */}
           {hasRole("admin_galeri") && (
             <Link
               href="/admin/galeri"
@@ -200,7 +219,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 6. Admin Prestasi */}
+          {/* 7. Admin Prestasi */}
           {hasRole("admin_prestasi") && (
             <Link
               href="/admin/prestasi"
@@ -220,7 +239,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 7. Admin Announcement */}
+          {/* 8. Admin Announcement */}
           {hasRole("admin_announcement") && (
             <Link
               href="/admin/announcement"
@@ -240,7 +259,7 @@ export default function AdminDashboardHub() {
             </Link>
           )}
 
-          {/* 8. Portal Superadmin */}
+          {/* 9. Portal Superadmin */}
           {userRoles.includes("superadmin") && (
             <Link
               href="/superadmin/users"

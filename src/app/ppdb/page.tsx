@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 const requirements = [
-  "Fotokopi Ijazah SMP/MTs/PKBM (Menyusul ketika Ijazah sudah ada)", "Fotokopi Akta Kelahiran", "Fotokopi Kartu Keluarga",
+  "Fotokopi Ijazah SMP/MTs/PKBM (Menyusul ketika Ijazah sudah ada)", " Surat Keterangan Lulus", "Fotokopi Akta Kelahiran", "Fotokopi Kartu Keluarga",
   "Pas foto SMP/MTs/PKBM 3x4 (2 lembar)", "Surat Keterangan Sehat dari Puskesmas atau Fasilitas Kesehatan terdekat",
 ];
 const steps = [
