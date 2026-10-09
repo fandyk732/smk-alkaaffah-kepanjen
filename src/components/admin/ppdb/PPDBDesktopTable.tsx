@@ -4,7 +4,7 @@ import React from "react";
 import { Pendaftar } from "@/types/ppdb";
 import { formatTanggalIndo } from "@/utils/formatters";
 import { Button } from "@/components/ui/button";
-import { Calendar, Sparkles, Award, Eye, Compass, Pencil, Trash2, Printer } from "lucide-react";
+import { Calendar, Sparkles, Award, Eye, Compass, Pencil, Trash2, Printer, GraduationCap } from "lucide-react";
 
 interface Props {
   data: Pendaftar[];
@@ -13,6 +13,13 @@ interface Props {
   onOpenDelete: (p: Pendaftar) => void;
   onPrintIndividu: (p: Pendaftar) => void;
 }
+
+const JALUR_BADGES: Record<string, { label: string; style: string }> = {
+  reguler: { label: "Reguler", style: "bg-slate-100 text-slate-700 border-slate-200" },
+  prestasi: { label: "Prestasi", style: "bg-amber-50 text-amber-700 border-amber-200" },
+  yatim: { label: "Yatim/Piatu", style: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  kurang_mampu: { label: "KIP/SKTM", style: "bg-blue-50 text-blue-700 border-blue-200" },
+};
 
 export function PPDBDesktopTable({
   data,
@@ -29,7 +36,7 @@ export function PPDBDesktopTable({
             <th className="px-3 py-3.5">No. Registrasi</th>
             <th className="px-3 py-3.5">Waktu / NISN</th>
             <th className="px-3 py-3.5">Nama & Sekolah</th>
-            <th className="px-3 py-3.5">Jurusan Utama</th>
+            <th className="px-3 py-3.5">Jalur & Jurusan</th>
             <th className="px-3 py-3.5">Program & Ekskul</th>
             <th className="px-3 py-3.5">Kontak WA</th>
             <th className="px-3 py-3.5">Hasil Tes</th>
@@ -43,6 +50,8 @@ export function PPDBDesktopTable({
           {data.map((p) => {
             const tesBW = p.tes?.butaWarna;
             const tesJur = p.tes?.jurusan;
+            const jalurKey = p.jalurPendaftaran || "reguler";
+            const jalurInfo = JALUR_BADGES[jalurKey] || JALUR_BADGES.reguler;
 
             return (
               <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition print:hover:bg-transparent">
@@ -68,9 +77,17 @@ export function PPDBDesktopTable({
                 </td>
 
                 <td className="px-3 py-3 whitespace-nowrap">
-                  <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-semibold text-slate-800 dark:text-slate-100 border print:border-none print:bg-transparent print:p-0 print:text-black">
-                    {p.pilihanJurusan}
-                  </span>
+                  <div className="space-y-1">
+                    <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold border ${jalurInfo.style}`}>
+                      <GraduationCap className="h-3 w-3 mr-1 print:hidden shrink-0" />
+                      {jalurInfo.label}
+                    </span>
+                    <div>
+                      <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-semibold text-slate-800 dark:text-slate-100 border print:border-none print:bg-transparent print:p-0 print:text-black">
+                        {p.pilihanJurusan}
+                      </span>
+                    </div>
+                  </div>
                 </td>
 
                 <td className="px-3 py-3 whitespace-nowrap">

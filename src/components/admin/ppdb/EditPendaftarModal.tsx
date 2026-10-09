@@ -17,9 +17,17 @@ interface Props {
     pilihanJurusan: string;
     programUnggulan: string;
     ekstrakurikuler: string;
+    jalurPendaftaran?: string;
   }) => Promise<void>;
   isSubmitting: boolean;
 }
+
+const DAFTAR_JALUR = [
+  { value: "reguler", label: "Reguler (Umum)" },
+  { value: "prestasi", label: "Beasiswa Prestasi" },
+  { value: "yatim", label: "Beasiswa Yatim / Yatim Piatu" },
+  { value: "kurang_mampu", label: "Beasiswa Ekonomi / KIP / SKTM" },
+];
 
 export function EditPendaftarModal({ pendaftar, onClose, onSave, isSubmitting }: Props) {
   const [nama, setNama] = useState("");
@@ -29,6 +37,7 @@ export function EditPendaftarModal({ pendaftar, onClose, onSave, isSubmitting }:
   const [jurusan, setJurusan] = useState("");
   const [programUnggulan, setProgramUnggulan] = useState("");
   const [ekskul, setEkskul] = useState("");
+  const [jalur, setJalur] = useState("reguler");
 
   useEffect(() => {
     if (pendaftar) {
@@ -39,6 +48,7 @@ export function EditPendaftarModal({ pendaftar, onClose, onSave, isSubmitting }:
       setJurusan(pendaftar.pilihanJurusan || "");
       setProgramUnggulan(pendaftar.programUnggulan || "");
       setEkskul(pendaftar.ekstrakurikuler || "");
+      setJalur(pendaftar.jalurPendaftaran || "reguler");
     }
   }, [pendaftar]);
 
@@ -58,6 +68,7 @@ export function EditPendaftarModal({ pendaftar, onClose, onSave, isSubmitting }:
       pilihanJurusan: jurusan.trim(),
       programUnggulan: programUnggulan.trim(),
       ekstrakurikuler: ekskul.trim(),
+      jalurPendaftaran: jalur,
     });
   };
 
@@ -117,6 +128,19 @@ export function EditPendaftarModal({ pendaftar, onClose, onSave, isSubmitting }:
               className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary transition"
               placeholder="Masukkan Asal Sekolah"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1">Jalur Pendaftaran / Beasiswa</label>
+            <select
+              value={jalur}
+              onChange={(e) => setJalur(e.target.value)}
+              className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary transition font-medium"
+            >
+              {DAFTAR_JALUR.map((j) => (
+                <option key={j.value} value={j.value}>{j.label}</option>
+              ))}
+            </select>
           </div>
 
           <div>

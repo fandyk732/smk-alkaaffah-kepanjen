@@ -1,6 +1,13 @@
 import { Pendaftar } from "@/types/ppdb";
 import { formatTanggalIndo } from "./formatters";
 
+const JALUR_LABELS: Record<string, string> = {
+  reguler: "Reguler (Umum)",
+  prestasi: "Beasiswa Prestasi",
+  yatim: "Beasiswa Yatim / Yatim Piatu",
+  kurang_mampu: "Beasiswa Ekonomi / KIP / SKTM",
+};
+
 export const downloadExcel = (pendaftarList: Pendaftar[]) => {
   if (pendaftarList.length === 0) {
     alert("Tidak ada data untuk diexport");
@@ -14,6 +21,7 @@ export const downloadExcel = (pendaftarList: Pendaftar[]) => {
     "NISN",
     "Asal Sekolah",
     "WhatsApp",
+    "Jalur Pendaftaran",
     "Pilihan Jurusan",
     "Program Unggulan",
     "Ekstrakurikuler",
@@ -31,6 +39,7 @@ export const downloadExcel = (pendaftarList: Pendaftar[]) => {
     clean(`'${p.nisn}`),
     clean(p.asalSekolah),
     clean(`'${p.whatsapp}`),
+    clean(JALUR_LABELS[p.jalurPendaftaran || "reguler"] || "Reguler (Umum)"),
     clean(p.pilihanJurusan),
     clean(p.programUnggulan || "Belum Memilih"),
     clean(p.ekstrakurikuler || "Belum Memilih"),

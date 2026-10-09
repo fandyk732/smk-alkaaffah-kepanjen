@@ -9,7 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { school } from "@/data/site";
 import { FormPPDB } from "@/components/pages/form-ppdb"; // Import komponen form barusan
 import { BannerGelombang } from "@/components/ppdb/BannerGelombang";
-
+import { ScholarshipSection } from "@/components/ppdb/ScholarshipSection";
 
 export const metadata: Metadata = {
   title: `SPMB — ${school.name}`,
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 const requirements = [
   "Fotokopi Ijazah SMP/MTs/PKBM (Menyusul ketika Ijazah sudah ada)", " Surat Keterangan Lulus", "Fotokopi Akta Kelahiran", "Fotokopi Kartu Keluarga",
-  "Pas foto SMP/MTs/PKBM 3x4 (2 lembar)", "Surat Keterangan Sehat dari Puskesmas atau Fasilitas Kesehatan terdekat",
+  "Pas foto SMP/MTs/PKBM 3x4 (2 lembar)", "Surat Keterangan Sehat dari Puskesmas atau Fasilitas Kesehatan terdekat", "Sertifikat Prestasi bagi yang mendaftar melalui jalur prestasi", "Kartu KIP/PKH/SKTM bagi yang mendaftar melalui jalur kurang mampu", "Surat Keterangan Yatim/Yatim Piatu bagi yang mendaftar melalui jalur yatim/piatu",
 ];
 const steps = [
   { icon: FileText, t: "Isi Formulir", d: "Lengkapi formulir pendaftaran online." },
@@ -44,6 +44,13 @@ export default function PPDBPage() {
         <section className="container-page py-6 max-w-2xl mx-auto">
           <Reveal>
             <BannerGelombang />
+          </Reveal>
+        </section>
+
+        {/* 🟢 BANNER PROGRAM BEASISWA */}
+        <section className="container-page py-6 max-w-3xl mx-auto">
+          <Reveal>
+            <ScholarshipSection />
           </Reveal>
         </section>
         

@@ -9,6 +9,8 @@ export interface Pendaftar {
   pilihanJurusan: string;
   ekstrakurikuler?: string;
   programUnggulan?: string;
+  // 🟢 Tambahkan field jalur pendaftaran/beasiswa
+  jalurPendaftaran?: "reguler" | "prestasi" | "yatim" | "kurang_mampu" | string;
   statusPendaftaran: "Menunggu Verifikasi" | "Diterima" | "Ditolak";
   createdAt: any;
   tes?: {

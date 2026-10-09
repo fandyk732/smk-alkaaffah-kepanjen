@@ -139,6 +139,7 @@ export function usePPDBAdmin() {
     pilihanJurusan: string;
     programUnggulan: string;
     ekstrakurikuler: string;
+    jalurPendaftaran?: string;
   }) => {
     if (!editingPendaftar) return;
 

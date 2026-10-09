@@ -4,7 +4,7 @@ import React from "react";
 import { Pendaftar } from "@/types/ppdb";
 import { formatTanggalIndo } from "@/utils/formatters";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Award, Pencil, Trash2, Printer } from "lucide-react";
+import { Sparkles, Award, Pencil, Trash2, Printer, GraduationCap } from "lucide-react";
 
 interface Props {
   data: Pendaftar[];
@@ -13,6 +13,13 @@ interface Props {
   onOpenDelete: (p: Pendaftar) => void;
   onPrintIndividu: (p: Pendaftar) => void;
 }
+
+const JALUR_BADGES: Record<string, { label: string; style: string }> = {
+  reguler: { label: "Reguler", style: "bg-slate-100 text-slate-700 border-slate-200" },
+  prestasi: { label: "Prestasi", style: "bg-amber-50 text-amber-700 border-amber-200" },
+  yatim: { label: "Yatim/Piatu", style: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  kurang_mampu: { label: "KIP/SKTM", style: "bg-blue-50 text-blue-700 border-blue-200" },
+};
 
 export function PPDBMobileList({
   data,
@@ -26,6 +33,8 @@ export function PPDBMobileList({
       {data.map((p) => {
         const tesBW = p.tes?.butaWarna;
         const tesJur = p.tes?.jurusan;
+        const jalurKey = p.jalurPendaftaran || "reguler";
+        const jalurInfo = JALUR_BADGES[jalurKey] || JALUR_BADGES.reguler;
 
         return (
           <div key={p.id} className="p-4 rounded-2xl border bg-card shadow-sm space-y-3">
@@ -55,7 +64,12 @@ export function PPDBMobileList({
 
             {/* Nama & NISN */}
             <div>
-              <h3 className="font-bold text-sm text-foreground">{p.namaLengkap}</h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-bold text-sm text-foreground">{p.namaLengkap}</h3>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${jalurInfo.style}`}>
+                  {jalurInfo.label}
+                </span>
+              </div>
               <p className="text-xs text-muted-foreground font-mono">NISN: {p.nisn}</p>
             </div>
 
@@ -88,6 +102,11 @@ export function PPDBMobileList({
 
             {/* Program & Ekskul */}
             <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border space-y-1.5 text-xs">
+              <div className="flex items-center gap-1.5">
+                <GraduationCap className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                <span className="text-muted-foreground text-[11px]">Jalur:</span>
+                <span className="font-semibold text-foreground">{jalurInfo.label}</span>
+              </div>
               <div className="flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-purple-600 shrink-0" />
                 <span className="text-muted-foreground text-[11px]">Program:</span>

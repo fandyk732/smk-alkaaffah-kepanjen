@@ -14,6 +14,13 @@ const JURUSAN_MANUAL = [
   { code: "TKR", title: "Teknik Kendaraan Ringan" },
 ];
 
+const JALUR_BEASISWA = [
+  { value: "reguler", label: "Jalur Reguler (Umum)" },
+  { value: "prestasi", label: "Jalur Beasiswa Prestasi (Kecamatan s/d Nasional)" },
+  { value: "yatim", label: "Jalur Beasiswa Yatim / Yatim Piatu" },
+  { value: "kurang_mampu", label: "Jalur Beasiswa Keluarga Kurang Mampu" },
+];
+
 const EKSKUL_MANUAL = [
   "Pramuka",
   "Paskibra",
@@ -42,6 +49,7 @@ export function FormPPDB() {
     pilihanJurusan: "",
     ekstrakurikuler: "",
     programUnggulan: "",
+    jalurPendaftaran: "reguler", // Default ke jalur reguler
   });
 
   const [gelombangAktif, setGelombangAktif] = useState<GelombangSPMB | null>(null);
@@ -161,6 +169,28 @@ export function FormPPDB() {
       <div className="space-y-1.5">
         <label className="text-sm font-semibold">No. WhatsApp Aktif Kamu / Ortu Kamu</label>
         <input type="tel" name="whatsapp" required value={formData.whatsapp} onChange={handleChange} placeholder="Contoh: 081234567xxx" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
+      </div>
+
+            <div className="space-y-1.5">
+        <div className="flex justify-between items-center">
+          <label className="text-sm font-semibold">Jalur Pendaftaran / Beasiswa</label>
+          <span className="text-xs text-muted-foreground font-normal">(Opsional)</span>
+        </div>
+        <select
+          name="jalurPendaftaran"
+          value={formData.jalurPendaftaran}
+          onChange={handleChange}
+          className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition"
+        >
+          {JALUR_BEASISWA.map((j) => (
+            <option key={j.value} value={j.value}>
+              {j.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-[11px] text-muted-foreground">
+          *Jika memilih jalur beasiswa, berkas pendukung (Sertifikat/KIP/SKTM/Surat Kematian) cukup dibawa saat konfirmasi/daftar ulang di sekolah.
+        </p>
       </div>
 
       <div className="space-y-1.5">

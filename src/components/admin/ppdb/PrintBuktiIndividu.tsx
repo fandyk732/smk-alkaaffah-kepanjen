@@ -9,6 +9,13 @@ interface Props {
   panitiaName: string;
 }
 
+const JALUR_LABELS: Record<string, string> = {
+  reguler: "Reguler (Umum)",
+  prestasi: "Beasiswa Prestasi",
+  yatim: "Beasiswa Yatim / Yatim Piatu",
+  kurang_mampu: "Beasiswa Ekonomi / KIP / SKTM",
+};
+
 export function PrintBuktiIndividu({ pendaftar, panitiaName }: Props) {
   if (!pendaftar) return null;
 
@@ -89,6 +96,10 @@ export function PrintBuktiIndividu({ pendaftar, panitiaName }: Props) {
                 <td className="py-2.5">: {pendaftar.asalSekolah}</td>
               </tr>
               <tr className="border-b border-gray-300">
+                <td className="py-2.5 font-bold">Jalur Pendaftaran</td>
+                <td className="py-2.5">: <strong>{JALUR_LABELS[pendaftar.jalurPendaftaran || "reguler"] || "Reguler (Umum)"}</strong></td>
+              </tr>
+              <tr className="border-b border-gray-300">
                 <td className="py-2.5 font-bold">Pilihan Jurusan Utama</td>
                 <td className="py-2.5">: <strong>{pendaftar.pilihanJurusan}</strong></td>
               </tr>
@@ -120,7 +131,7 @@ export function PrintBuktiIndividu({ pendaftar, panitiaName }: Props) {
           </table>
 
           <p className="text-justify my-4 text-black text-[13px] italic">
-            *Simpan bukti pendaftaran ini sebagai bukti verifikasi ulang saat proses pendaftaran fisik di sekolah.
+            *Simpan bukti pendaftaran ini sebagai bukti verifikasi ulang saat proses pendaftaran fisik/beasiswa di sekolah.
           </p>
 
           <div className="mt-16 float-right text-center w-[250px] text-black">
