@@ -59,6 +59,7 @@ export default function PusatKarirPage(): React.ReactElement {
           .from('lowongan_kerja')
           .select('*')
           .eq('is_active', true)
+          .eq('is_approved', true)
           .order('created_at', { ascending: false })
           .limit(6);
 
@@ -407,7 +408,7 @@ export default function PusatKarirPage(): React.ReactElement {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  <Globe size={14} /> Kunjungi Website Resmi Perusahaan
+                  <Globe size={14} /> Kunjungi Website Resmi Perusahaan / Kampus
                 </a>
                 <button
                   onClick={() => setSelectedMitra(null)}
