@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react"; // 🟢 Tambahkan useRef
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2 } from "lucide-react";
 import { GelombangSPMB } from "@/types/gelombang";
 import { getGelombangAktif } from "@/services/gelombangService";
-import { Turnstile } from "@marsidev/react-turnstile";
 
 const JURUSAN_MANUAL = [
   { code: "TKJ", title: "Teknik Komputer & Jaringan" },
@@ -39,7 +38,6 @@ const PROGRAM_UNGGULAN_MANUAL = [
 
 export function FormPPDB() {
   const router = useRouter();
-  const turnstileRef = useRef<any>(null); // 🟢 1. Ref untuk kontrol Turnstile
   
   const [formData, setFormData] = useState({
     namaLengkap: "",
@@ -49,11 +47,12 @@ export function FormPPDB() {
     pilihanJurusan: "",
     ekstrakurikuler: "",
     programUnggulan: "",
-    jalurPendaftaran: "reguler", // Default ke jalur reguler
+    jalurPendaftaran: "reguler",
   });
 
   const [gelombangAktif, setGelombangAktif] = useState<GelombangSPMB | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string>("");
+  // 🟢 Bypass Turnstile Token secara default
+  const [turnstileToken] = useState<string>("BYPASS_DISABLED");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -90,12 +89,6 @@ export function FormPPDB() {
       return;
     }
 
-    if (!turnstileToken) {
-      setError("Verifikasi keamanan belum siap/kadaluwarsa. Silakan tunggu atau muat ulang.");
-      setLoading(false);
-      return;
-    }
-
     try {
       const res = await fetch("/api/ppdb", {
         method: "POST",
@@ -104,7 +97,7 @@ export function FormPPDB() {
           ...formData,
           gelombangId: gelombangAktif?.id || "manual",
           namaGelombang: gelombangAktif?.namaGelombang || "Umum / Tanpa Gelombang",
-          token: turnstileToken,
+          token: turnstileToken, // Dikirim dummy bypass token
         }),
       });
 
@@ -129,9 +122,6 @@ export function FormPPDB() {
       console.error(err);
       setError(err.message || "Terjadi kesalahan sistem. Silakan coba lagi.");
       setLoading(false);
-      // 🟢 2. Reset Turnstile otomatis jika submit gagal
-      setTurnstileToken("");
-      turnstileRef.current?.reset();
     }
   };
 
@@ -140,13 +130,6 @@ export function FormPPDB() {
       {error && (
         <div className="p-3 text-sm rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium flex items-center justify-between gap-2">
           <span>{error}</span>
-          <button
-            type="button"
-            onClick={() => turnstileRef.current?.reset()}
-            className="text-xs underline font-bold shrink-0"
-          >
-            Muat Ulang Captcha
-          </button>
         </div>
       )}
 
@@ -171,7 +154,7 @@ export function FormPPDB() {
         <input type="tel" name="whatsapp" required value={formData.whatsapp} onChange={handleChange} placeholder="Contoh: 081234567xxx" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
       </div>
 
-            <div className="space-y-1.5">
+      <div className="space-y-1.5">
         <div className="flex justify-between items-center">
           <label className="text-sm font-semibold">Jalur Pendaftaran / Beasiswa</label>
           <span className="text-xs text-muted-foreground font-normal">(Opsional)</span>
@@ -235,24 +218,7 @@ export function FormPPDB() {
         </select>
       </div>
 
-      {/* 🟢 3. Widget Turnstile dengan Handlers Anti-Stuck */}
-      <div className="py-2 flex justify-center">
-        <Turnstile
-          ref={turnstileRef}
-          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-          onSuccess={(token) => setTurnstileToken(token)}
-          onExpire={() => {
-            setTurnstileToken("");
-            turnstileRef.current?.reset(); // Auto refresh saat expired
-          }}
-          onError={() => {
-            setTurnstileToken("");
-            turnstileRef.current?.reset(); // Auto refresh saat ada gangguan jaringan
-          }}
-        />
-      </div>
-
-      <Button type="submit" disabled={loading || !turnstileToken} className="w-full bg-gradient-primary rounded-xl py-6 font-semibold">
+      <Button type="submit" disabled={loading} className="w-full bg-gradient-primary rounded-xl py-6 font-semibold">
         {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memproses...</> : <><Send className="mr-2 h-4 w-4" /> Kirim Formulir Pendaftaran</>}
       </Button>
     </form>

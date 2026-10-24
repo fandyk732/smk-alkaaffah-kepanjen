@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useRef } from "react"; // 🟢 Tambahkan useRef
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AlumniFormState } from "@/types/alumni";
-import { Turnstile } from "@marsidev/react-turnstile";
 
 interface Props {
   formData: AlumniFormState;
@@ -14,8 +13,8 @@ interface Props {
 }
 
 export function AlumniForm({ formData, setFormData, isSubmitting, onSubmit }: Props) {
-  const [turnstileToken, setTurnstileToken] = useState<string>("");
-  const turnstileRef = useRef<any>(null); // 🟢 1. Ref untuk kontrol Turnstile
+  // 🟢 Bypass Turnstile Token secara default
+  const [turnstileToken] = useState<string>("BYPASS_DISABLED");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -28,9 +27,7 @@ export function AlumniForm({ formData, setFormData, isSubmitting, onSubmit }: Pr
     try {
       await onSubmit(e, turnstileToken);
     } catch (err) {
-      // 🟢 2. Reset Turnstile otomatis jika submit gagal agar user bisa coba lagi
-      setTurnstileToken("");
-      turnstileRef.current?.reset();
+      console.error("Gagal menyimpan data alumni:", err);
     }
   };
 
@@ -96,26 +93,9 @@ export function AlumniForm({ formData, setFormData, isSubmitting, onSubmit }: Pr
           <textarea name="testimoni" value={formData.testimoni} onChange={handleChange} placeholder="Kesan pesan untuk adik kelas di SMK Al Kaaffah..." className="w-full bg-background border p-2.5 rounded-xl text-sm h-20 resize-none focus:outline-none focus:border-primary transition" />
         </div>
 
-        {/* 🟢 3. Widget Turnstile dengan Handlers Anti-Stuck */}
-        <div className="py-2 flex justify-center">
-          <Turnstile
-            ref={turnstileRef}
-            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-            onSuccess={(token) => setTurnstileToken(token)}
-            onExpire={() => {
-              setTurnstileToken("");
-              turnstileRef.current?.reset(); // Auto refresh saat expired
-            }}
-            onError={() => {
-              setTurnstileToken("");
-              turnstileRef.current?.reset(); // Auto refresh saat jaringan bermasalah
-            }}
-          />
-        </div>
-
         <Button
           type="submit"
-          disabled={isSubmitting || !turnstileToken}
+          disabled={isSubmitting}
           className="w-full py-5 rounded-xl font-bold text-sm mt-2"
         >
           {isSubmitting ? "Menyimpan..." : "Simpan Data Alumni"}

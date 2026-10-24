@@ -29,7 +29,7 @@ const alumniSchema = z.object({
     .optional()
     .default(""),
   testimoni: z.string().max(500, "Testimoni maksimal 500 karakter").optional().default(""),
-  token: z.string().min(1, "Token Captcha tidak ditemukan"), // Turnstile Token
+  token: z.string().optional().default("BYPASS_DISABLED"), // Turnstile Token (Bypassable)
 });
 
 export async function POST(req: Request) {
@@ -57,33 +57,30 @@ export async function POST(req: Request) {
       token,
     } = validation.data;
 
-    // 2. Verifikasi Turnstile ke Cloudflare
-    const turnstileRes = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret: process.env.TURNSTILE_SECRET_KEY || "",
-          response: token,
-        }),
-      }
-    );
-
-    const turnstileData = await turnstileRes.json();
-    if (!turnstileData.success) {
-      return NextResponse.json(
-        { message: "Verifikasi Captcha Gagal/Kadaluwarsa. Silakan coba lagi." },
-        { status: 400 }
+    // 2. Verifikasi Turnstile ke Cloudflare (Hanya jika token BUKAN bypass)
+    if (token !== "BYPASS_DISABLED" && process.env.TURNSTILE_SECRET_KEY) {
+      const turnstileRes = await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            secret: process.env.TURNSTILE_SECRET_KEY || "",
+            response: token,
+          }),
+        }
       );
+
+      const turnstileData = await turnstileRes.json();
+      if (!turnstileData.success) {
+        return NextResponse.json(
+          { message: "Verifikasi Captcha Gagal/Kadaluwarsa. Silakan coba lagi." },
+          { status: 400 }
+        );
+      }
     }
 
-    // 3. 🔧 FIX: split ke 2 collection (sempat regresi jadi 1 addDoc doang ke
-    // "alumni" publik, termasuk whatsapp — itu balik ngebocorin nomor WA
-    // alumni ke publik, padahal ini udah pernah ditutup sebelumnya). Sekarang
-    // konsisten lagi sama pattern di useAlumniAdmin.ts: field publik ke
-    // "alumni", whatsapp ke "tracer_private" (admin_alumni/superadmin only),
-    // pakai 1 docId yang sama biar bisa di-merge balik di dashboard admin.
+    // 3. Split ke 2 collection (Tetap menjaga privasi nomor WhatsApp)
     const newDocRef = doc(collection(db, "alumni"));
     const newId = newDocRef.id;
 

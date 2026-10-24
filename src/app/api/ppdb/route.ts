@@ -4,7 +4,7 @@ import { db } from "@/lib/firebase";
 import { doc, writeBatch, serverTimestamp } from "firebase/firestore";
 import { sendTelegramNotification } from "@/lib/telegram";
 
-// 🎯 Schema Validasi Zod disesuaikan dengan FormPPDB
+// 🎯 Schema Validasi Zod
 const ppdbSchema = z.object({
   namaLengkap: z
     .string()
@@ -27,11 +27,12 @@ const ppdbSchema = z.object({
   pilihanJurusan: z
     .string()
     .min(1, "Pilihan jurusan wajib dipilih"),
+  jalurPendaftaran: z.string().optional().default("reguler"),
   ekstrakurikuler: z.string().optional().default("Belum Memilih"),
   programUnggulan: z.string().optional().default("Belum Memilih"),
   gelombangId: z.string().optional().default("manual"),
   namaGelombang: z.string().optional().default("Umum / Tanpa Gelombang"),
-  token: z.string().min(1, "Token Captcha tidak ditemukan"), // Turnstile Token
+  token: z.string().optional().default("BYPASS_DISABLED"), // Turnstile Token (Bypassable)
 });
 
 export async function POST(req: Request) {
@@ -53,6 +54,7 @@ export async function POST(req: Request) {
       asalSekolah,
       whatsapp,
       pilihanJurusan,
+      jalurPendaftaran,
       ekstrakurikuler,
       programUnggulan,
       gelombangId,
@@ -60,25 +62,27 @@ export async function POST(req: Request) {
       token,
     } = validation.data;
 
-    // 2. Verifikasi Turnstile Captcha ke Cloudflare
-    const turnstileRes = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret: process.env.TURNSTILE_SECRET_KEY || "",
-          response: token,
-        }),
-      }
-    );
-
-    const turnstileData = await turnstileRes.json();
-    if (!turnstileData.success) {
-      return NextResponse.json(
-        { message: "Verifikasi Captcha Gagal/Kadaluwarsa. Silakan coba lagi." },
-        { status: 400 }
+    // 2. Verifikasi Turnstile Captcha ke Cloudflare (Hanya jika token BUKAN bypass)
+    if (token !== "BYPASS_DISABLED" && process.env.TURNSTILE_SECRET_KEY) {
+      const turnstileRes = await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            secret: process.env.TURNSTILE_SECRET_KEY || "",
+            response: token,
+          }),
+        }
       );
+
+      const turnstileData = await turnstileRes.json();
+      if (!turnstileData.success) {
+        return NextResponse.json(
+          { message: "Verifikasi Captcha Gagal/Kadaluwarsa. Silakan coba lagi." },
+          { status: 400 }
+        );
+      }
     }
 
     // 3. Generate Nomor Registrasi & Simpan Batch ke Firestore
@@ -94,6 +98,7 @@ export async function POST(req: Request) {
       asalSekolah,
       whatsapp,
       pilihanJurusan,
+      jalurPendaftaran: jalurPendaftaran || "reguler",
       ekstrakurikuler: ekstrakurikuler || "Belum Memilih",
       programUnggulan: programUnggulan || "Belum Memilih",
       gelombangId,
@@ -110,6 +115,7 @@ export async function POST(req: Request) {
       noRegistrasi,
       asalSekolah,
       pilihanJurusan,
+      jalurPendaftaran: jalurPendaftaran || "reguler",
       gelombangId,
       namaGelombang,
       statusPendaftaran: "Menunggu Verifikasi",
