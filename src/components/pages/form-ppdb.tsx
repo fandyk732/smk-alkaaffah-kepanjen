@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Send, Loader2 } from "lucide-react";
 import { GelombangSPMB } from "@/types/gelombang";
 import { getGelombangAktif } from "@/services/gelombangService";
+import { sanitizeWhatsApp } from "@/lib/utils"; // 🟢 Impor helper sanitasi WA
 
 const JURUSAN_MANUAL = [
   { code: "TKJ", title: "Teknik Komputer & Jaringan" },
@@ -76,6 +77,12 @@ export function FormPPDB() {
   const handleNisnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const onlyDigits = e.target.value.replace(/\D/g, "").slice(0, 10);
     setFormData({ ...formData, nisn: onlyDigits });
+  };
+
+  // 🟢 Handler khusus WhatsApp untuk sanitasi format copas (+62, spasi, strip)
+  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleanNumber = sanitizeWhatsApp(e.target.value);
+    setFormData({ ...formData, whatsapp: cleanNumber });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,7 +158,15 @@ export function FormPPDB() {
 
       <div className="space-y-1.5">
         <label className="text-sm font-semibold">No. WhatsApp Aktif Kamu / Ortu Kamu</label>
-        <input type="tel" name="whatsapp" required value={formData.whatsapp} onChange={handleChange} placeholder="Contoh: 081234567xxx" className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" />
+        <input 
+          type="tel" 
+          name="whatsapp" 
+          required 
+          value={formData.whatsapp} 
+          onChange={handleWhatsAppChange} 
+          placeholder="Contoh: 081234567xxx atau +62 812-3456-7890" 
+          className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary transition" 
+        />
       </div>
 
       <div className="space-y-1.5">

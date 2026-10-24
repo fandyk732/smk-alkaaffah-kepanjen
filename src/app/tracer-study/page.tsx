@@ -15,6 +15,7 @@ import {
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import { sanitizeWhatsApp } from "@/lib/utils"; // 🟢 Impor helper sanitasi WA
 
 // Pilihan Jurusan
 const majorOptions = [
@@ -54,6 +55,12 @@ export default function TracerStudyPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // 🟢 Handler khusus WhatsApp untuk sanitasi format copas (+62, spasi, strip)
+  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleanNumber = sanitizeWhatsApp(e.target.value);
+    setFormData((prev) => ({ ...prev, noWhatsapp: cleanNumber }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -224,8 +231,8 @@ export default function TracerStudyPage() {
                       name="noWhatsapp"
                       required
                       value={formData.noWhatsapp}
-                      onChange={handleChange}
-                      placeholder="08xxxxxxxxxx"
+                      onChange={handleWhatsAppChange}
+                      placeholder="Contoh: 081234567xxx atau +62 812-3456-7890"
                       className="w-full rounded-xl border bg-background px-4 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
