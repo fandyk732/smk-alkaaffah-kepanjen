@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react"; // 🟢 Tambahkan useRef
+import { useState } from "react";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/motion-primitives";
 import { 
@@ -15,7 +15,6 @@ import {
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
-import { Turnstile } from "@marsidev/react-turnstile";
 
 // Pilihan Jurusan
 const majorOptions = [
@@ -36,8 +35,9 @@ const statusOptions = [
 export default function TracerStudyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string>("");
-  const turnstileRef = useRef<any>(null); // 🟢 1. Ref untuk mengontrol Turnstile
+  
+  // 🟢 Bypass Turnstile Token secara default
+  const [turnstileToken] = useState<string>("BYPASS_DISABLED");
 
   // Form State
   const [formData, setFormData] = useState({
@@ -58,12 +58,6 @@ export default function TracerStudyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!turnstileToken) {
-      toast.error("Verifikasi captcha belum siap / kadaluwarsa. Silakan tunggu atau muat ulang.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -80,7 +74,7 @@ export default function TracerStudyPage() {
           posisi: formData.jabatanJurusan,
           whatsapp: formData.noWhatsapp,
           testimoni: formData.kesanPesan,
-          token: turnstileToken,
+          token: turnstileToken, // Dikirim dummy bypass token
         }),
       });
 
@@ -95,10 +89,6 @@ export default function TracerStudyPage() {
     } catch (error: any) {
       console.error("Firebase/Server Error: ", error);
       toast.error(error.message || "Gagal mengirim data ke database.");
-      
-      // 🟢 2. Reset Turnstile otomatis jika submit gagal
-      setTurnstileToken("");
-      turnstileRef.current?.reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -139,8 +129,6 @@ export default function TracerStudyPage() {
                         jabatanJurusan: "",
                         kesanPesan: "",
                       });
-                      setTurnstileToken("");
-                      turnstileRef.current?.reset();
                     }}
                     className="rounded-xl border border-input bg-background px-6 py-2.5 text-sm font-semibold transition-colors hover:bg-accent"
                   >
@@ -326,27 +314,10 @@ export default function TracerStudyPage() {
                   />
                 </div>
 
-                {/* 🟢 3. Captcha Turnstile Widget dengan Handler Anti-Stuck */}
-                <div className="flex justify-center py-2">
-                  <Turnstile
-                    ref={turnstileRef}
-                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-                    onSuccess={(token) => setTurnstileToken(token)}
-                    onExpire={() => {
-                      setTurnstileToken("");
-                      turnstileRef.current?.reset(); // Auto refresh saat expired 2 menit
-                    }}
-                    onError={() => {
-                      setTurnstileToken("");
-                      turnstileRef.current?.reset(); // Auto refresh jika jaringan sempat DC
-                    }}
-                  />
-                </div>
-
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting || !turnstileToken}
+                  disabled={isSubmitting}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-md transition-all hover:bg-primary/90 disabled:opacity-50"
                 >
                   {isSubmitting ? (
