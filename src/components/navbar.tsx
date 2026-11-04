@@ -38,7 +38,13 @@ const mainNavItems = [
   { label: "Alumni", to: "/alumni" },
   { label: "Pusat Karir", to: "/pusatkarir"},
   { label: "SPMB", to: "/ppdb" },
-  { label: "Kontak", to: "/kontak" },
+  { label: "Kontak", 
+    to: "/kontak",
+    subItems: [
+      { label: "Kontak Sekolah", to: "/kontak" },
+      { label: "Kotak Saran & Aspirasi", to: "/kotak-saran" },
+    ],
+  },
 ];
 
 function useTheme() {
