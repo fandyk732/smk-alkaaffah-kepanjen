@@ -18,7 +18,8 @@ import {
   Trophy,
   Megaphone,
   Briefcase,
-  Users // 🚀 IMPORT ICON UNTUK GURU & STAF
+  Users,
+  Inbox
 } from "lucide-react";
 
 export default function AdminDashboardHub() {
@@ -254,6 +255,26 @@ export default function AdminDashboardHub() {
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                   Atur teks running bar, banner informasi, dan link pengumuman di header web.
+                </p>
+              </div>
+            </Link>
+          )}
+
+          {/* 🚀 9. ADMIN KOTAK SARAN & ASPIRASI (SUB-DASHBOARD BARU) */}
+          {hasRole("admin_saran") && (
+            <Link
+              href="/admin/kotak-saran"
+              className="group bg-slate-900 border border-slate-800 hover:border-sky-500/50 p-6 rounded-2xl transition hover:shadow-xl hover:shadow-sky-500/5 flex items-start gap-4"
+            >
+              <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl group-hover:scale-110 transition">
+                <Inbox className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-slate-100 group-hover:text-sky-400 transition">
+                  Kotak Saran & Aspirasi
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Tinjau masukan publik, ubah status penanganan, dan hubungi pengirim via WA.
                 </p>
               </div>
             </Link>

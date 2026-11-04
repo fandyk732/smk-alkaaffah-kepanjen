@@ -156,5 +156,16 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdminGuru();
     }
+
+    // 11. KOTAK SARAN
+    match /kotak_saran/{docId} {
+      // Bolehkan publik mengirim saran (create)
+      allow create: if request.resource.data.keys().hasAll(['isAnonim', 'kategori', 'subjek', 'pesan', 'status', 'createdAt'])
+                    && request.resource.data.status == 'baru';
+      
+      // Membaca, memperbarui status, dan menghapus hanya untuk admin/user terautentikasi
+      allow read, update, delete: if isAuthenticated();
+    }
+
   }
 }

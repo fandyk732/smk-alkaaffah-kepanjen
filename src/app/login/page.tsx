@@ -87,6 +87,8 @@ export default function LoginPage() {
           router.push("/admin/prestasi");
         } else if (singleRole === "admin_announcement") {
           router.push("/admin/announcement");
+        } else if (singleRole === "admin_saran") {
+          router.push("/admin/kotak-saran");
         } else {
           alert("Role tidak dikenali. Hubungi Superadmin.");
           await auth.signOut();
