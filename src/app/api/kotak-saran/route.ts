@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     });
 
     // 2. 🟢 Kirim Notifikasi Telegram (Non-blocking / Async)
-    sendTelegramKotakSaranNotification({
+    await sendTelegramKotakSaranNotification({
       isAnonim: data.isAnonim,
       nama: data.nama,
       whatsapp: data.whatsapp,
