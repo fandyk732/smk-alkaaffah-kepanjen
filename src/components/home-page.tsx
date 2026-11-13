@@ -1,17 +1,16 @@
 import dynamic from "next/dynamic";
-import { useHomeNews } from "@/hooks/useHomeNews"; // Jika useHomeNews butuh Client, kita bungkus section-nya saja
 import { HomeHero } from "@/components/home/HomeHero";
-import { HomeIntro } from "@/components/home/HomeIntro";
 import { HomePrograms } from "@/components/home/HomePrograms";
+import NewsSectionWrapper from "./NewsSectionWrapper";
 
-// ⚡ Dynamic Import (Lazy Load) untuk Section Berita agar fetch JS-nya terpisah
-const HomeNewsSection = dynamic(
-  () => import("@/components/home/HomeNewsSection").then((mod) => mod.HomeNewsSection),
-  { ssr: true }
+// ⚡ Dynamic Import agar bundle tetap ringan
+const HomeVideoSection = dynamic(
+  () => import("@/components/home/HomeVideoSection").then((mod) => mod.HomeVideoSection),
+  {
+    loading: () => <div className="h-96 w-full bg-transparent" />,
+  }
 );
 
-// ⚡ Dynamic Import (Lazy Load) untuk Section Bawah (Below-The-Fold)
-// Ini memangkas TBT drastis karena JS Partners, Alumni & Stats baru dimuat saat di-scroll
 const HomeStatsAndAlumni = dynamic(
   () => import("@/components/home/HomeStatsAndAlumni").then((mod) => mod.HomeStatsAndAlumni),
   {
@@ -19,22 +18,22 @@ const HomeStatsAndAlumni = dynamic(
   }
 );
 
-// Komponen Pembungkus Berita Client Side (Agara "use client" terisolasi hanya di sini)
-import NewsSectionWrapper from "./NewsSectionWrapper";
-
 export function HomePage() {
   return (
     <>
-      {/* 1. HERO SECTION (Fast Server Rendered & LCP Priority) */}
+      {/* 1. HERO SECTION */}
       <HomeHero />
 
-      {/* 2. NEWS SECTION (Terisolasi) */}
+      {/* 2. EMBED VIDEO UNGGULAN (Dinamis dari Admin Announcement) */}
+      <HomeVideoSection />
+
+      {/* 3. NEWS SECTION */}
       <NewsSectionWrapper />
 
       {/* 4. PROGRAM KEAHLIAN & KELAS JEPANG */}
       <HomePrograms />
 
-      {/* 5. STATS, PRESTASI, ALUMNI, PARTNERS, & CTA (Lazy Loaded) */}
+      {/* 5. STATS, PRESTASI, ALUMNI, PARTNERS, & CTA */}
       <HomeStatsAndAlumni />
     </>
   );
