@@ -26,7 +26,8 @@ export const navItems = [
   { label: "Pusat Karir", to: "/pusatkarir"},
   { label: "SPMB", to: "/ppdb" },
   { label: "Kontak", to: "/kontak" },
-  { label: "Kotak Saran", to: "/kotak-saran"}
+  { label: "Kotak Saran", to: "/kotak-saran"},
+  { label: "Galeri Kontes Modifikasi", to: "/galeri/kontes-modifikasi" }
 ] as const;
 
 export const stats = [
