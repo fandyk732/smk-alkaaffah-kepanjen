@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { PageHero } from "@/components/page-hero";
 import {
   FolderOpen,
@@ -13,20 +13,36 @@ import {
   Users,
   Gift,
   LogOut,
-  Grid,
-  List,
   Loader2,
+  Search,
+  Download,
+  ZoomIn,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ImageOff,
+  ChevronDown,
 } from "lucide-react";
 
 interface DriveFolderItem {
   id: string;
   title: string;
-  shortTitle: string; // Label ringkas khusus pill tab di mobile
+  shortTitle: string;
   subtitle: string;
   folderId: string;
   icon: React.ElementType;
   accent: string;
 }
+
+interface DrivePhoto {
+  id: string;
+  name: string;
+  thumbUrl: string;
+  fullUrl: string;
+  downloadUrl: string;
+}
+
+const ITEMS_PER_BATCH = 24; // 🟢 Tampilkan 24 foto per batch agar enteng di HP
 
 const DRIVE_FOLDERS: DriveFolderItem[] = [
   {
@@ -96,19 +112,106 @@ const DRIVE_FOLDERS: DriveFolderItem[] = [
 
 export default function DokumentasiKontesModifikasiPage() {
   const [activeFolder, setActiveFolder] = useState<DriveFolderItem>(DRIVE_FOLDERS[0]);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [iframeLoading, setIframeLoading] = useState(true);
-  const viewerRef = useRef<HTMLDivElement | null>(null);
+  const [photos, setPhotos] = useState<DrivePhoto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // 🟢 Batas jumlah foto yang dirender di layar
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_BATCH);
+
+  // State Lightbox Modal
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const driveDirectUrl = `https://drive.google.com/drive/folders/${activeFolder.folderId}`;
-  const driveEmbedUrl = `https://drive.google.com/embeddedfolderview?id=${activeFolder.folderId}#${viewMode}`;
 
-  const handleSelectFolder = (folder: DriveFolderItem) => {
-    if (folder.id !== activeFolder.id) {
-      setIframeLoading(true);
-      setActiveFolder(folder);
-    }
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    setErrorMsg(null);
+    setSearchQuery("");
+    setSelectedIndex(null);
+    setVisibleCount(ITEMS_PER_BATCH); // Reset jumlah tampil tiap ganti folder
+
+    fetch(`/api/drive-photos?folderId=${activeFolder.folderId}`)
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Gagal memuat foto");
+        return data.photos || [];
+      })
+      .then((list: DrivePhoto[]) => {
+        if (isMounted) setPhotos(list);
+      })
+      .catch((err: Error) => {
+        if (isMounted) setErrorMsg(err.message);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeFolder.folderId]);
+
+  // Filter Pencarian dari SELURUH foto di folder
+  const filteredPhotos = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return photos;
+    return photos.filter((p) => p.name.toLowerCase().includes(q));
+  }, [photos, searchQuery]);
+
+  // Potong array sesuai visibleCount agar DOM tetap ringan
+  const displayedPhotos = useMemo(() => {
+    return filteredPhotos.slice(0, visibleCount);
+  }, [filteredPhotos, visibleCount]);
+
+  const remainingCount = filteredPhotos.length - displayedPhotos.length;
+
+  // Kontrol Lightbox (navigasi tetap bisa menjelajah seluruh hasil filter)
+  const closeModal = useCallback(() => setSelectedIndex(null), []);
+
+  const showPrev = useCallback(() => {
+    setSelectedIndex((prev) =>
+      prev === null ? null : (prev - 1 + filteredPhotos.length) % filteredPhotos.length
+    );
+  }, [filteredPhotos.length]);
+
+  const showNext = useCallback(() => {
+    setSelectedIndex((prev) =>
+      prev === null ? null : (prev + 1) % filteredPhotos.length
+    );
+  }, [filteredPhotos.length]);
+
+  useEffect(() => {
+    if (selectedIndex === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeModal();
+      if (e.key === "ArrowLeft") showPrev();
+      if (e.key === "ArrowRight") showNext();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "unset";
+    };
+  }, [selectedIndex, closeModal, showPrev, showNext]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
   };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (diff > 50) showNext();
+    if (diff < -50) showPrev();
+    touchStartX.current = null;
+  };
+
+  const activePhoto = selectedIndex !== null ? filteredPhotos[selectedIndex] : null;
 
   return (
     <>
@@ -121,28 +224,25 @@ export default function DokumentasiKontesModifikasiPage() {
       <section className="container-page py-8 md:py-10 space-y-6 md:space-y-8">
         {/* 1. NAVIGASI KATEGORI FOLDER */}
         <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
             <div>
-                <h2 className="text-base md:text-xl font-bold text-foreground">
+              <h2 className="text-base md:text-xl font-bold text-foreground">
                 Pilih Folder Dokumentasi
-                </h2>
-                <p className="hidden md:block text-sm text-muted-foreground">
-                Klik salah satu kategori di bawah untuk melihat pratinjau foto atau membuka folder Google Drive.
-                </p>
+              </h2>
+              <p className="hidden md:block text-sm text-muted-foreground">
+                Klik salah satu kategori di bawah untuk melihat galeri foto atau mengunduh versi HD.
+              </p>
             </div>
 
-            {/* Badge khusus HP: kasih hint bahwa tab bisa di-swipe */}
             <span className="md:hidden text-[11px] font-medium text-muted-foreground shrink-0">
-                Geser kategori →
+              Geser kategori →
             </span>
-
-            {/* Badge khusus Desktop */}
             <span className="hidden md:inline-block text-xs font-semibold px-3 py-1 rounded-full bg-secondary text-secondary-foreground shrink-0">
-                {DRIVE_FOLDERS.length} Folder
+              {DRIVE_FOLDERS.length} Folder
             </span>
-            </div>
+          </div>
 
-          {/* TAMPILAN MOBILE (< md): Horizontal Scrollable Pill Tabs (Ringkas, langsung lihat preview) */}
+          {/* MOBILE (< md): Horizontal Scrollable Pill Tabs */}
           <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-2 no-scrollbar -mx-4 px-4">
             {DRIVE_FOLDERS.map((folder) => {
               const Icon = folder.icon;
@@ -152,7 +252,7 @@ export default function DokumentasiKontesModifikasiPage() {
                 <button
                   key={folder.id}
                   type="button"
-                  onClick={() => handleSelectFolder(folder)}
+                  onClick={() => setActiveFolder(folder)}
                   className={`shrink-0 inline-flex items-center gap-2 px-3.5 py-2.5 rounded-full border text-xs font-bold transition-all ${
                     isSelected
                       ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
@@ -166,7 +266,7 @@ export default function DokumentasiKontesModifikasiPage() {
             })}
           </div>
 
-          {/* TAMPILAN DESKTOP (md+): Grid Card Lengkap */}
+          {/* DESKTOP (md+): Grid Card Lengkap */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {DRIVE_FOLDERS.map((folder, index) => {
               const Icon = folder.icon;
@@ -179,7 +279,7 @@ export default function DokumentasiKontesModifikasiPage() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  onClick={() => handleSelectFolder(folder)}
+                  onClick={() => setActiveFolder(folder)}
                   className={`group text-left p-4 rounded-2xl border transition-all duration-200 flex flex-col justify-between gap-3 ${
                     isSelected
                       ? "bg-primary/5 border-primary ring-2 ring-primary/20 shadow-md"
@@ -196,7 +296,7 @@ export default function DokumentasiKontesModifikasiPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      title="Buka langsung di tab baru"
+                      title="Buka langsung di Google Drive"
                       className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
                     >
                       <ExternalLink className="h-4 w-4" />
@@ -217,13 +317,10 @@ export default function DokumentasiKontesModifikasiPage() {
           </div>
         </div>
 
-        {/* 2. LIVE PREVIEW CONTAINER + TOMBOL DOWNLOAD HD */}
-        <div
-          ref={viewerRef}
-          className="rounded-2xl md:rounded-3xl border bg-card shadow-xl overflow-hidden"
-        >
-          {/* Header Bar Viewer */}
-          <div className="p-4 md:p-6 border-b bg-secondary/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* 2. CUSTOM GALLERY SHOWCASE CONTAINER */}
+        <div className="rounded-2xl md:rounded-3xl border bg-card shadow-xl overflow-hidden">
+          {/* Header Bar */}
+          <div className="p-4 md:p-6 border-b bg-secondary/30 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className={`p-2.5 md:p-3 rounded-xl border shrink-0 ${activeFolder.accent}`}>
                 <FolderOpen className="h-5 w-5" />
@@ -233,9 +330,11 @@ export default function DokumentasiKontesModifikasiPage() {
                   <h3 className="font-extrabold text-base md:text-lg text-foreground">
                     {activeFolder.title}
                   </h3>
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    Google Drive Live
-                  </span>
+                  {!loading && !errorMsg && (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      Menampilkan {displayedPhotos.length} dari {filteredPhotos.length} Foto
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {activeFolder.subtitle}
@@ -243,82 +342,254 @@ export default function DokumentasiKontesModifikasiPage() {
               </div>
             </div>
 
-            {/* Kontrol View & Tombol Buka Drive */}
-            <div className="flex items-center justify-between md:justify-end gap-2.5 w-full md:w-auto">
-              {/* Toggle Grid / List View */}
-              <div className="inline-flex rounded-xl border bg-background p-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (viewMode !== "grid") {
-                      setIframeLoading(true);
-                      setViewMode("grid");
-                    }
+            {/* Search Bar & Tombol Buka Semua di Drive */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <div className="relative">
+                <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setVisibleCount(ITEMS_PER_BATCH);
                   }}
-                  title="Tampilan Grid"
-                  className={`p-1.5 rounded-lg transition ${
-                    viewMode === "grid"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Grid className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (viewMode !== "list") {
-                      setIframeLoading(true);
-                      setViewMode("list");
-                    }
-                  }}
-                  title="Tampilan Daftar"
-                  className={`p-1.5 rounded-lg transition ${
-                    viewMode === "list"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
+                  placeholder="Cari nomor foto (mis. 0035)..."
+                  className="w-full sm:w-56 pl-9 pr-3 py-2 rounded-xl border bg-background text-xs md:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
               </div>
 
               <a
                 href={driveDirectUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-primary text-primary-foreground text-xs md:text-sm font-bold shadow-sm hover:opacity-95 transition flex-1 md:flex-initial"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-primary text-primary-foreground text-xs md:text-sm font-bold shadow-sm hover:opacity-95 transition shrink-0"
               >
                 <ExternalLink className="h-4 w-4 shrink-0" />
-                <span>Buka & Download HD</span>
+                <span>Buka Folder Drive</span>
               </a>
             </div>
           </div>
 
-          {/* Embedded Google Drive Folder Viewer */}
-          <div className="relative w-full h-[500px] md:h-[650px] bg-slate-50/70 dark:bg-slate-950/60 p-2 md:p-5 transition-colors">
-            {iframeLoading && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-slate-50/90 dark:bg-slate-950/90 text-slate-600 dark:text-slate-300">
-                <Loader2 className="h-7 w-7 animate-spin text-blue-500" />
-                <span className="text-xs font-medium">Memuat pratinjau folder...</span>
+          {/* Body Gallery Grid */}
+          <div className="p-4 md:p-6 space-y-6">
+            {loading ? (
+              <div className="py-24 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-xs md:text-sm font-medium">
+                  Mengambil daftar foto dari Google Drive...
+                </p>
               </div>
-            )}
+            ) : errorMsg ? (
+              <div className="py-16 text-center space-y-3 max-w-md mx-auto">
+                <ImageOff className="h-10 w-10 text-rose-500 mx-auto" />
+                <p className="text-sm font-semibold text-foreground">
+                  Gagal memuat pratinjau langsung
+                </p>
+                <p className="text-xs text-muted-foreground">{errorMsg}</p>
+                <a
+                  href={driveDirectUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold"
+                >
+                  <ExternalLink className="h-4 w-4" /> Buka Langsung di Google Drive
+                </a>
+              </div>
+            ) : displayedPhotos.length === 0 ? (
+              <div className="py-20 text-center text-muted-foreground text-sm">
+                Tidak ada foto yang cocok dengan pencarian &ldquo;{searchQuery}&rdquo;.
+              </div>
+            ) : (
+              <>
+                {/* MASONRY PHOTO GRID */}
+                <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-4 [&>*]:mb-3 md:[&>*]:mb-4">
+                  {displayedPhotos.map((photo, idx) => (
+                    <div
+                      key={photo.id}
+                      onClick={() => setSelectedIndex(idx)}
+                      className="group relative break-inside-avoid rounded-xl md:rounded-2xl overflow-hidden border bg-muted cursor-zoom-in shadow-sm hover:shadow-lg transition-shadow"
+                    >
+                      <img
+                        src={photo.thumbUrl}
+                        alt={photo.name}
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
 
-            <iframe
-              key={`${activeFolder.folderId}-${viewMode}`}
-              src={driveEmbedUrl}
-              title={activeFolder.title}
-              onLoad={() => setIframeLoading(false)}
-              className={`w-full h-full border-0 rounded-xl transition-all ${
-                viewMode === "list"
-                  ? "dark:invert dark:hue-rotate-180 dark:contrast-90"
-                  : ""
-              }`}
-              loading="lazy"
-            />
+                      {/* Overlay Gelap Saat Hover (Desktop) + Tombol Aksi */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between p-3">
+                        <div className="flex justify-end">
+                          <span className="p-2 rounded-full bg-white/15 backdrop-blur-md text-white">
+                            <ZoomIn className="h-4 w-4" />
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold text-white truncate">
+                            {photo.name}
+                          </span>
+                          <a
+                            href={photo.downloadUrl}
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            title="Download Foto HD"
+                            className="p-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white shrink-0 transition"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 🟢 TOMBOL LOAD MORE (MUAT LEBIH BANYAK) */}
+                {remainingCount > 0 && (
+                  <div className="pt-2 flex flex-col items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_BATCH)}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-secondary hover:bg-primary hover:text-primary-foreground text-foreground font-bold text-xs md:text-sm border transition-all shadow-sm active:scale-95"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                      <span>
+                        Muat {Math.min(ITEMS_PER_BATCH, remainingCount)} Foto Lagi (Sisa {remainingCount} foto)
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </section>
+
+      {/* 3. LIGHTBOX MODAL FULLSCREEN + DOWNLOAD HD */}
+      <AnimatePresence>
+        {activePhoto && selectedIndex !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={closeModal}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-4 md:p-8"
+          >
+            {/* Top Bar */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center justify-between w-full max-w-6xl mx-auto z-10 gap-3"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs md:text-sm font-semibold text-slate-200 bg-white/10 px-3.5 py-1.5 rounded-full">
+                  {selectedIndex + 1} / {filteredPhotos.length}
+                </span>
+                <span className="hidden sm:inline-block text-xs text-slate-400 font-mono">
+                  {activePhoto.name}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={activePhoto.downloadUrl}
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm font-bold shadow-lg transition"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Download HD</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  aria-label="Tutup tampilan penuh"
+                  className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Center Photo + Panah Desktop */}
+            <div className="relative flex-1 flex items-center justify-center my-2 overflow-hidden">
+              {filteredPhotos.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    showPrev();
+                  }}
+                  aria-label="Foto sebelumnya"
+                  className="hidden md:flex absolute left-2 lg:left-6 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+              )}
+
+              <motion.div
+                key={activePhoto.id}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
+                onClick={(e) => e.stopPropagation()}
+                className="max-w-5xl max-h-full flex items-center justify-center"
+              >
+                <img
+                  src={activePhoto.fullUrl}
+                  alt={activePhoto.name}
+                  referrerPolicy="no-referrer"
+                  className="max-h-[68vh] md:max-h-[76vh] w-auto max-w-full rounded-xl object-contain shadow-2xl select-none"
+                />
+              </motion.div>
+
+              {filteredPhotos.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    showNext();
+                  }}
+                  aria-label="Foto berikutnya"
+                  className="hidden md:flex absolute right-2 lg:right-6 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              )}
+            </div>
+
+            {/* Bottom Bar (Mobile Swipe Hint & Prev/Next) */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-xl mx-auto text-center space-y-2 z-10"
+            >
+              <p className="sm:hidden text-xs font-mono text-slate-300">{activePhoto.name}</p>
+
+              {filteredPhotos.length > 1 && (
+                <div className="flex md:hidden items-center justify-center gap-6 pt-1">
+                  <button
+                    type="button"
+                    onClick={showPrev}
+                    className="flex items-center gap-1 px-4 py-2 rounded-full bg-white/10 active:bg-white/20 text-white text-xs font-semibold"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Sebelumnya
+                  </button>
+                  <span className="text-[11px] text-slate-400">Geser foto</span>
+                  <button
+                    type="button"
+                    onClick={showNext}
+                    className="flex items-center gap-1 px-4 py-2 rounded-full bg-white/10 active:bg-white/20 text-white text-xs font-semibold"
+                  >
+                    Berikutnya <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
