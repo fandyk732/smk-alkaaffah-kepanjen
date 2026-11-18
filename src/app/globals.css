@@ -53,6 +53,7 @@
 }
 
 :root {
+  color-scheme: light;  
   --radius: 0.85rem;
 
   --background: oklch(1 0 0);
@@ -107,6 +108,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.165 0.03 265.8);
   --foreground: oklch(0.98 0.003 247.9);
   --card: oklch(0.21 0.035 265.8);
@@ -222,11 +224,9 @@
 
 .animate-float-slow { 
   animation: float-slow 14s ease-in-out infinite; 
-  will-change: transform;
 }
 .animate-float-slower { 
   animation: float-slower 18s ease-in-out infinite; 
-  will-change: transform;
 }
 
 /* =========================================================

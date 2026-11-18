@@ -53,20 +53,36 @@ const mainNavItems = [
   },
 ];
 
+function applyTheme(isDark: boolean) {
+  const mode = isDark ? "dark" : "light";
+  document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.style.colorScheme = mode;
+
+  let metaColorScheme = document.querySelector('meta[name="color-scheme"]');
+  if (!metaColorScheme) {
+    metaColorScheme = document.createElement("meta");
+    metaColorScheme.setAttribute("name", "color-scheme");
+    document.head.appendChild(metaColorScheme);
+  }
+  metaColorScheme.setAttribute("content", mode);
+}
+
 function useTheme() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
-    const isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = stored
+      ? stored === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
     setDark(isDark);
-    document.documentElement.classList.toggle("dark", isDark);
+    applyTheme(isDark);
   }, []);
 
   const toggle = () => {
     setDark((d) => {
       const next = !d;
-      document.documentElement.classList.toggle("dark", next);
+      applyTheme(next);
       localStorage.setItem("theme", next ? "dark" : "light");
       return next;
     });
@@ -168,7 +184,7 @@ export function Navbar() {
     <div
       style={{ transform: "translateZ(0)" }} // 🚀 Hardware Acceleration
       className={cn(
-        "w-full transition-all duration-200 z-50 relative will-change-transform",
+        "w-full transition-all duration-200 z-50 relative",
         scrolled ? "glass-card border-b py-2 shadow-sm" : "bg-transparent py-3"
       )}
     >
@@ -282,10 +298,6 @@ export function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            style={{
-              willChange: "transform, opacity",
-              transform: "translateZ(0)", // 🚀 GPU Offload
-            }}
             className="absolute top-full left-0 w-full lg:hidden bg-background/98 sm:bg-background/90 sm:backdrop-blur-xl border-b shadow-lg z-40"
           >
             <ul className="container-page flex flex-col gap-1 py-4 mx-auto max-h-[75vh] overflow-y-auto">
