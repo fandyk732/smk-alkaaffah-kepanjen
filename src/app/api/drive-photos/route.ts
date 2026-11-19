@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
   const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=${fields}&orderBy=name&pageSize=300&key=${apiKey}`;
 
   try {
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    // 🟢 Ubah revalidate jadi 300 detik (5 menit) agar foto baru lebih cepat muncul
+    const res = await fetch(url, { next: { revalidate: 300 } });
     const data = await res.json();
 
     if (!res.ok) {
@@ -50,11 +51,14 @@ export async function GET(request: NextRequest) {
     }
 
     const photos = (data.files || []).map(
-      (file: { id: string; name: string }) => ({
+      (file: { id: string; name: string; thumbnailLink?: string }) => ({
         id: file.id,
         name: file.name.replace(/\.[^/.]+$/, ""),
-        thumbUrl: `https://drive.google.com/thumbnail?id=${file.id}&sz=w500`,
-        fullUrl: `https://drive.google.com/thumbnail?id=${file.id}&sz=w1600`,
+        // 🟢 Gunakan CDN lh3.googleusercontent.com yang jauh lebih stabil
+        thumbUrl: `https://lh3.googleusercontent.com/d/${file.id}=w500`,
+        fullUrl: `https://lh3.googleusercontent.com/d/${file.id}=w1600`,
+        // Simpan URL cadangan kalau lh3 gagal
+        fallbackUrl: `https://drive.google.com/thumbnail?id=${file.id}&sz=w500`,
         downloadUrl: `https://drive.google.com/uc?export=download&id=${file.id}`,
       })
     );

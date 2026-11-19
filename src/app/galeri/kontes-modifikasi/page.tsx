@@ -39,6 +39,7 @@ interface DrivePhoto {
   name: string;
   thumbUrl: string;
   fullUrl: string;
+  fallbackUrl?: string;
   downloadUrl: string;
 }
 
@@ -415,6 +416,13 @@ export default function DokumentasiKontesModifikasiPage() {
                         loading="lazy"
                         decoding="async"
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.dataset.triedFallback && photo.fallbackUrl) {
+                            target.dataset.triedFallback = "true";
+                            target.src = photo.fallbackUrl;
+                          }
+                        }}
                         className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
                       />
 
@@ -541,6 +549,13 @@ export default function DokumentasiKontesModifikasiPage() {
                   src={activePhoto.fullUrl}
                   alt={activePhoto.name}
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.dataset.triedFallback) {
+                      target.dataset.triedFallback = "true";
+                      target.src = `https://drive.google.com/thumbnail?id=${activePhoto.id}&sz=w1600`;
+                    }
+                  }}
                   className="max-h-[68vh] md:max-h-[76vh] w-auto max-w-full rounded-xl object-contain shadow-2xl select-none"
                 />
               </motion.div>
